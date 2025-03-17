@@ -35,4 +35,27 @@ Digital design verification is the process of testing and validating the correct
 * **Emulation**: it involves testing the digital design on specializrd hardware that can emulate the behaviour of the system. This technique is often used for large, complex designs that cannot be simulated on a computer. *Example: executing in Linux a Risc-V processor before manufacturing the chip.*
 * **Prototyping**: involves building a physical prototype of the system to test its functionality in a real-world enviroment. This technique is often used for designs that require testing with real-world inputs and conditions. *Example: test an PCIe interface using an FPGA before manufacturing the chip.*
 
+## Verification Methodologies
+
+* **UVM (Universal Verification Methodology)**:
+    * UVM is a widely-used, standardized verification methodology built on SystemVerilog. It provides a robust framework for functional verification, offering reusable components for stimulus generation, checking, and reporting.
+    * Key aspects:
+        * Testbenches: The environment where your design gets tested.
+        * Transactions: Defined data packets that are sent across interfaces.
+        * Sequences: A series of transactions or commands that are run during verification.
+* **Coverage-Driven Verification (CDV)**:
+    * This approach focuses on ensuring that all parts of the design are tested through a combination of code coverage and functional coverage.
+    * It ensures that all the design's possible scenarios (including corner cases) are covered during simulation.
+    * *Example:* Using functional coverage to verify that all possible states in a finite state machine (FSM) are visited during the simulation.
+
+## Key Terms
+
+* **Code Coverage**: code coverage tools monitor and report on which parts of the code were exercised during simulation. Achieving high code coverage is important to ensure all paths and conditions in the design are tested.
+    * Types of code coverage:
+        * Statement Coverage: Ensures that every line of code has been executed.
+        * Branch Coverage: Ensures every decision point (like if statements) has been both true and false.
+        * Toggle Coverage: Ensures that every flip-flop has been toggled (set/reset).
+* **Functional Coverage**: functional coverage tracks how well the design’s functionality has been verified. It involves defining coverage points that represent important design states or events. *Example:* Ensuring all address ranges of a memory controller are tested by creating specific coverage points for them.
+* **Assertions**: are crucial in formal and functional verification. They help to monitor whether specific conditions hold true during the simulation and flag errors when these conditions are violated. *Example:* A covergroup assertion can be used to ensure that every possible value of a signal is observed during testing.
+
 Return 📂 home: [Main Readme](../README.md) 
