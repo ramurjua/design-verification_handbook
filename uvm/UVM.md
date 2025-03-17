@@ -56,3 +56,5 @@ Methods that do not consume simulation time are functions and methods that consu
 **Why SystemVerilog testbench need phases and verilog testbench does not?**
 
 Verilog testbenches have all its components made of static containers or modules. Since a module is static, all modules will be created at beginning of the simulation and don't have to worry about any components getting called without being created or initialized. SystemVerilog introduces OOP features. This enables the creation of well structured entites that can be rused and desployed when required. These class objects an be created in the middle of the simulation. What means is that testbench components can be created at different times, and hance you could end up calling a copmponent while it hasn't been initialized yet leading to woring testbench outputs.  
+
+Return 📂 home: [Main Readme](../README.md) 
