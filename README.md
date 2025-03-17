@@ -1,10 +1,10 @@
 # Digital Design Verification Learning Repository
 
-¡Bienvenido! 🚀 Este repositorio es mi espacio de aprendizaje sobre **Digital Design Verification**. Aquí iré recopilando conceptos, ejemplos de código, y herramientas que voy explorando en el camino.
+¡Bienvenido! 🚀 Este repositorio es mi espacio de aprendizaje sobre **Digital Design and Verification**. Aquí iré recopilando conceptos, ejemplos de código, y herramientas que voy explorando en el camino.
 
 ## 📂 Índice
 
-* 📂 [Basic Concepts](basic_concepts/basic_concetps.md)
+* 📂 [Verification Basic Concepts](basic_concepts/basic_concetps.md)
 * 📂 [Formal Verification](formal_verification/formal.md)
 * 📂 [UVM Theory](uvm/UVM.md)
     * 📂 [Example: Pattern detection](uvm/examples/test_plan.md) 
