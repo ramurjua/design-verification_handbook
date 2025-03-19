@@ -4,6 +4,7 @@
 
 ## 📂 Índice
 
+* 📂 [Digital Design Basic Concepts](basic_concepts/basic_concetps.md)
 * 📂 [Verification Basic Concepts](basic_concepts/basic_concetps.md)
 * 📂 [Formal Verification](formal_verification/formal.md)
 * 📂 [UVM Theory](uvm/UVM.md)
