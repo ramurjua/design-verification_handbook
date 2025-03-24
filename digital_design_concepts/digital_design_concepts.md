@@ -49,7 +49,103 @@ https://vlsiuniverse.blogspot.com/2013/09/synchronization-schemes.html
 
 ### Code
 
-**Difference between Blocking vs Non-blocking?**
+**Difference between Blocking vs Non-blocking?** 
+
+| Feature             | **Blocking (`=`)** | **Non-Blocking (`<=`)** |
+|---------------------|-------------------|-------------------------|
+| **Execution Order** | Executes **immediately** within the same time step (like sequential code). | Executes **in parallel**, scheduling updates for the next time step. |
+| **Use Case**        | Used for **combinational logic** (e.g., `always @(*)`). | Used for **sequential logic** (e.g., `always @(posedge clk)`). |
+| **Effect on Simulation** | Can cause **race conditions** in sequential designs. | Prevents race conditions by ensuring updates happen at the correct time. |
+| **Register Behavior** | Doesn't correctly model **flip-flops** or registers. | Properly models **flip-flops** and registers. |
+| **Execution Example** | Executes immediately, affecting subsequent statements. | Updates all signals at the same time in a clock cycle. |
+  
+
+*Example 1: Blocking Assignment (`=`)*
+
+```verilog
+always @(*) begin
+    A = B; 
+    C = A;
+end
+```
+Behavior: Since A = B executes first, C = A uses the updated value of A.
+
+*Example 3: Non-blocking Assignment (`<=`)*
+
+```verilog
+always @(posedge clk) begin
+    A <= B;
+    C <= A;
+end
+```
+
+Behavior: A doesn't update immediately. Instead, C gets the old value of A, because both assignments happen simultaneously at the end of the clock cycle.
+
+*Rule of thumb*
+
+* Use blocking for combinacional logic.
+* Use non-blocking for sequential logic.
+
+**Difference between a flip flop and a latch**
+
+| Feature            | **Flip-Flop** | **Latch** |
+|--------------------|--------------|-----------|
+| **Triggering**     | Edge-triggered (rising or falling edge of the clock). | Level-sensitive (transparent when enable is high). |
+| **Clock Dependency** | Requires a clock signal to change state. | Can change state anytime when enabled. |
+| **Storage Type**   | Synchronous storage element. | Asynchronous storage element. |
+| **Timing Control** | Captures data only at clock edges. | Follows input while enabled, holds value otherwise. |
+| **Power Consumption** | Higher power consumption (clocking overhead). | Lower power (but can have glitches). |
+| **Common Usage**   | Registers, counters, memory elements. | Buffering, metastability handling (synchronizers). |
+
+*Latches Can Cause Timing Issues:*
+
+Since latches are transparent while enabled, they can introduce glitches in high-speed circuits.
+
+Flip-flops are safer because they only update on clock edges, reducing race conditions.
+
+*D-latch in Verilog*
+
+```verilog
+module d_latch (
+    input logic D,      // Data input
+    input logic En,     // Enable signal
+    output logic Q,     // Output
+    output logic Qn     // Complementary output
+);
+
+    always @(*) begin
+        if (En) begin
+            Q  = D;
+            Qn = ~D;
+        end
+    end
+
+endmodule
+```
+
+*D-flip-flop*
+
+```verilog
+module d_flip_flop (
+    input logic D,      // Data input
+    input logic clk,    // Clock input
+    input logic rst_n,  // Active-low reset
+    output logic Q,     // Output
+    output logic Qn     // Complementary output
+);
+
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            Q  <= 0;  
+            Qn <= 1;
+        end else begin
+            Q  <= D;  
+            Qn <= ~D;
+        end
+    end
+
+endmodule
+```
 
 ### Synthesis and Implementation 
 
