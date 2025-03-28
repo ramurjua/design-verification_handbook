@@ -70,7 +70,7 @@ end
 ```
 Behavior: Since A = B executes first, C = A uses the updated value of A.
 
-*Example 3: Non-blocking Assignment (`<=`)*
+*Example 2: Non-blocking Assignment (`<=`)*
 
 ```verilog
 always @(posedge clk) begin
@@ -85,6 +85,27 @@ Behavior: A doesn't update immediately. Instead, C gets the old value of A, beca
 
 * Use blocking for combinacional logic.
 * Use non-blocking for sequential logic.
+
+**Difference between a task and a function in Verilog?**
+
+| Característica                   | Task                              | Function                            |
+|---------------------------------|-----------------------------------|--------------------------------------|
+| Uso principal                   | Realizar operaciones complejas o secuenciales | Realizar operaciones combinacionales y devolver un solo valor |
+| Retorno de valor                 | Opcional, usando `output`          | Obligatorio, devuelve un valor directamente |
+| Tiempo de ejecución              | Puede contener declaraciones de tiempo como `#`, `@`, `wait` | No puede contener declaraciones de tiempo |
+| Número de valores de retorno     | Múltiples mediante `output`        | Solo un valor de retorno             |
+| Llamada desde                    | Siempre se llama desde un **procedural block** | Puede llamarse desde cualquier expresión |
+| Ejecución en paralelo            | No soporta ejecución paralela      | Siempre se ejecuta de manera combinacional |
+| Uso de argumentos                | Permite múltiples tipos (input, output, inout) | Solo permite argumentos de tipo `input` |
+| Contexto de uso                  | Tareas complejas como testbenches y secuencias de eventos | Operaciones matemáticas, lógicas o combinacionales |
+| Ejemplo de declaración           | `task add(input a, b; output sum);` | `function [7:0] add(input [7:0] a, b);` |
+
+**Difference between aire and reg?**
+
+The net (wire, tri) is used for physical connection between structural elements. Value is assigned by a continuous assignment or a gate output or port of a module. It can not store any value. The values can be either read or assigned. Default value is z.
+
+The register (reg, integer, time, real, real-time) represents an abstract data storage element and they are not the physical registers. Value is assigned only within an initial or an always statement.
+It can store the value. Default value is x.
 
 **Difference between a flip flop and a latch**
 
@@ -147,7 +168,60 @@ module d_flip_flop (
 endmodule
 ```
 
+**What are regular delay control and Intra-assignment delay control?**
+
+The regular delay control delays the execution of the entire statement by a specified value. The non-zero delay is specified at the LHS of the procedural statement.
+
+*Example: #5 data = i_value;*
+
+In this case, the result signal value will be updated after 5-time units for change happen in its input. 
+
+Intra-assignment delay control delays computed value assignment by a specified value. The RHS operand expression is evaluated at the current simulation time and assigned to the LHS operand after a specified delay value.
+
+*Example: data = #5 i_value;*
+
+**What is #0 in Verilog and its usage?**
+
+Zero delay control is used to control execution order when multiple procedural blocks try to update values of the same variable. Both always and initial blocks execution order is non-deterministic as they start evaluation at the same simulation time. The statement having zero control delay executes last, thus it avoids race conditions.
+
+```verilog
+reg [2:0] data;
+initial begin 
+  data = 2;
+end
+initial begin 
+  #0 data = 3;
+end
+```
+
+Without zero delay control, the ‘data’ variable may have a value of either 2 or 3 due to race conditions. Having zero delay statement as specified in the above code guarantees the outcome to be 3. However, it is not recommended to assign value to the variable at the same simulation time.
+
+
+**What is `timescale?**
+
+It is a ‘compile directive’ and is used for the measurement of simulation time and delay.
+
+```verilog
+`timescale <time_unit>/<time_precision>
+```
+
+- time_unit: Measurement for simulation time and delay.
+- time_precision: Rounding the simulation time values means the simulator can at least advance by a specified value.
+
 ### Synthesis and Implementation 
+
+**What is infer latch means? How can you avoid it?**
+
+Infer latch means creating a feedback loop from the output back to the input due to missing if-else condition or missing ‘default’ in a ‘case’ statement. 
+
+Infer latch indicates that the design might not be implemented as intended and can result in race conditions and timing issues.
+
+How to avoid It:
+
+- Always use all branches in the ‘if’ and ‘case’ statements.
+- Use default in the ‘case’ statement.
+- Have a proper code review.
+- Use lint tools, and logical-equivalence-check tools
 
 **What are leaf cells?**
 
