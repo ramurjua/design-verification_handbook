@@ -5,6 +5,8 @@
 ## 📂 Índice
 
 * 📂 [Digital Design Basic Concepts](digital_design_concepts/digital_design_concepts.md)
+	* 📂 [Timming Analysis](digital_design_concepts/timming.md) 
+	* 📂 [Synthesis and Implementation ](digital_design_concepts/synthesis.md)
 * 📂 [Verification Basic Concepts](basic_concepts/basic_concetps.md)
 * 📂 [Formal Verification](formal_verification/formal.md)
 * 📂 [UVM Theory](uvm/UVM.md)
