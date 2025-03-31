@@ -9,6 +9,8 @@ Advantages:
 
 *Example:* The sequence-driver hanshake mechanishm is taken care of under the hood so that only stimulus need to be written. This saves quite a lot of time in setting up a testbench stucture since the foundation itself is well defined.
 
+![alt text](uvm_tb.png)
+
 ## Components vs Objects
 
 Every simulation testbench has a few key components like: drivers, monitors, stimulus generators and scoreboards. UVM provides a base-class for each component, with standarize functions to instantiate, connect and build the testbench enviroment. These are static entities called components, that exist throughout a simumlation. These components operate and process on some kind of data that flows around the environment. The data or transactions are called objects or sequence items the appear and disappear at varios times in the simulation and is more dynamic in nature. 
