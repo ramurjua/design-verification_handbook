@@ -1,13 +1,13 @@
 # UVM
 
-UVM is a framework of SystemVerilog classes from which fully functional testbenches can be built. The methodology specifies and lays out a set of guidliens to be followed for creation od verification testbenches. UVM provides a set of base classes from which more complex classes can be build by inheritance and adding into it certain functions required for verification enviroment.
+UVM is a framework of SystemVerilog classes from which fully functional testbenches can be built. The methodology specifies and lays out a set of guidlines to be followed for creation od verification testbenches. UVM provides a set of base classes from which more complex classes can be build by inheritance and adding into it certain functions required for verification enviroment.
 
 Advantages:
 * Ensure uniformity between different verification teams.
 * Flexibility.
 * Ease of mantaining testbenches.
 
-*Example:* The sequence-driver hanshake mechanishm is tajen care of under the hood so that only stimulus need to be written. This saves quite a lot of time in setting up a testbnehc stucture since the foundation itself is well defined.
+*Example:* The sequence-driver hanshake mechanishm is taken care of under the hood so that only stimulus need to be written. This saves quite a lot of time in setting up a testbench stucture since the foundation itself is well defined.
 
 ## Components vs Objects
 
@@ -44,7 +44,7 @@ Methods that do not consume simulation time are functions and methods that consu
     * *build_phase* (function): used to buiild testbench compoents and create their instances.
     * *connect_phase* (function): used to connect between different testbench components.
     * *end_of_elaboration_phase* (function): other functions requerid to be done after conection.
-    * start_of_simulation_phase* (function): used to set initial run-time configuration or display
+    * start_of_simulation_phase (function): used to set initial run-time configuration or display
 2. Run time phases: 
     * *run_phase* (task): actual simulation that consumes time, runs parallel to other UVM run-time phases.
 3. Clean-up phases:
@@ -55,6 +55,6 @@ Methods that do not consume simulation time are functions and methods that consu
 
 **Why SystemVerilog testbench need phases and verilog testbench does not?**
 
-Verilog testbenches have all its components made of static containers or modules. Since a module is static, all modules will be created at beginning of the simulation and don't have to worry about any components getting called without being created or initialized. SystemVerilog introduces OOP features. This enables the creation of well structured entites that can be rused and desployed when required. These class objects an be created in the middle of the simulation. What means is that testbench components can be created at different times, and hance you could end up calling a copmponent while it hasn't been initialized yet leading to woring testbench outputs.  
+Verilog testbenches have all its components made of static containers or modules. Since a module is static, all modules will be created at beginning of the simulation and don't have to worry about any components getting called without being created or initialized. SystemVerilog introduces OOP features. This enables the creation of well structured entites that can be rused and desployed when required. These class objects can be created in the middle of the simulation. What means is that testbench components can be created at different times, and hance you could end up calling a copmponent while it hasn't been initialized yet leading to woring testbench outputs.  
 
 Return 📂 home: [Main Readme](../README.md) 
