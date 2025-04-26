@@ -1,11 +1,11 @@
-# Digital Design Verification Learning Repository
+# Digital & Verification Handbook
 
-¡Bienvenido! 🚀 Este repositorio es mi espacio de aprendizaje sobre **Digital Design and Verification**. Aquí iré recopilando conceptos, ejemplos de código, y herramientas que voy explorando en el camino.
+¡Bienvenido! 🚀 Este repositorio es mi espacio de aprendizaje sobre diseño y verifiación. Aquí iré recopilando conceptos, ejemplos de código, y herramientas que voy explorando en el camino.
 
 ## 📂 Índice
 
 * 📂 [Design](design/digital_design_concepts.md)
-	* 📂 [Timming Analysis](design/timming.md) 
+	* 📂 [Timing Analysis](design/timming.md) 
 	* 📂 [Synthesis and Implementation ](design/synthesis.md)
 * 📂 [Verification](verification/basic_concetps.md)
 	* 📂 [Formal Verification](verification/formal.md)
