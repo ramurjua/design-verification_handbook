@@ -4,13 +4,14 @@
 
 ## 📂 Índice
 
-* 📂 [Digital Design Basic Concepts](digital_design_concepts/digital_design_concepts.md)
-	* 📂 [Timming Analysis](digital_design_concepts/timming.md) 
-	* 📂 [Synthesis and Implementation ](digital_design_concepts/synthesis.md)
-* 📂 [Verification Basic Concepts](basic_concepts/basic_concetps.md)
-* 📂 [Formal Verification](formal_verification/formal.md)
-* 📂 [UVM Theory](uvm/UVM.md)
-    * 📂 [Example: Pattern detection](uvm/examples/test_plan.md) 
+* 📂 [Design](design/digital_design_concepts.md)
+	* 📂 [Timming Analysis](design/timming.md) 
+	* 📂 [Synthesis and Implementation ](design/synthesis.md)
+* 📂 [Verification](verification/basic_concetps.md)
+	* 📂 [Formal Verification](verification/formal.md)
+	* 📂 [UVM Theory](verification/uvm/UVM.md)
+		* 📂 [Example: Pattern detection](verification/uvm/examples/test_plan.md) 
+* 📂 [High Level Synthesis](hls/hls.md)
 
 ## 🚀 Objetivo
 Este repositorio no solo es un **registro de aprendizaje**, sino también un recurso útil para futuras referencias y proyectos.
@@ -24,6 +25,7 @@ Si tienes sugerencias o quieres compartir conocimientos, ¡eres bienvenido a col
 - [EDA Playground](https://www.edaplayground.com/) – Para probar código online
 
 ## 📌 Notas
+
 Este repositorio está en constante evolución, así que iré actualizando con nuevos temas y mejoras.
 
 ¡Gracias por pasar por aquí! 😊

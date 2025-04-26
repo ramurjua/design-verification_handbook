@@ -57,5 +57,3 @@ Digital design verification is the process of testing and validating the correct
         * Toggle Coverage: Ensures that every flip-flop has been toggled (set/reset).
 * **Functional Coverage**: functional coverage tracks how well the design’s functionality has been verified. It involves defining coverage points that represent important design states or events. *Example:* Ensuring all address ranges of a memory controller are tested by creating specific coverage points for them.
 * **Assertions**: are crucial in formal and functional verification. They help to monitor whether specific conditions hold true during the simulation and flag errors when these conditions are violated. *Example:* A covergroup assertion can be used to ensure that every possible value of a signal is observed during testing.
-
-Return 📂 home: [Main Readme](../README.md) 

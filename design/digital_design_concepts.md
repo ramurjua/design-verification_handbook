@@ -158,4 +158,3 @@ It is a ‘compile directive’ and is used for the measurement of simulation ti
 
 - time_unit: Measurement for simulation time and delay.
 - time_precision: Rounding the simulation time values means the simulator can at least advance by a specified value.
-
