@@ -4,7 +4,7 @@
 
 The ASIC (Application-Specific Integrated Circuit) Design Flow consists of several steps including: design specification, design entry, design synthesis, design verification, physical design and design sing-off. Design Verification typically referens to pre-silicon effort of fcuntional validation of design using simulation tools. 
 
-Digital design verification is the process of testing and validating the correctness and functionality of a digital design before it is released or depliyed. The goal is to identify and eliminate any design errors or bugs, and to ensure thtat syustem performs as expected under different conditions and use cases. 
+Digital design verification is the process of testing and validating the correctness and functionality of a digital design before it is released or deployed. The goal is to identify and eliminate any design errors or bugs, and to ensure thtat syustem performs as expected under different conditions and use cases. 
 
 **Importance of design verification**
 
