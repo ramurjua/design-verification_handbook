@@ -1,4 +1,4 @@
-# Digital & Verification Handbook
+# Design & Verification Handbook
 
 ¡Bienvenido! 🚀 Este repositorio es mi espacio de aprendizaje sobre diseño y verifiación. Aquí iré recopilando conceptos, ejemplos de código, y herramientas que voy explorando en el camino.
 
