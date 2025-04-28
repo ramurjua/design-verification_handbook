@@ -12,6 +12,8 @@
 	* 📂 [UVM Theory](verification/uvm/UVM.md)
 		* 📂 [Example: Pattern detection](verification/uvm/examples/test_plan.md) 
 * 📂 [High Level Synthesis](hls/hls.md)
+* 📂 [Utils](utils/utils.md)
+	* 📂 [RasberryPi Pico JTAG](utils/JTAG_rp2040/xvc-pico.md)
 
 ## 🚀 Objetivo
 Este repositorio no solo es un **registro de aprendizaje**, sino también un recurso útil para futuras referencias y proyectos.

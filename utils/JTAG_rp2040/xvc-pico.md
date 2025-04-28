@@ -1,6 +1,6 @@
 # Using a Rasberry Pico as a JTAG
 
-A cheap and open soruce method to program and FPGA is using a Rasberry Pico as a JTAG cable. In order to do it you will find the instructions based on the Github open-source project [pico-xvc repository](https://github.com/kholia/xvc-pico). In folder *program_files* exists the necessary files to perform a Xilinx FPGA load using a Windows Computer. 
+A cheap and open source method to program and FPGA is using a Rasberry Pico as a JTAG cable. In order to do it you will find the instructions based on the Github open-source project [pico-xvc repository](https://github.com/kholia/xvc-pico). In folder *program_files* exists the necessary files to perform a Xilinx FPGA load using a Windows Computer. 
 
 ## Conexions: 
 
