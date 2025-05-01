@@ -4,6 +4,9 @@
 
 ## 📂 Índice
 
+* 📂 [Code Modules](modules/modules.md)
+	* 📄 [UART Transmitter](modules/modules.md#uart-transmitter-uart_tx)
+	* 📄 [UART Receiver](modules/modules.md#uart-receiver-uart_rx)
 * 📂 [Design](design/digital_design_concepts.md)
 	* 📂 [Timing Analysis](design/timming.md) 
 	* 📂 [Synthesis and Implementation ](design/synthesis.md)
