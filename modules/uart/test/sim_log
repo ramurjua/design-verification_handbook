@@ -1,0 +1,19 @@
+VCD info: dumpfile uart_tb.vcd opened for output.
+VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
+[INFO] >> Setting initial conditions.
+INFO: ./uart_tb.v:126: Resetting module.
+      Time: 0  Scope: uart_tb.reset_task
+INFO: ./uart_tb.v:129: Release Reset
+      Time: 0  Scope: uart_tb.reset_task
+[INFO] >> Test init
+[OK]: Sended data 92153524 - Received data 92153524
+[OK]: Sended data 40895e81 - Received data 40895e81
+[OK]: Sended data 0484d609 - Received data 0484d609
+[OK]: Sended data 31f05663 - Received data 31f05663
+[OK]: Sended data 86b97b0d - Received data 86b97b0d
+[OK]: Sended data c6df998d - Received data c6df998d
+[OK]: Sended data 32c28465 - Received data 32c28465
+[OK]: Sended data 09375212 - Received data 09375212
+[OK]: Sended data 80f3e301 - Received data 80f3e301
+[OK]: Sended data 86d7cd0d - Received data 86d7cd0d
+./uart_tb.v:93: $finish called at 16660 (10ns)
