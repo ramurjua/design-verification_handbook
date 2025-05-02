@@ -7,6 +7,7 @@ This project includes a TCL + BAT based scripts for automation flow for creating
 - Installed Vivado 2022.1  (or other compatible version)
 - Folder structure as follows: 
 
+```bash
 project-root/
 ├── constraints/
 │ └── xdc_file.xdc
@@ -20,6 +21,7 @@ project-root/
 │ ├── build_project.tcl
 │ └── make.bat
 └── output/
+```
 
 ## ⚙ Configuration
 
