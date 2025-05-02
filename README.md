@@ -17,6 +17,7 @@
 * 📂 [High Level Synthesis](hls/hls.md)
 * 📂 [Utils](utils/utils.md)
 	* 📂 [RasberryPi Pico JTAG](utils/JTAG_rp2040/xvc-pico.md)
+	* 📂 [Scripts Vivado Workflow](utils/Scripts_Vivado_Workflow/vivado.md)
 
 ## 🚀 Objetivo
 Este repositorio no solo es un **registro de aprendizaje**, sino también un recurso útil para futuras referencias y proyectos.
