@@ -58,7 +58,7 @@ add_files [ glob ../include/*.vh]
 add_files [ glob ../memory_files/*.mem]
 ```
 
-## 🚀 Ejecución
+## 🚀 Execution
 
 From powershell or cmd, inside scripts folder execute:
 

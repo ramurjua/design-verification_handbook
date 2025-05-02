@@ -23,8 +23,6 @@ The maximum clock frequency is the mimum clock period (T), and the minimum perio
 
 fmax = 1.0 / (tsu + tp + th)
 
-TODO: revisar apuntes de clase sobre las ecuaciones y demas
-
 ### What is metastability?
 
 Metastability is a phenomenon of unstable equilibrium in digital electronics in which the sequential element is not able to resolve the state of the input signal; hence, the output goes into unresolved state for an unbounded interval of time. 
