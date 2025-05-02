@@ -4,9 +4,9 @@ module uart_rx # (
 )(
   input clk, 
   input rst, /* synchronous reset */
-  (* MARK_DEBUG = "TRUE" *) input i_rx, /* uart reception line */
+  input i_rx, /* uart reception line */
   output reg [8*p_data_buffer-1:0] orp_data, /* data received */
-  (* MARK_DEBUG = "TRUE" *) output reg or_dv /* output data valid */
+  output reg or_dv /* output data valid */
 );
 
 localparam lpw_preescaler_counter = $clog2(p_preescaler);
@@ -40,7 +40,7 @@ localparam st_stop = 3'd3;
 localparam st_next_byte = 3'd4;
 localparam st_end = 3'd5;
 
-(* MARK_DEBUG = "TRUE" *) reg [2:0] r3_state; /* FSM state */
+reg [2:0] r3_state; /* FSM state */
 reg [8*p_data_buffer-1:0] rp_data; /* complete data */
 reg [7:0] r8_byte_rcv; /* Actual byte sending */
 
