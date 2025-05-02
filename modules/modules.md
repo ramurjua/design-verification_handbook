@@ -1,50 +1,50 @@
 # ✅ Code Modules
 
-Esta sección contiene módulos de diseño digital que han sido desarrollados, verificados y probados con éxito. La idea es construir una pequeña biblioteca reutilizable que puedas integrar fácilmente en futuros proyectos personales o profesionales.
+This section contains digital design modules that have been successfully developed, verified, and tested. The goal is to build a reusable library that can be easily integrated into future personal or professional projects.
 
-## 📦 Módulos Disponibles
+## 📦 Available Modules
 
-### 🔹 UART Transmitter (uart_tx)
+### 🔹 UART Transmitter
 
-Módulo secuencial que transmite datos en serie utilizando el protocolo UART.
+Sequential module that transmits data serially using the UART protocol.
 
-✔️ Verificado mediante testbench con estímulos de distintos baud rates, tamaños de tramas y valores transmitidos.
+✔️ Verified via testbench with stimuli for various baud rates, frame sizes, and transmitted values.
 
-🧪 Estado: Probado en HW real utilizando un FTDI conectado al ordenador.
+🧪 Status: Tested on real hardware using an FTDI connected to a computer.
 
-📁 [Código fuente](uart/source/uart_tx.v)
+📁 [Source Code](uart/source/uart_tx.v)
 
-📁 [Testbench](uart/test/uart_tb.v) 
+📁 [Testbench](uart/test/uart_tb.v)
 
-📌 Instancia:
+📌 Instantiation:
 
 ```verilog
 uart_tx # (
-    .p_preescaler(), /* clock preescaler to set baudrate */
-    .p_data_buffer() /* number of bytes to send */
+    .p_preescaler(), /* Clock prescaler to set baudrate */
+    .p_data_buffer() /* Number of bytes to send */
 ) uart_tx (
     .clk(), 
-    .rst(), /* synchronous reset */
-    .ip_data(), /* data to send */
-    .i_dv(), /* input data valid */
-    .o_ready(), /* module ready to accept new data */
-    .o_tx() /* uart transmission line */
+    .rst(), /* Synchronous reset */
+    .ip_data(), /* Data to send */
+    .i_dv(), /* Input data valid */
+    .o_ready(), /* Module ready to accept new data */
+    .o_tx() /* UART transmission line */
 );
 ```
 
-### 🔹 UART Receiver (uart_rx)
+### 🔹 UART Receiver
 
-Módulo secuencial que recibe datos en serie utilizando el protocolo UART.
+Sequential module that receives data serially using the UART protocol.
 
-✔️ Verificado mediante testbench con estímulos de distintos baud rates, tamaños de tramas y valores transmitidos.
+✔️ Verified via testbench with stimuli for various baud rates, frame sizes, and transmitted values.
 
-🧪 Estado: Probado en HW real utilizando un FTDI conectado al ordenador.
+🧪 Status: Tested on real hardware using an FTDI connected to a computer.
 
-📁 [Código fuente](uart/source/uart_rx.v)
+📁 [Source Code](uart/source/uart_rx.v)
 
-📁 [Testbench](uart/test/uart_tb.v) 
+📁 [Testbench](uart/test/uart_tb.v)
 
-📌 Instancia:
+📌 Instantiation:
 
 ```verilog
 uart_rx #(
@@ -53,7 +53,7 @@ uart_rx #(
 ) uart_rx (
     .clk(), /* Input clock */
     .rst(), /* Input reset */
-    .i_rx(),	/* Input rx pin */
+    .i_rx(),	/* Input RX pin */
     .orp_data(),	/* Parallel data port */
     .or_dv() /* New data available in data port */ 
 );
