@@ -43,5 +43,3 @@ In formal verification, assertions serve as the properties that the formal tool 
 * Method of analysis: formal verification use mathematical methods while assertion-based relies on runtime checks, acting like automated checks embedded in the design. 
 
 * Completeness: formal verification can prove a propierty is true for all possible cases while assertions-based is limited to the propierties that the designer has written assertions for. 
-
-Return 📂 home: [Main Readme](../README.md) 
