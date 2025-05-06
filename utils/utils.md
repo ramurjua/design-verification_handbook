@@ -9,3 +9,5 @@ A collection of useful tools, scripts, and small hardware hacks designed to simp
 ### 🔹 Scripts Vivado Workflow
 
 [Scripts Vivado Workflow](Scripts_Vivado_Workflow/vivado.md) provides TCL + BAT scripts for automation flow for creating, synthesizing, implementing, and generating the bitstream, memory configuration file and debug probes using Xilinx Vivado.
+
+### 🔹 QT Designer GUI
