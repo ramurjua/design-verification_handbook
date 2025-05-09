@@ -12,4 +12,4 @@ A collection of useful tools, scripts, and small hardware hacks designed to simp
 
 ### 🔹 QT Designer GUI
 
-[QT Designer GUI][QT_GUI/qt_designer_gui.md] provides a step by step tutorial to create a simple grpahical user interface using QT Designer and Python.
+[QT Designer GUI](QT_GUI/qt_designer_gui.md) provides a step by step tutorial to create a simple grpahical user interface using QT Designer and Python.
