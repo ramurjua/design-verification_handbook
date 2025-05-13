@@ -1,4 +1,4 @@
-# Para sacar el .py de la gui generado a partir del archivo de QTDeesigner:  pyuic5 -x openLoop.ui -o openLoop.py
+# Para sacar el .py de la gui generado a partir del archivo de QTDesigner:  py -m PyQt5.uic.pyuic -x openLoop.ui -o openLoop.py
 import sys
 from openLoop import Ui_MainWindow
 from PyQt5.QtWidgets import QApplication, QMainWindow
@@ -11,11 +11,22 @@ class MiVentana(QMainWindow):
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
 
+      self.ui.connectButton.clicked.connect(self.connectButton_callback)
       self.ui.onButton.clicked.connect(self.onButton_callback)
+     #  self.ui.sendButton_callback.clicked.connect(self.sendButton_callback)
+
+    def connectButton_callback(self):
+       
+      print("connectButton Callback")
 
     def onButton_callback(self):
        
       print("onButton Callback")
+
+    # def sendButton_callback(self):
+       
+      # freq_mod_value = float(self.ui.freq_mod.text)
+
 
 
 if __name__ ==  "__main__":

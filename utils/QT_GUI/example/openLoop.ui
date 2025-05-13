@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>478</width>
-    <height>291</height>
+    <width>556</width>
+    <height>335</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,11 +17,16 @@
    <widget class="QPushButton" name="onButton">
     <property name="geometry">
      <rect>
-      <x>200</x>
-      <y>80</y>
-      <width>101</width>
-      <height>91</height>
+      <x>300</x>
+      <y>120</y>
+      <width>131</width>
+      <height>111</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>ON</string>
@@ -31,10 +36,15 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>80</y>
-      <width>151</width>
-      <height>31</height>
+      <y>120</y>
+      <width>161</width>
+      <height>41</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>10.0</string>
@@ -47,10 +57,15 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>60</y>
-      <width>151</width>
+      <y>90</y>
+      <width>181</width>
       <height>16</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Frecuencia moduladora</string>
@@ -60,10 +75,15 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>120</y>
-      <width>151</width>
-      <height>16</height>
+      <y>170</y>
+      <width>161</width>
+      <height>21</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>Amplitud moduladora</string>
@@ -73,10 +93,15 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>140</y>
-      <width>151</width>
-      <height>31</height>
+      <y>200</y>
+      <width>161</width>
+      <height>41</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>0.01</string>
@@ -90,9 +115,14 @@
      <rect>
       <x>400</x>
       <y>10</y>
-      <width>71</width>
-      <height>21</height>
+      <width>111</width>
+      <height>41</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>CONECT</string>
@@ -101,11 +131,16 @@
    <widget class="QLineEdit" name="com_uart">
     <property name="geometry">
      <rect>
-      <x>330</x>
+      <x>300</x>
       <y>10</y>
-      <width>61</width>
-      <height>21</height>
+      <width>91</width>
+      <height>41</height>
      </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
     </property>
     <property name="text">
      <string>COM X</string>
@@ -114,13 +149,49 @@
      <bool>false</bool>
     </property>
    </widget>
+   <widget class="QPushButton" name="sendButton">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>40</y>
+      <width>161</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>SEND</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="conection_label">
+    <property name="geometry">
+     <rect>
+      <x>300</x>
+      <y>70</y>
+      <width>181</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>Not connected</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>478</width>
+     <width>556</width>
      <height>22</height>
     </rect>
    </property>
