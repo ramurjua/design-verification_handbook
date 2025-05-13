@@ -13,19 +13,26 @@ class MiVentana(QMainWindow):
 
       self.ui.connectButton.clicked.connect(self.connectButton_callback)
       self.ui.onButton.clicked.connect(self.onButton_callback)
-     #  self.ui.sendButton_callback.clicked.connect(self.sendButton_callback)
+      self.ui.sendButton.clicked.connect(self.sendButton_callback)
 
     def connectButton_callback(self):
+
+      uartCOM = self.ui.com_uart.text()
+
+      self.ui.conection_label.setText("Connected")
        
-      print("connectButton Callback")
+      print("connectButton ", uartCOM)
 
     def onButton_callback(self):
        
       print("onButton Callback")
 
-    # def sendButton_callback(self):
+    def sendButton_callback(self):
        
-      # freq_mod_value = float(self.ui.freq_mod.text)
+      freq_mod_value = float(self.ui.freq_mod.text())
+      amp_mod_value = float(self.ui.amp_mod.text())
+
+      print(freq_mod_value, amp_mod_value)
 
 
 

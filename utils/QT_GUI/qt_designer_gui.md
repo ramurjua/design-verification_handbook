@@ -85,3 +85,15 @@ You can repeat the same process will all the Push Buttons that you like. In orde
 </property>
 </widget>
 ```
+
+9. In order to get the values introduced by the user in the QLineEdit call the text method. Take into account it returns a string so it needs to be casted if a number is expected.
+
+```python
+  amp_mod_value = float(self.ui.amp_mod.text())
+```
+
+10. In order to write in a QLabel use the setText method.
+
+```python
+  self.ui.conection_label.setText("Connected")
+```
