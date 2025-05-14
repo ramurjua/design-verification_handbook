@@ -1,0 +1,9 @@
+VCD info: dumpfile spi_tb.vcd opened for output.
+VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
+[INFO] >> Setting initial conditions.
+INFO: ./spi_tb.v:106: Resetting module.
+      Time: 0  Scope: spi_tb.reset_task
+INFO: ./spi_tb.v:109: Release Reset
+      Time: 0  Scope: spi_tb.reset_task
+[INFO] >> Test init
+./spi_tb.v:99: $finish called at 180 (10ns)
