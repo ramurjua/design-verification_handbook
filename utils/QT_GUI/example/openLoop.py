@@ -95,7 +95,7 @@ class Ui_MainWindow(object):
         self.amp_mod_label.setText(_translate("MainWindow", "Amplitud moduladora"))
         self.amp_mod.setText(_translate("MainWindow", "0.01"))
         self.connectButton.setText(_translate("MainWindow", "CONECT"))
-        self.com_uart.setText(_translate("MainWindow", "COM X"))
+        self.com_uart.setText(_translate("MainWindow", "COMX"))
         self.sendButton.setText(_translate("MainWindow", "SEND"))
         self.conection_label.setText(_translate("MainWindow", "Not connected"))
 

@@ -97,3 +97,8 @@ You can repeat the same process will all the Push Buttons that you like. In orde
 ```python
   self.ui.conection_label.setText("Connected")
 ```
+
+When every element on the interface has been handled, it is the time to make the ui interact with an element, by adding a communication interface. In this example UART is used.  
+
+You should create a class for the communication protocol, and at least manage the connexion, the sending and the receiving functions. In this example the packet creation and decoding is also managed at the UART class. 
+
