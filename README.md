@@ -17,6 +17,7 @@ Welcome! 🚀 This repository is my personal learning space for digital design a
 * 📂 [Utils](utils/utils.md)
 	* 📂 [RasberryPi Pico JTAG](utils/JTAG_rp2040/xvc-pico.md)
 	* 📂 [Scripts Vivado Workflow](utils/Scripts_Vivado_Workflow/vivado.md)
+	* 📂 [QT Designer GUI](utils/QT_GUI/qt_designer_gui.md)
 * 📂 [Others](others/others.md)
 	* 📂 [High Level Synthesis](others/hls/hls.md)
 
