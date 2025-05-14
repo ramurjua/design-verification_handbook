@@ -102,3 +102,5 @@ When every element on the interface has been handled, it is the time to make the
 
 You should create a class for the communication protocol, and at least manage the connexion, the sending and the receiving functions. In this example the packet creation and decoding is also managed at the UART class. 
 
+When ussing the example provided, you must take into account the defined variable MOCK. If MOCK is set to True it doesn't really connect to UART it imitates its working just to test the interface. If MOCK is set to False the interface expects a real physical connection with an UART device. 
+
