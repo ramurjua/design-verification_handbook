@@ -1,0 +1,66 @@
+[*]
+[*] GTKWave Analyzer v3.3.100 (w)1999-2019 BSI
+[*] Wed May 21 10:29:54 2025
+[*]
+[dumpfile] "C:\Users\rmurcia\Documents\00-Formacion\Learns\design-verification_handbook\modules\spi\test\spi_tb.vcd"
+[dumpfile_mtime] "Wed May 21 10:20:57 2025"
+[dumpfile_size] 164449
+[savefile] "C:\Users\rmurcia\Documents\00-Formacion\Learns\design-verification_handbook\modules\spi\test\waveforms.gtkw"
+[timestart] 0
+[size] 1920 1017
+[pos] -1 -1
+*-14.336788 37480 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] spi_tb.
+[sst_width] 285
+[signals_width] 340
+[sst_expanded] 1
+[sst_vpaned_height] 299
+@28
+spi_tb.w_sck
+spi_tb.w_mosi
+spi_tb.w_miso
+@200
+-Master
+@28
+spi_tb.spi_master.o_sck
+spi_tb.spi_master.i_miso
+@24
+spi_tb.spi_master.rp_data_index[4:0]
+@28
+spi_tb.spi_master.o_data_ready
+spi_tb.spi_slave.o_data_valid
+@22
+spi_tb.r24_data_to_send_master[23:0]
+spi_tb.w24_data_received_slave[23:0]
+spi_tb.r24_data_to_send_slave[23:0]
+@c00022
+spi_tb.w24_data_received_master[23:0]
+@28
+(0)spi_tb.w24_data_received_master[23:0]
+(1)spi_tb.w24_data_received_master[23:0]
+(2)spi_tb.w24_data_received_master[23:0]
+(3)spi_tb.w24_data_received_master[23:0]
+(4)spi_tb.w24_data_received_master[23:0]
+(5)spi_tb.w24_data_received_master[23:0]
+(6)spi_tb.w24_data_received_master[23:0]
+(7)spi_tb.w24_data_received_master[23:0]
+(8)spi_tb.w24_data_received_master[23:0]
+(9)spi_tb.w24_data_received_master[23:0]
+(10)spi_tb.w24_data_received_master[23:0]
+(11)spi_tb.w24_data_received_master[23:0]
+(12)spi_tb.w24_data_received_master[23:0]
+(13)spi_tb.w24_data_received_master[23:0]
+(14)spi_tb.w24_data_received_master[23:0]
+(15)spi_tb.w24_data_received_master[23:0]
+(16)spi_tb.w24_data_received_master[23:0]
+(17)spi_tb.w24_data_received_master[23:0]
+(18)spi_tb.w24_data_received_master[23:0]
+(19)spi_tb.w24_data_received_master[23:0]
+(20)spi_tb.w24_data_received_master[23:0]
+(21)spi_tb.w24_data_received_master[23:0]
+(22)spi_tb.w24_data_received_master[23:0]
+(23)spi_tb.w24_data_received_master[23:0]
+@1401200
+-group_end
+[pattern_trace] 1
+[pattern_trace] 0

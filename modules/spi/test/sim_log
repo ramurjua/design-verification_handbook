@@ -1,9 +1,47 @@
 VCD info: dumpfile spi_tb.vcd opened for output.
 VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
 [INFO] >> Setting initial conditions.
-INFO: ./spi_tb.v:106: Resetting module.
+INFO: ./spi_tb.v:166: Resetting module.
       Time: 0  Scope: spi_tb.reset_task
-INFO: ./spi_tb.v:109: Release Reset
+INFO: ./spi_tb.v:169: Release Reset
       Time: 0  Scope: spi_tb.reset_task
 [INFO] >> Test init
-./spi_tb.v:99: $finish called at 180 (10ns)
+Packet send
+Master complete sending
+ERROR: ./spi_tb.v:155: Received data from master is different from slave sending
+       Time: 1248  Scope: spi_tb.packet_send
+Slave  9002625, Master   614017
+Packet send
+Master complete sending
+ERROR: ./spi_tb.v:155: Received data from master is different from slave sending
+       Time: 2516  Scope: spi_tb.packet_send
+Slave 15750755, Master  7362147
+Packet send
+Master complete sending
+ERROR: ./spi_tb.v:155: Received data from master is different from slave sending
+       Time: 3784  Scope: spi_tb.packet_send
+Slave 14653837, Master  6265229
+Packet send
+Master complete sending
+Packet send
+Master complete sending
+ERROR: ./spi_tb.v:155: Received data from master is different from slave sending
+       Time: 6320  Scope: spi_tb.packet_send
+Slave 14142733, Master  5754125
+Packet send
+Master complete sending
+ERROR: ./spi_tb.v:155: Received data from master is different from slave sending
+       Time: 7588  Scope: spi_tb.packet_send
+Slave  9293117, Master   904509
+Packet send
+Master complete sending
+Packet send
+Master complete sending
+Packet send
+Master complete sending
+Packet send
+Master complete sending
+ERROR: ./spi_tb.v:155: Received data from master is different from slave sending
+       Time: 12660  Scope: spi_tb.packet_send
+Slave 13791863, Master  5403255
+./spi_tb.v:115: $finish called at 12860 (10ns)

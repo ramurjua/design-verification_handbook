@@ -1,7 +1,7 @@
 module spi_master #(
 	parameter p_prescaler = 25, /* spi clock prescaler */
 	parameter p_cpol = 0,	/* clock polarity */
-	parameter p_max_data_buffer = 64, /* Max data buffer */
+	parameter p_max_data_buffer = 64, /* Max data buffer in bits */
 	parameter pw_data_index = 6 /* Width for data index */
 )(
 	input clk,

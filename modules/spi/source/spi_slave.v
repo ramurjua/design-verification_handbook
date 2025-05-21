@@ -18,8 +18,7 @@ module spi_slave #(
   
   input i_sclk, /* spi sclk input */
   input i_mosi, /* spi mosi input */
-  output reg o_miso, /* spi miso output */
-  input i_ce /* chip enable input */
+  output reg o_miso /* spi miso output */
 );
 
   localparam lp_index_width = $clog2(p_data_buffer_length)+1; /* index width */
