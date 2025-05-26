@@ -52,8 +52,7 @@ module spi_tb();
 
   /**** Test modules instantiation ****/
   spi_slave #(
-  .p_data_buffer_length(), /* input data buffer length */
-  .p_frame_timeout(), /* frame timeout */
+  .p_data_buffer_length(24), /* input data buffer length */
   .p_cpol(0) /* clock polarity */
   ) spi_slave (
   .clk(clk25),
@@ -63,10 +62,9 @@ module spi_tb();
   .op_data_in(w24_data_received_slave), /* data received */
   .o_data_valid(w_received_slave), /* new transaction finished */
   .o_busy(), /* spi interface is busy */
-  .o_error(), /* error frame */ 
   .i_sclk(w_sck), /* spi sclk input */
   .i_mosi(w_mosi), /* spi mosi input */
-  .o_miso(w_miso) /* spi miso output */
+  .or_miso(w_miso) /* spi miso output */
   );
 
   spi_master #(
