@@ -149,11 +149,11 @@ module spi_tb();
 
     if(w24_data_received_slave != r24_data_to_send_master) begin
       $error("Received data from slave is different from master sending");
-      $display("Slave %d, Master %d", w24_data_received_slave, r24_data_to_send_master);
+      $display("Slave %h, Master %h", w24_data_received_slave, r24_data_to_send_master);
     end
     if(w24_data_received_master != r24_data_to_send_slave) begin
       $error("Received data from master is different from slave sending");
-      $display("Slave %d, Master %d", r24_data_to_send_slave, w24_data_received_master);
+      $display("Slave %h, Master %h", r24_data_to_send_slave, w24_data_received_master);
     end
 
   end
