@@ -11,6 +11,7 @@ Welcome! 🚀 This repository is my personal learning space for digital design a
 	* 📂 [Formal Verification](verification/formal.md)
 	* 📂 [UVM Theory](verification/uvm/UVM.md)
 		* 📂 [Example: Pattern detection](verification/uvm/examples/test_plan.md) 
+	* 📂 [Cocotb Framework](verification/cocotb/Cocotb.md)
 * 📂 [Code Modules](modules/modules.md)
 	* 📄 [UART Transmitter](modules/modules.md#-uart-transmitter)
 	* 📄 [UART Receiver](modules/modules.md#-uart-receiver)
