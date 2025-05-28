@@ -2,97 +2,168 @@
 
 Cocotb is a powerful verification framework that allows you to write testbenches for digital hardware using Python instead of traditional HDL languages like Verilog or VHDL. It simplifies the testing process by leveraging Python's readability, extensive libraries, and advanced features such as coroutines and randomization. This makes it easier to write, debug, and scale complex test scenarios. Cocotb also integrates seamlessly with existing simulators, enabling modern software practices like unit testing and continuous integration in hardware development workflows.
 
-## Create a simple testbench
+📂 [Create a simple testbench: 4-bits adder example](Simple_tb/adder_example.md) 
+📂 [Using advanced verification components: counter example](Complex_tb/counter_example.md) 
 
-The following steps will describe how to verify a simple 4 bits adder, the files needed are in the example folder. As any other python package, the installation can be done using pip: pip3 install cocotb
+## Key Concepts in Cocotb
 
-1. Import needed libraries:
+### 1. Coroutines (async def)
 
-* import cocotb: imports the cocotb library, which gives access to the simulation environment and decorators.
-* from cocotb.triggers import Timer: Timer trigger pauses the test for a certain amount of simulation time.
-* import random: module to generate random input values for testing.
-
-```python
-import cocotb
-from cocotb.triggers import Timer
-import random
-```
-
-2. Create a test case:
-
-* @cocotb.test(): this is a decorator that tells cocotb to treat the function below it as a test case.
-* async def adder_basic_test(dut): this defines the actual test function. async is used because cocotb testbenches are coroutine-based (non-blocking)
-* dut is a handle for the top-level Verilog module
+Coroutines are functions that can pause execution using await, allowing simulation of time or event-based behavior.
 
 ```python
 @cocotb.test()
-async def adder_basic_test(dut):
+async def my_test(dut):
+    await RisingEdge(dut.clk)
 ```
 
-3. Generate stimuli just in python:
+### 2. Triggers
 
-```python
-for _ in range(10):
-    a = random.randint(0, 15)
-    b = random.randint(0, 15)
+Triggers are events that synchronize test execution with the simulator:
+
+* RisingEdge(signal): wait for rising edge
+* FallingEdge(signal): wait for falling edge
+* Timer(time, units='ns'): wait for a specific time
+* ReadOnly(): wait until the simulator finishes the current cycle
+
+### 3. Parallel Execution (fork/join)
+
+You can launch tasks in parallel using cocotb.start_soon() similarly as with verilog fork join instruction.
+
+```verilog
+initial begin
+  fork
+    task1();
+    task2();
+  join
+  $display("Both tasks completed");
+end
 ```
 
-4. Link stimuli with DUT, .value is used to assign or read signal values in cocotb.
-
 ```python
-dut.a.value = a
-dut.b.value = b
+async def task1():
+    await Timer(10, units='ns')
+    cocotb.log.info("Task 1 done")
+
+async def task2():
+    await Timer(20, units='ns')
+    cocotb.log.info("Task 2 done")
+
+@cocotb.test()
+async def test_parallel(dut):
+    cocotb.start_soon(task1())
+    cocotb.start_soon(task2())
+    await Timer(30, units='ns')
+    cocotb.log.info("Both tasks should be done")
 ```
 
-5. Set some delays, wait 2 nanoseconds of simulation time.
+### 4. Subroutines (task)
+
+Reusable functions are defined using async def
 
 ```python
+async def reset(dut):
+    dut.rst.value = 1
+    await Timer(10, units='ns')
+    dut.rst.value = 0
+```
+
+### 5. Logging and Errors
+
+* cocotb.log.info("message"): print information
+* assert condition, "message": raise error if condition fails
+
+## Verilog vs. Cocotb – Feature Equivalents
+
+| Verilog Feature         | Cocotb Equivalent                                  | Description |
+|-------------------------|----------------------------------------------------|-------------|
+| `initial` / `always`    | `@cocotb.test()` + `async def`                    | Test blocks |
+| `posedge clk`           | `await RisingEdge(dut.clk)`                       | Wait for rising edge |
+| `wait (cond)`           | `await ReadOnly(); if cond:` or `await Event()`   | Wait for condition |
+| `task`                  | `async def name():`                               | Asynchronous subroutine |
+| `fork/join`             | `cocotb.start_soon(func())`                       | Run in parallel |
+| `$display(...)`         | `cocotb.log.info(...)`                            | Print messages |
+| `$error(...)`           | `assert cond, "message"`                          | Assertion failure |
+
+
+## Advanced verification componentes: What Are Drivers, Monitors, and Scoreboards?
+
+These are testbench components that help you organize your verification code in a clean and reusable way. They are inspired by object-oriented verification methodologies like UVM (Universal Verification Methodology), but adapted to Python and Cocotb.
+
+### 1. Drivers – Stimulus Generators
+
+A driver is a component that sends inputs to the DUT (Device Under Test). It encapsulates the logic for applying values to input signals, often in a reusable and parameterized way.
+
+* Keeps test code clean
+* Allows reuse across multiple tests
+* Makes it easier to randomize or sequence inputs
+
+*Example Use Case*
+
+Instead of writing this in every test:
+
+```python
+dut.a.value = 5
+dut.b.value = 3
 await Timer(2, units='ns')
 ```
 
-6. Compute the expected result and assert it:
-
-In Python, assert is used to check that a condition is True. If it's not, it will raise an AssertionError and optionally print a meesage. 
-
-Syntax:
+You write:
 
 ```python
-assert <condition>, <error_message>
+await driver.send(5, 3)
 ```
-In this example:
+
+### 2. Monitors – Output Observers
+
+A monitor is a passive component that watches the DUT’s outputs and records or reports them. It does not drive any signals — it just listens.
+
+* Separates observation from checking
+* Can log or store outputs for later comparison
+* Useful for coverage collection or debugging
+
+*Example Use Case*
+
+Instead of checking outputs manually:
 
 ```python
-expected = a + b
-assert dut.sum.value == expected, f"Test failed: {a} + {b} != {dut.sum.value}"
+await RisingEdge(dut.clk)
+observed = dut.sum.value
 ```
 
-## Setup the simulation enviroment
+You write:
 
-The Makefile is a key part of running cocotb simulations — it's how cocotb knows what files to simulate, what simulator to use, and what Python test to run.
-
-A Makefile is a plain text file used by the make tool to automate commands. It's like a script that tells cocotb:
-* Language of the HDL files: TOPLEVEL_LANG
-* Source files: VERILOG_SOURCES
-* Top level module: TOPLEVEL
-* Testbench file: MODULE
-* Simulator to use: SIM
-
-## Launch test
-
-From a gitBash terminal run:
-
-```bash
-make
+```python
+await monitor.observe()
+# monitor stores or logs the value internally
 ```
-If make is not installed, you can download it here https://sourceforge.net/projects/ezwinports/. Aftewards it should be added to the system path.
 
-If the test passed successfully the terminal should print:
+### 3. Scoreboards – Output Checkers
 
-```bash
-** TEST                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
-**************************************************************************************
-** test_adder.adder_basic_test   ←[32m PASS ←[49m←[39m         20.00           0.00      10011.97  **
-**************************************************************************************
-** TESTS=1 PASS=1 FAIL=0 SKIP=0                 20.00           0.33         59.90  **
-**************************************************************************************
+A scoreboard is a component that compares the expected outputs (from a model or prediction) with the actual outputs (from the DUT). It’s the core of a self-checking testbench.
+
+* Automates result checking
+* Helps detect mismatches
+* Makes your testbench scalable and maintainable
+
+*Example Use Case*
+
+Instead of writing:
+
+```python
+assert dut.sum.value == expected
 ```
+
+You write:
+
+```python
+scoreboard.add_expected(expected)
+scoreboard.add_actual(dut.sum.value)
+scoreboard.check()
+```
+
+### How They Work Together
+
+* Driver sends inputs to the DUT.
+* Monitor observes outputs from the DUT.
+* Scoreboard compares expected vs actual outputs.
