@@ -13,6 +13,7 @@ Welcome! 🚀 This repository is my personal learning space for digital design a
 		* 📂 [Example: Pattern detection](verification/uvm/example/test_plan.md) 
 	* 📂 [Cocotb Framework](verification/cocotb/Cocotb.md)
 		* 📂 [Create a simple testbench: 4-bits adder example](verification/cocotb/Simple_tb/adder_example.md) 
+		* 📂 [Using advanced verification components: counter example](verification/cocotb/Complex_tb/counter_example.md) 
 * 📂 [Code Modules](modules/modules.md)
 	* 📄 [UART Transmitter](modules/modules.md#-uart-transmitter)
 	* 📄 [UART Receiver](modules/modules.md#-uart-receiver)
