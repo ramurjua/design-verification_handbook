@@ -33,7 +33,7 @@ source_directory = "../"
 publish_directory = "../publish"
 
 excluded_extensions = [".md", ".tmp", ".vcd", ".gtkw", ".tcl", ".bat"]
-excluded_filenames = [".gitignore", "sim_log", "README.md"]
+excluded_filenames = [".gitignore", "sim_log", "README.html"]
 excluded_directories = [".git", "__pycache__", "publish", "web", "program_files"]
 
 copy_filtered_files(

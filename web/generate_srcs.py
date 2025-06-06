@@ -10,8 +10,32 @@ parser.add_argument("--all", action = "store_true", default = False, help="Updat
 parser.add_argument("--only", action = "store_true", default = False, help="Updates only selected file")
 args = parser.parse_args()
 
+
+# TODO: revisar esto ahora mismo no va bien
+def count_levels(root):
+   root = root.strip(os.sep)
+   parts = root.split(os.sep)
+   print(root, parts)
+   if len(parts) > 2:
+      niveles = len(parts) - 2
+      print(niveles)
+      return "../"*niveles
+   else:
+      niveles = 0
+      print(niveles)
+      return ""
+
+
 def md2html(rootfile, filename):
-  command = ['pandoc', rootfile+filename+".md", '-o', rootfile+filename+".html"]
+
+  # cssroot = count_levels(rootfile) IN PROCESS
+
+  command = ['pandoc', 
+             rootfile+filename+".md", 
+             '-o', rootfile+filename+".html", 
+             '--standalone',
+             '--css', "styles.css"
+            ]
   result = subprocess.run(command, capture_output=True, text=True)
   time.sleep(1)
 
@@ -51,10 +75,10 @@ elif args.all:
 
   if next == "S":
     print("Listing all markdown files found... ")
-    markdown_files = list_markdown_files("../../")
+    markdown_files = list_markdown_files("../")
 
     for root, filename in markdown_files:
-      print(f"Root: {root}, Filename: {filename}")
+      # print(f"Root: {root}, Filename: {filename}")
       md2html(root+"/", filename)
   else:
     print("Exiting...")
