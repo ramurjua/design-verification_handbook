@@ -1,0 +1,64 @@
+<h1 id="using-a-rasberry-pico-as-a-jtag">Using a Rasberry Pico as a
+JTAG</h1>
+<p>A cheap and open source method to program and FPGA is using a
+Rasberry Pico as a JTAG cable. In order to do it you will find the
+instructions based on the Github open-source project <a
+href="https://github.com/kholia/xvc-pico">pico-xvc repository</a>. In
+folder <em>program_files</em> exists the necessary files to perform a
+Xilinx FPGA load using a Windows Computer.</p>
+<h2 id="conexions">Conexions:</h2>
+<p>The pinout is as follows:</p>
+<figure>
+<img src="img/rasberry_pinout.png" alt="rasberry pinout" />
+<figcaption aria-hidden="true">rasberry pinout</figcaption>
+</figure>
+<h2 id="steps">Steps:</h2>
+<ol type="1">
+<li>Load the program into the la Rasberry Pi (RP2040):</li>
+</ol>
+<ul>
+<li>Pressing the buttons BOOT and RST insert the USB cable into the
+computer</li>
+<li>When releasing the buttons, a new window would appear in the files
+explorer</li>
+<li>Put the uf2 file into that folder</li>
+</ul>
+<ol start="2" type="1">
+<li>Change the drivers:</li>
+</ol>
+<ul>
+<li>Install Zading in the host computer (https://zadig.akeo.ie/)</li>
+<li>Using Zadig install <em>libusbK</em> to the new device. You can
+disconnect and connect it again in order to know which is it.</li>
+</ul>
+<figure>
+<img src="img/zadig.png" alt="zadig" />
+<figcaption aria-hidden="true">zadig</figcaption>
+</figure>
+<ol start="3" type="1">
+<li>Execute the xvc-pico.exe from command window.</li>
+</ol>
+<figure>
+<img src="img/cmd.png" alt="cmd" />
+<figcaption aria-hidden="true">cmd</figcaption>
+</figure>
+<ol start="4" type="1">
+<li>From Vivado Hardware Manager, add the Virtual Cable with the host
+IP.</li>
+</ol>
+<figure>
+<img src="img/add_xvc.png" alt="add_xvc" />
+<figcaption aria-hidden="true">add_xvc</figcaption>
+</figure>
+<figure>
+<img src="img/virtualcable.png" alt="virtualcable" />
+<figcaption aria-hidden="true">virtualcable</figcaption>
+</figure>
+<figure>
+<img src="img/jtag.png" alt="jtag" />
+<figcaption aria-hidden="true">jtag</figcaption>
+</figure>
+<ol start="5" type="1">
+<li>Now it act as a normal JTAG adapter. Every time you want to use it,
+it is necessary to only do steps 3 and 4.</li>
+</ol>

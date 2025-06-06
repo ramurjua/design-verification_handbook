@@ -1,0 +1,83 @@
+<h1 id="formal-verification">Formal Verification</h1>
+<p>Formal verification is a method of verifying the correctness of a
+digital design through mathematical techniques, rather than relying on
+simulation with test cases. It provides a rigorous approach to ensure
+that a design adheres to its specifications by proving that the design
+is free from errors. This technique is especially useful in designs
+where failure can have severe consequences, such as in safety-critical
+systems or high-reliability applications.</p>
+<p><strong>Why use Formal Verification?</strong></p>
+<ul>
+<li>High Confidence in Design: it proves that the design will behave as
+expected for all possible input conditions. This is particularly
+valuable in scenarios where exhaustive simulation is impractical due to
+the sheer number of test cases that would be needed.</li>
+<li>Critical systems: For designs such as aerospace or medical devices,
+where a bug can lead to catastrophic failures, formal verification
+ensures that the design meets its functional specifications without the
+risk of untested corner cases.</li>
+<li>Completeness: Unlike simulation-based approaches, which are limited
+by the number of test cases run, formal verification can provide
+complete assurance that a property holds across all possible input
+conditions.</li>
+</ul>
+<p><strong>How it works?</strong></p>
+<p>Formal verification tools use mathematical models to explore all
+possible states of a digital design. These tools typically rely on
+techniques such as model checking and theorem proving to exhaustively
+verify that a set of properties holds for the design. The properties
+could range from simple assertions to more complex temporal properties
+that describe the behavior of the system over time.</p>
+<p>The verification tool uses the design description (usually written in
+HDL) and a set of properties or assertions (often written in
+SystemVerilog Assertions, SVA) to prove that the design satisfies the
+requirements. If a violation of any property is found, the tool provides
+a counterexample that shows the specific sequence of events that led to
+the failure.</p>
+<h2 id="formal-verification-vs.-assertion-based-verification">Formal
+Verification vs. Assertion-Based Verification</h2>
+<p>Assertion-based verification is a technique that uses assertions
+-specifics statements- to check that certain conditions hold during the
+verification process. Assertions are typicallly used to express
+propierties or expected behaviours of the design.</p>
+<p>An assertion in this context is a statement that must always hold
+true in the design. If the assertion is violated (i.e., if the condition
+it checks is false), the simulator or formal verification tool will
+raise an error or failure message, helping the engineer identify
+potential issues in the design.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>property fifo_not_overflow<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">@(</span><span class="kw">posedge</span> clk<span class="op">)</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">disable</span> iff <span class="op">(</span>reset<span class="op">)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span>write_enable <span class="op">&amp;&amp;</span> <span class="op">!</span>full<span class="op">)</span> <span class="op">|-&gt;</span> <span class="op">(</span>fifo_count <span class="op">&lt;</span> FIFO_DEPTH<span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>endproperty</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>assert property <span class="op">(</span>fifo_not_overflow<span class="op">)</span> <span class="kw">else</span> <span class="dt">$fatal</span><span class="op">(</span><span class="st">&quot;FIFO overflow detected!&quot;</span><span class="op">);</span></span></code></pre></div>
+<p><strong>How are they related?</strong></p>
+<p>Assertion-based verification is a methodoly used withing noth formal
+verification and simulation to specify and check the behaviour of the
+design. It provdies a way to express desired design propierties in a
+clear, checkeable form that can be verified during either simulation or
+formal verification.</p>
+<p>In formal verification, assertions serve as the properties that the
+formal tool checks exhaustively across all possible states of the system
+to verify that they hold true for every scenario. In simulation-based
+verification, assertions are used to monitor the design during
+simulation to check whether the design is behaving as expected for a
+given set of inputs.</p>
+<p><strong>Why are they not the same?</strong></p>
+<ul>
+<li><p>Scope of check: while formal verification can exhaustively check
+the design for all possible input combination and corner cases using
+mathematical proofs guaranteeing that a propierty holds in very
+scenario, assertion-based verification involves writing individual
+assertions to check certain propierties and they need to be written for
+each individual case the designer cares about, meaning they are
+typically targeted at jey functional behaviours.</p></li>
+<li><p>Method of analysis: formal verification use mathematical methods
+while assertion-based relies on runtime checks, acting like automated
+checks embedded in the design.</p></li>
+<li><p>Completeness: formal verification can prove a propierty is true
+for all possible cases while assertions-based is limited to the
+propierties that the designer has written assertions for.</p></li>
+</ul>

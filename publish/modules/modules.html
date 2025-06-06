@@ -1,0 +1,105 @@
+<h1 id="code-modules">✅ Code Modules</h1>
+<p>This section contains digital design modules that have been
+successfully developed, verified, and tested. The goal is to build a
+reusable library that can be easily integrated into future personal or
+professional projects.</p>
+<h2 id="available-modules">📦 Available Modules</h2>
+<h3 id="uart-transmitter">🔹 UART Transmitter</h3>
+<p>Sequential module that transmits data serially using the UART
+protocol.</p>
+<p>✔️ Verified via testbench with stimuli for various baud rates, frame
+sizes, and transmitted values.</p>
+<p>🧪 Status: Tested on real hardware using an FTDI connected to a
+computer.</p>
+<p>📁 <a href="uart/source/uart_tx.v">Source Code</a></p>
+<p>📁 <a href="uart/test/uart_tb.v">Testbench</a></p>
+<p>📌 Instantiation:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>uart_tx # <span class="op">(</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    .p_preescaler<span class="op">(),</span> <span class="co">/* Clock prescaler to set baudrate */</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    .p_data_buffer<span class="op">()</span> <span class="co">/* Number of bytes to send */</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">)</span> uart_tx <span class="op">(</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    .clk<span class="op">(),</span> </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    .rst<span class="op">(),</span> <span class="co">/* Synchronous reset */</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    .ip_data<span class="op">(),</span> <span class="co">/* Data to send */</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    .i_dv<span class="op">(),</span> <span class="co">/* Input data valid */</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    .o_ready<span class="op">(),</span> <span class="co">/* Module ready to accept new data */</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    .o_tx<span class="op">()</span> <span class="co">/* UART transmission line */</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>
+<h3 id="uart-receiver">🔹 UART Receiver</h3>
+<p>Sequential module that receives data serially using the UART
+protocol.</p>
+<p>✔️ Verified via testbench with stimuli for various baud rates, frame
+sizes, and transmitted values.</p>
+<p>🧪 Status: Tested on real hardware using an FTDI connected to a
+computer.</p>
+<p>📁 <a href="uart/source/uart_rx.v">Source Code</a></p>
+<p>📁 <a href="uart/test/uart_tb.v">Testbench</a></p>
+<p>📌 Instantiation:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>uart_rx #<span class="op">(</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    .p_preescaler<span class="op">(),</span> <span class="co">/* Prescaler for baudrate */</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    .p_data_buffer<span class="op">()</span> <span class="co">/* Indicates number of bytes to receive */</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="op">)</span> uart_rx <span class="op">(</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    .clk<span class="op">(),</span> <span class="co">/* Input clock */</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    .rst<span class="op">(),</span> <span class="co">/* Input reset */</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    .i_rx<span class="op">(),</span>    <span class="co">/* Input RX pin */</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    .orp_data<span class="op">(),</span>    <span class="co">/* Parallel data port */</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    .or_dv<span class="op">()</span> <span class="co">/* New data available in data port */</span> </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>
+<h3 id="spi-master">🔹 SPI Master</h3>
+<p>Module that transmits and reads data using the SPI protocol actuating
+as a master. Take into account chip select logic is outside the modules
+scope since it can be different depending on its use.</p>
+<p>✔️ Verified via testbench with stimuli for various clock preescalers,
+cpol configurations, frame sizes, and transmitted values.</p>
+<p>🧪 Status: Tested on real hardware using components in PCB that
+communicates through SPI.</p>
+<p>📁 <a href="spi/source/spi_master.v">Source Code</a></p>
+<p>📁 <a href="spi/test/spi_tb.v">Testbench</a></p>
+<p>📌 Instantiation:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>spi_master #<span class="op">(</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    .p_prescaler<span class="op">(),</span> <span class="co">/* spi clock prescaler */</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    .p_cpol<span class="op">(),</span>  <span class="co">/* clock polarity */</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    .p_max_data_buffer<span class="op">(),</span> <span class="co">/* Max data buffer in bits */</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    .pw_data_index<span class="op">()</span> <span class="co">/* Width for data index */</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">)</span> spi_master <span class="op">(</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    .clk<span class="op">(),</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    .rst<span class="op">(),</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    .ip_data<span class="op">(),</span> <span class="co">/* parallel data to send */</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    .ip_data_count<span class="op">(),</span> <span class="co">/* number of bits to send */</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    .i_data_valid<span class="op">(),</span> <span class="co">/* input data ready to send */</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    .orp_data<span class="op">(),</span> <span class="co">/* parallel data readed */</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    .o_data_ready<span class="op">(),</span> <span class="co">/* SPI module ready to receive data */</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    .or_mosi<span class="op">(),</span> <span class="co">/* master output, slave input pin */</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    .i_miso<span class="op">(),</span> <span class="co">/* master input, slave output pin */</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    .o_sck<span class="op">()</span> <span class="co">/* spi clock pin */</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>
+<h3 id="spi-slave">🔹 SPI Slave</h3>
+<p>Module that transmits and reads data using the SPI protocol actuating
+as a slave. Take into account chip select logic is outside the modules
+scope since it can be different depending on its use.</p>
+<p>✔️ Verified via testbench with stimuli for various clock preescalers,
+cpol configurations, frame sizes, and transmitted values.</p>
+<p>🧪 Status: Tested on real hardware using a MCU as master and the FPGA
+as Slave.</p>
+<p>📁 <a href="spi/source/spi_slave.v">Source Code</a></p>
+<p>📁 <a href="spi/test/spi_tb.v">Testbench</a></p>
+<p>📌 Instantiation:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>spi_slave #<span class="op">(</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    .p_data_buffer_length<span class="op">(),</span> <span class="co">/* input data buffer length */</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    .p_cpol<span class="op">()</span> <span class="co">/* clock polarity */</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="op">)</span> spi_slave <span class="op">(</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    .clk<span class="op">(),</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    .rst<span class="op">(),</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    .ip_data_out<span class="op">(),</span> <span class="co">/* data to send */</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    .ip_data_count<span class="op">(),</span> <span class="co">/* data bit count */</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    .op_data_in<span class="op">(),</span> <span class="co">/* data received */</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    .o_data_valid<span class="op">(),</span> <span class="co">/* new transaction finished */</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    .o_busy<span class="op">(),</span> <span class="co">/* spi interface is busy */</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    .i_sclk<span class="op">(),</span> <span class="co">/* spi sclk input */</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    .i_mosi<span class="op">(),</span> <span class="co">/* spi mosi input */</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    .or_miso<span class="op">()</span> <span class="co">/* spi miso output */</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span></code></pre></div>

@@ -1,0 +1,107 @@
+<h1 id="uvm">UVM</h1>
+<p>UVM is a framework of SystemVerilog classes from which fully
+functional testbenches can be built. The methodology specifies and lays
+out a set of guidlines to be followed for creation od verification
+testbenches. UVM provides a set of base classes from which more complex
+classes can be build by inheritance and adding into it certain functions
+required for verification enviroment.</p>
+<p>Advantages: * Ensure uniformity between different verification teams.
+* Flexibility. * Ease of mantaining testbenches.</p>
+<p><em>Example:</em> The sequence-driver hanshake mechanishm is taken
+care of under the hood so that only stimulus need to be written. This
+saves quite a lot of time in setting up a testbench stucture since the
+foundation itself is well defined.</p>
+<figure>
+<img src="uvm_tb.png" alt="alt text" />
+<figcaption aria-hidden="true">alt text</figcaption>
+</figure>
+<h2 id="components-vs-objects">Components vs Objects</h2>
+<p>Every simulation testbench has a few key components like: drivers,
+monitors, stimulus generators and scoreboards. UVM provides a base-class
+for each component, with standarize functions to instantiate, connect
+and build the testbench enviroment. These are static entities called
+components, that exist throughout a simumlation. These components
+operate and process on some kind of data that flows around the
+environment. The data or transactions are called objects or sequence
+items the appear and disappear at varios times in the simulation and is
+more dynamic in nature.</p>
+<p><em>uvm_object</em> is the main class, it defines methods for common
+operations like copy, compare and print. Typically it is used to build
+testbench and testcase configurations.</p>
+<p>There are two branches in hierarchy: * <em>uvm_component</em>:
+classes that define verification components: <em>uvm_driver,
+uvm_monitor, uvm_sequencer_ uvm_agent, uvm_test, uvm_env,
+uvm_scoreboard</em>. * <em>uvm_transaction</em>: classes that define
+data objects consumed and operated upong by verification components:
+<em>uvm_sequence_item, uvm_sequence_base, uvm_sequence</em>.</p>
+<p><strong>Objects</strong></p>
+<ul>
+<li><em>uvm_sequence</em> is a container for the actual stimulus to the
+design. If you put different stimuyli into differents sequences, it
+enhances the ability to reuse and drive thsese sequences in random order
+to get more coverage and verifiacation results.</li>
+<li><em>uvm_sequence_item</em> is a data object that have to be driven
+to DUT are generally called as sequence items.</li>
+</ul>
+<p><strong>Components</strong></p>
+<ul>
+<li><em>uvm_driver</em>: drive signals to DUT</li>
+<li><em>uvm_monitor</em>: monitor signals at DUT output port</li>
+<li><em>uvm_sequencer</em>: create different tests patterns</li>
+<li><em>uvm_agent</em>: contains the sequencer, driver and monitor</li>
+<li><em>uvm_env</em>: contains all other verification components</li>
+<li><em>uvm_scoreboard</em>: checker that determines if test
+passed/failed</li>
+<li><em>uvm_subscriber</em>: subscribes to activites of other
+components</li>
+</ul>
+<h2 id="phases">Phases</h2>
+<p>A main feature that components inherit from their parents class
+<em>uvm_component</em> is Phasing. Each component hoes thorugh a
+pre-defined set of phases, and it cannot proceed to the neext phase
+until all components finish their execution in the current phase. So UVM
+phases act as a synchronizyng mechanism in the life cycle of a
+simulation.</p>
+<p>Methods that do not consume simulation time are functions and methods
+that consume simulation time are tasks.</p>
+<ol type="1">
+<li>Build time phases:
+<ul>
+<li><em>build_phase</em> (function): used to buiild testbench compoents
+and create their instances.</li>
+<li><em>connect_phase</em> (function): used to connect between different
+testbench components.</li>
+<li><em>end_of_elaboration_phase</em> (function): other functions
+requerid to be done after conection.</li>
+<li>start_of_simulation_phase (function): used to set initial run-time
+configuration or display</li>
+</ul></li>
+<li>Run time phases:
+<ul>
+<li><em>run_phase</em> (task): actual simulation that consumes time,
+runs parallel to other UVM run-time phases.</li>
+</ul></li>
+<li>Clean-up phases:
+<ul>
+<li><em>extract_phase</em> (function): used to extract and compute
+expected data from scoreboard.</li>
+<li><em>check_phases</em> (function): used to perform scoreboard tasks
+that check for errors between expected an actual values.</li>
+<li><em>report_phase</em> (function): used to display results from
+checkers, summary, and other test objectives</li>
+<li><em>final_phase</em> (function): typically used to do last minute
+operations before exiting simulation.</li>
+</ul></li>
+</ol>
+<p><strong>Why SystemVerilog testbench need phases and verilog testbench
+does not?</strong></p>
+<p>Verilog testbenches have all its components made of static containers
+or modules. Since a module is static, all modules will be created at
+beginning of the simulation and don’t have to worry about any components
+getting called without being created or initialized. SystemVerilog
+introduces OOP features. This enables the creation of well structured
+entites that can be rused and desployed when required. These class
+objects can be created in the middle of the simulation. What means is
+that testbench components can be created at different times, and hance
+you could end up calling a copmponent while it hasn’t been initialized
+yet leading to woring testbench outputs.</p>

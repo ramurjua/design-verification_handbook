@@ -1,0 +1,129 @@
+<h1 id="how-to-create-a-simple-gui-using-qt-designer">How to create a
+simple GUI using QT Designer?</h1>
+<ol type="1">
+<li>Installation:</li>
+</ol>
+<ul>
+<li>Qt Designer using the following link:
+https://build-system.fman.io/qt-designer-download</li>
+<li>In python by using pip install: PyQt5</li>
+<li>In python by using pip install: pyqt5-tools</li>
+</ul>
+<ol start="2" type="1">
+<li>Open Qt Designer and create a <em>New Form</em> of type <em>Main
+Window</em>:</li>
+</ol>
+<figure>
+<img src="img/create_form.png" alt="Create Form" />
+<figcaption aria-hidden="true">Create Form</figcaption>
+</figure>
+<ol start="2" type="1">
+<li>From the lateral menu add the components that you like. Here, there
+is an example of a simple gui that uses:</li>
+</ol>
+<ul>
+<li>Push button: to make the UI responsive to the user</li>
+<li>Labels: to show information that update periodically</li>
+<li>Line edit: to get uset text inputs</li>
+</ul>
+<figure>
+<img src="img/ui_example.png" alt="UI Example" />
+<figcaption aria-hidden="true">UI Example</figcaption>
+</figure>
+<ol start="3" type="1">
+<li>Save the .ui file by clicking the Save Button.</li>
+<li>Convert the .ui file to .py file in order to use it in python.
+Execute:</li>
+</ol>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">py</span> <span class="at">-m</span> PyQt5.uic.pyuic <span class="at">-x</span> openLoop.ui <span class="at">-o</span> openLoop.py</span></code></pre></div>
+<ol start="5" type="1">
+<li>Create a gui.py file. This would be the ‘’backend’’ of the console.
+The first thing to do in the script is to add the generated python file
+to it.</li>
+</ol>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> sys</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> openLoop <span class="im">import</span> Ui_MainWindow</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PyQt5.QtWidgets <span class="im">import</span> QApplication, QMainWindow</span></code></pre></div>
+<ol start="6" type="1">
+<li>In order to create and run the window the following code is needed.
+When executing the script the created window should appear as in the
+image.</li>
+</ol>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> MiVentana(QMainWindow):</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Crear ventana y aplicacion</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.ui <span class="op">=</span> Ui_MainWindow()</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.ui.setupUi(<span class="va">self</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span>  <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    app <span class="op">=</span> QApplication(sys.argv)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    ventana <span class="op">=</span> MiVentana()</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    ventana.show()</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    sys.exit(app.<span class="bu">exec</span>())</span></code></pre></div>
+<figure>
+<img src="img/window.png" alt="UI Example" />
+<figcaption aria-hidden="true">UI Example</figcaption>
+</figure>
+<ol start="7" type="1">
+<li>Create push button callback:</li>
+</ol>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> onButton_callback(<span class="va">self</span>):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;onButton Callback&quot;</span>)</span></code></pre></div>
+<ol start="8" type="1">
+<li>Link callback to button and when executing the script
+<em>gui.py</em> in the terminal will appear: “onButton Callback”.</li>
+</ol>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>  <span class="va">self</span>.ui.onButton.clicked.<span class="ex">connect</span>(<span class="va">self</span>.onButton_callback)</span></code></pre></div>
+<p>You can repeat the same process will all the Push Buttons that you
+like. In order to get the name of each component you need to identify
+each element in the .ui file. This can be done beacuse each element is
+contained in a widget where it is easy to indentify the name, the size,
+the position or the displayed text.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode html"><code class="sourceCode html"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">widget</span><span class="ot"> class</span><span class="op">=</span><span class="st">&quot;QWidget&quot;</span><span class="ot"> name</span><span class="op">=</span><span class="st">&quot;centralwidget&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">widget</span><span class="ot"> class</span><span class="op">=</span><span class="st">&quot;QPushButton&quot;</span><span class="ot"> name</span><span class="op">=</span><span class="st">&quot;onButton&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">property</span><span class="ot"> name</span><span class="op">=</span><span class="st">&quot;geometry&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">rect</span><span class="dt">&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">x</span><span class="dt">&gt;</span>200<span class="dt">&lt;/</span><span class="kw">x</span><span class="dt">&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&lt;</span><span class="kw">y</span><span class="dt">&gt;</span>80<span class="dt">&lt;/</span><span class="kw">y</span><span class="dt">&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">width</span><span class="dt">&gt;</span>101<span class="dt">&lt;/</span><span class="kw">width</span><span class="dt">&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">height</span><span class="dt">&gt;</span>91<span class="dt">&lt;/</span><span class="kw">height</span><span class="dt">&gt;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;/</span><span class="kw">rect</span><span class="dt">&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">property</span><span class="dt">&gt;</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;</span><span class="kw">property</span><span class="ot"> name</span><span class="op">=</span><span class="st">&quot;text&quot;</span><span class="dt">&gt;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&lt;</span><span class="kw">string</span><span class="dt">&gt;</span>ON<span class="dt">&lt;/</span><span class="kw">string</span><span class="dt">&gt;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">property</span><span class="dt">&gt;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="dt">&lt;/</span><span class="kw">widget</span><span class="dt">&gt;</span></span></code></pre></div>
+<ol start="9" type="1">
+<li>In order to get the values introduced by the user in the QLineEdit
+call the text method. Take into account it returns a string so it needs
+to be casted if a number is expected.</li>
+</ol>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>  amp_mod_value <span class="op">=</span> <span class="bu">float</span>(<span class="va">self</span>.ui.amp_mod.text())</span></code></pre></div>
+<ol start="10" type="1">
+<li>In order to write in a QLabel use the setText method.</li>
+</ol>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>  <span class="va">self</span>.ui.conection_label.setText(<span class="st">&quot;Connected&quot;</span>)</span></code></pre></div>
+<p>When every element on the interface has been handled, it is the time
+to make the ui interact with an element, by adding a communication
+interface. In this example UART is used.</p>
+<p>You should create a class for the communication protocol, and at
+least manage the connexion, the sending and the receiving functions. In
+this example the packet creation and decoding is also managed at the
+UART class.</p>
+<p>When ussing the example provided, you must take into account the
+defined variable MOCK. If MOCK is set to True it doesn’t really connect
+to UART it imitates its working just to test the interface. If MOCK is
+set to False the interface expects a real physical connection with an
+UART device.</p>

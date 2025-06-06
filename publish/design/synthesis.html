@@ -1,0 +1,18 @@
+<h3 id="synthesis-and-implementation">Synthesis and Implementation</h3>
+<p><strong>What is infer latch means? How can you avoid it?</strong></p>
+<p>Infer latch means creating a feedback loop from the output back to
+the input due to missing if-else condition or missing ‘default’ in a
+‘case’ statement.</p>
+<p>Infer latch indicates that the design might not be implemented as
+intended and can result in race conditions and timing issues.</p>
+<p>How to avoid It:</p>
+<ul>
+<li>Always use all branches in the ‘if’ and ‘case’ statements.</li>
+<li>Use default in the ‘case’ statement.</li>
+<li>Have a proper code review.</li>
+<li>Use lint tools, and logical-equivalence-check tools</li>
+</ul>
+<p><strong>What are leaf cells?</strong></p>
+<p>Leaf cell means cells which are self contained ie cells which don’t
+instantiate any other cells in them or where the hierarchy stops ie
+there are no more branches in the tree ergo leaf.</p>

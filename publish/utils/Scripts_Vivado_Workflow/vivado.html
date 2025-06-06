@@ -1,0 +1,54 @@
+<h1 id="scripts-vivado-workflow">📦 Scripts Vivado Workflow</h1>
+<p>This project includes a TCL + BAT based scripts for automation flow
+for creating, synthesizing, implementing, and generating the bitstream,
+memory configuration file and debug probes using Xilinx Vivado.</p>
+<h2 id="requirements">🛠 Requirements</h2>
+<ul>
+<li>Installed Vivado 2022.1 (or other compatible version)</li>
+<li>Folder structure as follows:</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">project-root/</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> constraints/</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span> └── xdc_file.xdc</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> source/</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span> └── <span class="pp">*</span>.v / <span class="pp">*</span>.sv / <span class="pp">*</span>.vhd</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> memory_files/</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span> └── <span class="pp">*</span>.mem</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> include/</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span> └── <span class="pp">*</span>.vh</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="ex">├──</span> scripts/</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span> ├── build_project.tcl</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ex">│</span> └── make.bat</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="ex">└──</span> output/</span></code></pre></div>
+<h2 id="configuration">⚙ Configuration</h2>
+<p>Inside .bat file the Vivado installation root should be
+configured.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> VIVADO_PATH=D:<span class="dt">\X</span>ilinx<span class="dt">\V</span>ivado<span class="dt">\2</span>022.1</span></code></pre></div>
+<p>Inside .tcl file project settings sholud be configured.</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> project_name        PROJECT_NAME</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> part_name           xc7a75tlfgg484-2L         <span class="kw">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> mem_part            mx25l12872f-spi-x1_x2_x4  <span class="kw">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> top_name            top</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> xdc_file            xdc_file</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> output_dir          ../output</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="bu">set</span> project_dir         ../project/autogen</span></code></pre></div>
+<p>If some of the following types of files are not present in the
+project, its corresponding line should be commented.</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Add source files</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">add_files</span> [ glob ../source/<span class="pp">*</span>.v]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="ex">add_files</span> [ glob ../source/<span class="pp">*</span>.sv]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="ex">add_files</span> [ glob ../source/<span class="pp">*</span>.vhd]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Add include files</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="ex">add_files</span> [ glob ../include/<span class="pp">*</span>.vh]</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Add memory files</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="ex">add_files</span> [ glob ../memory_files/<span class="pp">*</span>.mem]</span></code></pre></div>
+<h2 id="execution">🚀 Execution</h2>
+<p>From powershell or cmd, inside scripts folder execute:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="bu">.</span><span class="dt">\m</span>ake.bat</span></code></pre></div>
