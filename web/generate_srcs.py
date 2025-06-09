@@ -10,31 +10,30 @@ parser.add_argument("--all", action = "store_true", default = False, help="Updat
 parser.add_argument("--only", action = "store_true", default = False, help="Updates only selected file")
 args = parser.parse_args()
 
-
-# TODO: revisar esto ahora mismo no va bien
 def count_levels(root):
-   root = root.strip(os.sep)
-   parts = root.split(os.sep)
-   print(root, parts)
-   if len(parts) > 2:
-      niveles = len(parts) - 2
-      print(niveles)
-      return "../"*niveles
-   else:
-      niveles = 0
-      print(niveles)
-      return ""
+   
+  print("Adding css")
+
+  normalized_root = root.replace("/", "\\")
+  normalized_root = normalized_root.strip(os.sep)
+  parts = normalized_root.split(os.sep)
+  if len(parts) > 1:
+    niveles = len(parts) - 1
+    return "../"*niveles
+  else:
+    niveles = 0
+    return ""
 
 
 def md2html(rootfile, filename):
 
-  # cssroot = count_levels(rootfile) IN PROCESS
+  cssroot = count_levels(rootfile)
 
   command = ['pandoc', 
              rootfile+filename+".md", 
              '-o', rootfile+filename+".html", 
              '--standalone',
-             '--css', "styles.css"
+             '--css', cssroot+"styles.css"
             ]
   result = subprocess.run(command, capture_output=True, text=True)
   time.sleep(1)
@@ -46,6 +45,29 @@ def md2html(rootfile, filename):
     print("[INFO]: Succesfully conversion of ", rootfile+filename+".md", " from md to html")
     
   return result.returncode
+
+
+def htmlProcess(rootfile, filename):
+    
+    print("Processing html")
+
+    filepath = rootfile+filename+".html"
+    
+    try:
+        with open(filepath, 'r', encoding='utf-8') as file:
+            content = file.read()
+
+        updated_content = content.replace('.md', '.html')
+
+        with open(filepath, 'w', encoding='utf-8') as file:
+            file.write(updated_content)
+
+        print(f"Processed file: {filepath}")
+    except FileNotFoundError:
+        print(f"File not found: {filepath}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+  
 
 def list_markdown_files(directory, depth=5):
   markdown_files = []
@@ -67,6 +89,7 @@ if args.only:
   rootfile = input("Provide complete root to file selected: ")
   selectedfile = input("Provide file name (not include extension): ")
   md2html(rootfile, selectedfile)
+  htmlProcess(rootfile, selectedfile)
 
 elif args.all:
 
@@ -80,6 +103,7 @@ elif args.all:
     for root, filename in markdown_files:
       # print(f"Root: {root}, Filename: {filename}")
       md2html(root+"/", filename)
+      htmlProcess(root+"/", filename)
   else:
     print("Exiting...")
     exit()

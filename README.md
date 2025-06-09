@@ -22,6 +22,7 @@ Welcome! 🚀 This repository is my personal learning space for digital design a
 	* 📂 [QT Designer GUI](utils/QT_GUI/qt_designer_gui.md)
 * 📂 [Others](others/others.md)
 	* 📂 [High Level Synthesis](others/hls/hls.md)
+* 📂 [Web Publish](web/web_deploy.md)
 
 ## 🚀 Purpose
 

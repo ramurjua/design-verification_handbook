@@ -22,7 +22,7 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
 <h1 id="high-level-synthesis">High Level Synthesis</h1>
@@ -144,24 +144,53 @@ you use floats it will generates floating point code, not optimal.</li>
 <li>Arbitrary Precision Data types: ap_uint<N> (unsigned), ap_int<N>
 (signed). N number of bits.</li>
 </ul>
-<h2 id="interface-ports-and-protocols.">Interface: Ports and
-protocols.</h2>
-<p>Block-level protocol: * Control the operation of the IP core. *
-Signals are active high. * ap_clk: Clock rising edge (Default) * ap_rst:
-Reset ative high and syncrhonus (Default) * hs_protocol (handshake
-protocol) -&gt; ap_ctrl: * ap_start: starts the operation of the IP
-Core. Must be active high for at least one clock cycle. * ap_ready: if
-active high new data can be applied to the input * ap_done: if active,
-this shows thtat the output is valid * ap_return: return value of a
-function * ap_idle: if active shows that the IP Core is idle, not
-operating. * ap_memory (memory protocol): * ap_data_addres * ap_data_ce
-* ap_data_q0</p>
-<p>C arguments types: * Scalar Arguments: input port, keep the input
-during all the IP performance. * Pointer and references: * if onlt read:
-like scalar value -&gt; input port will be generated * if only written:
-output port and hs_protocol * read/write: purely combinational * Arrays:
-* External BRAM should be attached to the IP Core * Protocol:
-ap_memory</p>
-<p>AXI Interface: * AXI4-Lite * Clk * Reset</p>
+<h2 id="interface-ports-and-protocols">Interface: Ports and
+protocols</h2>
+<p><strong>Block-level protocol:</strong></p>
+<ul>
+<li>Control the operation of the IP core.</li>
+<li>Signals are active high.</li>
+<li>ap_clk: Clock rising edge (Default)</li>
+<li>ap_rst: Reset ative high and syncrhonus (Default)</li>
+<li>hs_protocol (handshake protocol) -&gt; ap_ctrl:
+<ul>
+<li>ap_start: starts the operation of the IP Core. Must be active high
+for at least one clock cycle.</li>
+<li>ap_ready: if active high new data can be applied to the input</li>
+<li>ap_done: if active, this shows thtat the output is valid</li>
+<li>ap_return: return value of a function</li>
+<li>ap_idle: if active shows that the IP Core is idle, not
+operating.</li>
+</ul></li>
+<li>ap_memory (memory protocol):
+<ul>
+<li>ap_data_addres</li>
+<li>ap_data_ce</li>
+<li>ap_data_q0</li>
+</ul></li>
+</ul>
+<p><strong>C arguments types:</strong></p>
+<ul>
+<li>Scalar Arguments: input port, keep the input during all the IP
+performance.</li>
+<li>Pointer and references:
+<ul>
+<li>if onlt read: like scalar value -&gt; input port will be
+generated</li>
+<li>if only written: output port and hs_protocol</li>
+<li>read/write: purely combinational</li>
+</ul></li>
+<li>Arrays:
+<ul>
+<li>External BRAM should be attached to the IP Core</li>
+<li>Protocol: ap_memory</li>
+</ul></li>
+</ul>
+<p><strong>AXI Interface:</strong></p>
+<ul>
+<li>AXI4-Lite</li>
+<li>Clk</li>
+<li>Reset</li>
+</ul>
 </body>
 </html>

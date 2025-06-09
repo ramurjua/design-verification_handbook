@@ -16,9 +16,8 @@ Take into account that in order to publish a new module, its html file should be
 
 It deletes previous deployed folder. So, any change done directly in this folder would be remove. Please update files in its source. 
 
+Take into account index modifications should be done by hand. This process is not automated. 
 
 TODOs:
 
-* Reference in each html the sytles sheet with the proper root. *<link rel="stylesheet" href="style.css">* 
-  - It should be reference by counting the levels down that is the file and adding: "../" 
 * Make the index available from each html file. 

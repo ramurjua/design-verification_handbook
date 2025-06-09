@@ -22,7 +22,7 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
 <h1 id="uvm">UVM</h1>
@@ -32,8 +32,12 @@ out a set of guidlines to be followed for creation od verification
 testbenches. UVM provides a set of base classes from which more complex
 classes can be build by inheritance and adding into it certain functions
 required for verification enviroment.</p>
-<p>Advantages: * Ensure uniformity between different verification teams.
-* Flexibility. * Ease of mantaining testbenches.</p>
+<p>Advantages:</p>
+<ul>
+<li>Ensure uniformity between different verification teams.</li>
+<li>Flexibility.</li>
+<li>Ease of mantaining testbenches.</li>
+</ul>
 <p><em>Example:</em> The sequence-driver hanshake mechanishm is taken
 care of under the hood so that only stimulus need to be written. This
 saves quite a lot of time in setting up a testbench stucture since the
@@ -55,12 +59,15 @@ more dynamic in nature.</p>
 <p><em>uvm_object</em> is the main class, it defines methods for common
 operations like copy, compare and print. Typically it is used to build
 testbench and testcase configurations.</p>
-<p>There are two branches in hierarchy: * <em>uvm_component</em>:
-classes that define verification components: <em>uvm_driver,
-uvm_monitor, uvm_sequencer_ uvm_agent, uvm_test, uvm_env,
-uvm_scoreboard</em>. * <em>uvm_transaction</em>: classes that define
-data objects consumed and operated upong by verification components:
-<em>uvm_sequence_item, uvm_sequence_base, uvm_sequence</em>.</p>
+<p>There are two branches in hierarchy:</p>
+<ul>
+<li><em>uvm_component</em>: classes that define verification components:
+<em>uvm_driver, uvm_monitor, uvm_sequencer_ uvm_agent, uvm_test,
+uvm_env, uvm_scoreboard</em>.</li>
+<li><em>uvm_transaction</em>: classes that define data objects consumed
+and operated upong by verification components: <em>uvm_sequence_item,
+uvm_sequence_base, uvm_sequence</em>.</li>
+</ul>
 <p><strong>Objects</strong></p>
 <ul>
 <li><em>uvm_sequence</em> is a container for the actual stimulus to the

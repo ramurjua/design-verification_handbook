@@ -109,9 +109,10 @@ The FSM control he execution of the IP Core over the clock cycles. It generates 
 * Standard C/C++ Data types: infers data widths based on C widths. If you use floats it will generates floating point code, not optimal.
 * Arbitrary Precision Data types: ap_uint<N> (unsigned), ap_int<N> (signed). N number of bits. 
 
-## Interface: Ports and protocols.
+## Interface: Ports and protocols
 
-Block-level protocol: 
+**Block-level protocol:** 
+
 * Control the operation of the IP core. 
 * Signals are active high.
 * ap_clk: Clock rising edge (Default)
@@ -127,7 +128,8 @@ Block-level protocol:
 	* ap_data_ce
 	* ap_data_q0
 	
-C arguments types:
+**C arguments types:**
+
 * Scalar Arguments: input port, keep the input during all the IP performance. 
 * Pointer and references: 
 	* if onlt read: like scalar value -> input port will be generated
@@ -138,7 +140,8 @@ C arguments types:
 	* Protocol: ap_memory
 	
 
-AXI Interface:
+**AXI Interface:**
+
 * AXI4-Lite
 * Clk
 * Reset

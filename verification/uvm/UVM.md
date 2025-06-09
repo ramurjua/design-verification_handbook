@@ -3,6 +3,7 @@
 UVM is a framework of SystemVerilog classes from which fully functional testbenches can be built. The methodology specifies and lays out a set of guidlines to be followed for creation od verification testbenches. UVM provides a set of base classes from which more complex classes can be build by inheritance and adding into it certain functions required for verification enviroment.
 
 Advantages:
+
 * Ensure uniformity between different verification teams.
 * Flexibility.
 * Ease of mantaining testbenches.
@@ -18,6 +19,7 @@ Every simulation testbench has a few key components like: drivers, monitors, sti
 *uvm_object* is the main class, it defines methods for common operations like copy, compare and print. Typically it is used to build testbench and testcase configurations. 
 
 There are two branches in hierarchy:
+
 * *uvm_component*: classes that define verification components: *uvm_driver, uvm_monitor, uvm_sequencer_ uvm_agent, uvm_test, uvm_env, uvm_scoreboard*.
 * *uvm_transaction*: classes that define data objects consumed and operated upong by verification components: *uvm_sequence_item, uvm_sequence_base, uvm_sequence*.
 
