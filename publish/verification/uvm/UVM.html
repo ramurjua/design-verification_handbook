@@ -25,6 +25,15 @@
   <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
 <h1 id="uvm">UVM</h1>
 <p>UVM is a framework of SystemVerilog classes from which fully
 functional testbenches can be built. The methodology specifies and lays
@@ -139,5 +148,12 @@ objects can be created in the middle of the simulation. What means is
 that testbench components can be created at different times, and hance
 you could end up calling a copmponent while it hasn’t been initialized
 yet leading to woring testbench outputs.</p>
+<h2 id="verification-testbench-example">Verification Testbench
+Example</h2>
+<p><a href="/verification/uvm/examples/test_plan.html">Detect Pattern Example</a>
+verification of a pattern detector written in Verilog to identify a
+pattern in a stream of input values. On every clock there is a new input
+to the design and when it matches the pattern ‘1011’, the output is set
+to 1.</p>
 </body>
 </html>

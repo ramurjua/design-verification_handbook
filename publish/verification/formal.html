@@ -89,6 +89,15 @@
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
 <h1 id="formal-verification">Formal Verification</h1>
 <p>Formal verification is a method of verifying the correctness of a
 digital design through mathematical techniques, rather than relying on

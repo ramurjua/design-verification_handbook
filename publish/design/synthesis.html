@@ -25,6 +25,15 @@
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
 <h3 id="synthesis-and-implementation">Synthesis and Implementation</h3>
 <p><strong>What is infer latch means? How can you avoid it?</strong></p>
 <p>Infer latch means creating a feedback loop from the output back to

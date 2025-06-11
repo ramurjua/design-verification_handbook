@@ -6,38 +6,54 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <h1>📘 FPGA Design & Verification Handbook</h1>
-  <ul>
-    <li>📂 <a href="design/digital_design_concepts.html">Design</a>
-      <ul>
-        <li>📂 <a href="design/timming.html">Timing Analysis</a></li>
-        <li>📂 <a href="design/synthesis.html">Synthesis and Implementation</a></li>
-      </ul>
-    </li>
-    <li>📂 <a href="verification/basic_concetps.html">Verification</a>
-      <ul>
-        <li>📂 <a href="verification/formal.html">Formal Verification</a></li>
-        <li>📂 <a href="verification/uvm/UVM.html">UVM Theory</a>
-          <ul>
-            <li>📂 <a href="verification/uvm/examples/test_plan.html">Example: Pattern detection</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li>📂 <a href="modules/modules.html">Code Modules</a>
-    </li>
-    <li>📂 <a href="utils/utils.html">Utils</a>
-      <ul>
-        <li>📂 <a href="utils/JTAG_rp2040/xvc-pico.html">Raspberry Pi Pico JTAG</a></li>
-        <li>📂 <a href="utils/Scripts_Vivado_Workflow/vivado.html">Scripts Vivado Workflow</a></li>
-        <li>📂 <a href="utils/QT_GUI/qt_designer_gui.html">QT Designer GUI</a></li>
-      </ul>
-    </li>
-    <li>📂 <a href="others/others.html">Others</a>
-      <ul>
-        <li>📂 <a href="others/hls/hls.html">High Level Synthesis</a></li>
-      </ul>
-    </li>
-  </ul>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+<h1>📘 FPGA Design & Verification Handbook</h1>
+
+<div class="card-grid">
+  <div class="card">
+    <img src="https://placehold.co/400x200?text=Design&font=roboto" alt="Design">
+    <h2><a href="design/digital_design_concepts.html">Design</a></h2>
+    <p>Timing analysis, synthesis, and implementation techniques.</p>
+  </div>
+
+  <div class="card">
+    <img src="https://placehold.co/400x200?text=Verification&font=roboto" alt="Verification">
+    <h2><a href="verification/basic_concetps.html">Verification</a></h2>
+    <p>Formal methods, UVM theory, and practical examples.</p>
+  </div>
+
+  <div class="card">
+    <img src="https://placehold.co/400x200?text=Modules&font=roboto" alt="Modules">
+    <h2><a href="modules/modules.html">Code Modules</a></h2>
+    <p>Reusable HDL modules and design patterns.</p>
+  </div>
+
+  <div class="card">
+    <img src="https://placehold.co/400x200?text=Utils&font=roboto" alt="Utils">
+    <h2><a href="utils/utils.html">Utils</a></h2>
+    <p>JTAG tools, Vivado scripts, and GUI utilities.</p>
+  </div>
+
+  <div class="card">
+    <img src="https://placehold.co/400x200?text=Others&font=roboto" alt="Others">
+    <h2><a href="others/others.html">Others</a></h2>
+    <p>High-Level Synthesis and miscellaneous topics.</p>
+  </div>
+
+  
+  <div class="card coming-soon">
+    <img src="https://placehold.co/400x200?text=Soon&font=roboto" alt="soon">
+    <h2>🚧 Coming Soon</h2>
+    <p>More design and verification topics and tools are on the way. Stay tuned!</p>
+  </div>
+
+</div>  
 </body>
 </html>

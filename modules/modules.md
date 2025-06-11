@@ -1,4 +1,4 @@
-# ✅ Code Modules
+# Code Modules
 
 This section contains digital design modules that have been successfully developed, verified, and tested. The goal is to build a reusable library that can be easily integrated into future personal or professional projects.
 

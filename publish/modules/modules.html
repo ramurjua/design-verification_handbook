@@ -89,7 +89,16 @@
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
-<h1 id="code-modules">✅ Code Modules</h1>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
+<h1 id="code-modules">Code Modules</h1>
 <p>This section contains digital design modules that have been
 successfully developed, verified, and tested. The goal is to build a
 reusable library that can be easily integrated into future personal or

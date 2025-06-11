@@ -25,6 +25,15 @@
   <link rel="stylesheet" href="../../styles.css" />
 </head>
 <body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
 <h1 id="high-level-synthesis">High Level Synthesis</h1>
 <h2 id="introduction-to-hls">Introduction to HLS</h2>
 <p>Synthesize an algorithm model of an IP Core wirtter in C/C++ into a

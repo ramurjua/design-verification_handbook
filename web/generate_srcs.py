@@ -42,32 +42,98 @@ def md2html(rootfile, filename):
     print("[ERROR]: Not possible to convert ", rootfile+filename+".md", " from md to html")
     print(result.stderr)
   else:
-    print("[INFO]: Succesfully conversion of ", rootfile+filename+".md", " from md to html")
+    print("✅ Succesfully conversion of ", rootfile+filename+".md", " from md to html")
     
   return result.returncode
 
 
+# def htmlProcess(rootfile, filename):
+    
+#     print("Processing html")
+
+#     filepath = rootfile+filename+".html"
+    
+#     try:
+#         with open(filepath, 'r', encoding='utf-8') as file:
+#             content = file.read()
+
+#         updated_content = content.replace('.md', '.html')
+
+#         with open(filepath, 'w', encoding='utf-8') as file:
+#             file.write(updated_content)
+
+#         print(f"Processed file: {filepath}")
+#     except FileNotFoundError:
+#         print(f"File not found: {filepath}")
+#     except Exception as e:
+#         print(f"An error occurred: {e}")
+
 def htmlProcess(rootfile, filename):
     
-    print("Processing html")
+  print("Processing HTML")
 
-    filepath = rootfile+filename+".html"
+  filepath = os.path.join(rootfile, filename + ".html")
+
+  try:
+      with open(filepath, 'r', encoding='utf-8') as file:
+          content = file.read()
+
+      # Replace relative .md links with absolute .html links
+      def replace_md_link(match):
+          relative_path = match.group(1)
+          absolute_path = os.path.normpath(os.path.join(rootfile, relative_path))
+          absolute_url = absolute_path.replace(os.sep, '/').replace('.md', '.html')
+          return f'href="{absolute_url}"'
+
+      updated_content = re.sub(r'href="([^"]+\.md)"', replace_md_link, content)
+
+      with open(filepath, 'w', encoding='utf-8') as file:
+          file.write(updated_content)
+
+      print(f"✅ Links processed file: {filepath}")
+
+  except FileNotFoundError:
+      print(f"File not found: {filepath}")
+  except Exception as e:
+      print(f"An error occurred: {e}")
+
+
+def add_nav_menu(rootfile, filename):
     
-    try:
-        with open(filepath, 'r', encoding='utf-8') as file:
-            content = file.read()
+  print("Adding navigation menu")
 
-        updated_content = content.replace('.md', '.html')
-
-        with open(filepath, 'w', encoding='utf-8') as file:
-            file.write(updated_content)
-
-        print(f"Processed file: {filepath}")
-    except FileNotFoundError:
-        print(f"File not found: {filepath}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+  filepath = rootfile + filename + ".html"
   
+  # Compute relative path to nav.html
+  navroot = count_levels(rootfile)
+
+  nav_menu = f'''
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("{navroot}nav.html")
+      .then(response => response.text())
+      .then(data => {{
+        document.getElementById("nav-placeholder").innerHTML = data;
+      }});
+  </script>
+  '''
+
+  try:
+      with open(filepath, 'r', encoding='utf-8') as file:
+          content = file.read()
+
+      # Insert nav_menu right after <body>
+      updated_content = content.replace('<body>', '<body>' + nav_menu)
+
+      with open(filepath, 'w', encoding='utf-8') as file:
+          file.write(updated_content)
+
+      print(f"✅ Navigation menu added to: {filepath}")
+  except FileNotFoundError:
+      print(f"❌ File not found: {filepath}")
+  except Exception as e:
+      print(f"❌ An error occurred: {e}")
+
 
 def list_markdown_files(directory, depth=5):
   markdown_files = []
@@ -90,6 +156,7 @@ if args.only:
   selectedfile = input("Provide file name (not include extension): ")
   md2html(rootfile, selectedfile)
   htmlProcess(rootfile, selectedfile)
+  add_nav_menu(rootfile, selectedfile)
 
 elif args.all:
 
@@ -104,6 +171,7 @@ elif args.all:
       # print(f"Root: {root}, Filename: {filename}")
       md2html(root+"/", filename)
       htmlProcess(root+"/", filename)
+      add_nav_menu(root+"/", filename)
   else:
     print("Exiting...")
     exit()
