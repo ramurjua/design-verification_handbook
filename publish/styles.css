@@ -148,7 +148,7 @@ hr {
 }
 
 .menu > li:hover > a {
-  background-color: #16a085;
+  background-color: #007acc;
 }
 
 .submenu {
@@ -174,7 +174,7 @@ hr {
 }
 
 .submenu li a:hover {
-  background-color: #16a085;
+  background-color: #007acc;
 }
 
 .menu li:hover > .submenu {
