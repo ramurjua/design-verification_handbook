@@ -131,12 +131,12 @@ Module that performs the clark-park transformation, based on the following equat
 
 Amplitud invariant Clark transformation:
 
-\begin{bmatrix} Valfa \\ Vbeta \end{bmatrix} = 2/3 \begin{pmatrix} 1 & -1/2  & -1/2  \\ 0 & \sqrt{3}/2  & -\sqrt{3}/2 \end{pmatrix} \cdot \begin{bmatrix} Va \\ Vb \\ Vc \end{bmatrix}
+$$ \begin{bmatrix} Valfa \\ Vbeta \end{bmatrix} = 2/3 \begin{pmatrix} 1 & -1/2  & -1/2  \\ 0 & \sqrt{3}/2  & -\sqrt{3}/2 \end{pmatrix} \cdot \begin{bmatrix} Va \\ Vb \\ Vc \end{bmatrix} $$
 
 
 Park Transformation:
 
-\begin{bmatrix} Vd\\ Vq\end{bmatrix} = \begin{pmatrix} cos(\Theta) & sin(\Theta)   \\ -sin(\Theta) & cos(\Theta) \end{pmatrix} \cdot \begin{bmatrix} Valfa \\ Vbeta \end{bmatrix} 
+$$ \begin{bmatrix} Vd\\ Vq\end{bmatrix} = \begin{pmatrix} cos(\Theta) & sin(\Theta)   \\ -sin(\Theta) & cos(\Theta) \end{pmatrix} \cdot \begin{bmatrix} Valfa \\ Vbeta \end{bmatrix} $$ 
 
 ✔️ Verified via testbench.
 
@@ -174,11 +174,11 @@ Module that performs the clark-park inverse transformation, based on the followi
 
 Park inverse transformation:
 
-\begin{bmatrix} Valfa\\ Vbeta\end{bmatrix} = \begin{pmatrix} cos(\Theta) & -sin(\Theta)   \\sin(\Theta) & cos(\Theta) \end{pmatrix} \cdot \begin{bmatrix} Vd \\ Vq \end{bmatrix} 
+$$ \begin{bmatrix} Valfa\\ Vbeta\end{bmatrix} = \begin{pmatrix} cos(\Theta) & -sin(\Theta)   \\sin(\Theta) & cos(\Theta) \end{pmatrix} \cdot \begin{bmatrix} Vd \\ Vq \end{bmatrix} $$
 
 Clark inverse transformation:
 
-\begin{pmatrix} Va \\ Vb \\ Vc \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ -1/2 & \sqrt{3}/2 \\ -1/2 & -\sqrt{3}/2 \end{pmatrix} \cdot \begin{pmatrix} Valfa \\ Vbeta \end{pmatrix}
+$$ \begin{pmatrix} Va \\ Vb \\ Vc \end{pmatrix} = \begin{pmatrix} 1 & 0 \\ -1/2 & \sqrt{3}/2 \\ -1/2 & -\sqrt{3}/2 \end{pmatrix} \cdot \begin{pmatrix} Valfa \\ Vbeta \end{pmatrix} $$
 
 ✔️ Verified via testbench.
 
