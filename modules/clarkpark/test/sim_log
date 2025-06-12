@@ -1,0 +1,9 @@
+VCD info: dumpfile clark_park_tb.vcd opened for output.
+VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
+[INFO] >> Setting initial conditions.
+INFO: ./clark_park_tb.sv:180: Resetting module.
+      Time: 0  Scope: clark_park_tb.reset_task
+INFO: ./clark_park_tb.sv:183: Release Reset
+      Time: 0  Scope: clark_park_tb.reset_task
+[INFO] >> Test init
+./clark_park_tb.sv:134: $finish called at 2000180 (10ns)
