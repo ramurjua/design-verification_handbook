@@ -17,7 +17,7 @@ SIM = icarus
 PW_COUNTER_MODULE ?= 5
 
 # Pass the parameter to the simulator
-EXTRA_ARGS += -pvalue+pw_counter_module=$(PW_COUNTER_MODULE)
+IVERILOG_FLAGS += -P counter.pw_counter_module=$(PW_COUNTER_MODULE)
 
 # Include cocotb's simulation makefile
 include $(shell cocotb-config --makefiles)/Makefile.sim
