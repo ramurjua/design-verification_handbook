@@ -142,9 +142,9 @@ Park Transformation:
 
 🧪 Status: Tested on real hardware controlling a motor.
 
-📁 [Source Code](spi/source/clarkpark.v)
+📁 [Source Code](clarkpark/source/clarkpark.v)
 
-📁 [Testbench](spi/test/clark_park_tb.v)
+📁 [Testbench](clarkpark/test/clark_park_tb.sv)
 
 📌 Instantiation:
 
@@ -184,9 +184,9 @@ Clark inverse transformation:
 
 🧪 Status: Tested on real hardware controlling a motor.
 
-📁 [Source Code](spi/source/clarkpark_inv.v)
+📁 [Source Code](clarkpark/source/clarkpark_inv.v)
 
-📁 [Testbench](spi/test/clark_park_tb.v)
+📁 [Testbench](clarkpark/test/clark_park_tb.sv)
 
 📌 Instantiation:
 
@@ -215,9 +215,9 @@ Module that generates sin and cos waveforms of selected frequency.
 
 🧪 Status: Tested on real hardware to generate waveforms as modulators for a motor.
 
-📁 [Source Code](spi/source/dds.v)
+📁 [Source Code](clarkpark/source/dds.v)
 
-📁 [Testbench](spi/test/clark_park_tb.v)
+📁 [Testbench](clarkpark/test/clark_park_tb.sv)
 
 📌 Instantiation:
 
