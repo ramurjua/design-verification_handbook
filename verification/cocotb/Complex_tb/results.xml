@@ -1,8 +1,6 @@
 <testsuites name="results">
   <testsuite name="all" package="all">
-    <property name="random_seed" value="1748890128" />
-    <testcase name="test_counter" classname="test_counter" file="C:\Users\ramuj\Desktop\FPGA_Devs\digital_design_verification_learns\verification\cocotb\Complex_tb\test_counter.py" lineno="84" time="0.004986763000488281" sim_time_ns="20.001" ratio_time="4010.8182398164085">
-      <failure message="Test failed with RANDOM_SEED=1748890128" />
-    </testcase>
+    <property name="random_seed" value="1750074766" />
+    <testcase name="test_counter" classname="test_counter" file="C:\Users\ramuj\Desktop\FPGA_Devs\digital_design_verification_learns\verification\cocotb\Complex_tb\test_counter.py" lineno="90" time="0.007979154586791992" sim_time_ns="60.001" ratio_time="7519.718956106015" />
   </testsuite>
 </testsuites>
