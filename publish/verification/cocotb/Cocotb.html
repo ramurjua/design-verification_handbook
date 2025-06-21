@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Cocotb</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../../styles.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
+<h1 id="cocotb">Cocotb</h1>
+<p>Cocotb is a powerful verification framework that allows you to write
+testbenches for digital hardware using Python instead of traditional HDL
+languages like Verilog or VHDL. It simplifies the testing process by
+leveraging Python’s readability, extensive libraries, and advanced
+features such as coroutines and randomization. This makes it easier to
+write, debug, and scale complex test scenarios. Cocotb also integrates
+seamlessly with existing simulators, enabling modern software practices
+like unit testing and continuous integration in hardware development
+workflows.</p>
+<p>📂 <a href="/verification/cocotb/Simple_tb/adder_example.html">Create a simple testbench:
+4-bits adder example</a></p>
+<p>📂 <a href="/verification/cocotb/Complex_tb/counter_example.html">Using advanced
+verification components: counter example</a></p>
+<h2 id="key-concepts-in-cocotb">Key Concepts in Cocotb</h2>
+<h3 id="coroutines-async-def">1. Coroutines (async def)</h3>
+<p>Coroutines are functions that can pause execution using await,
+allowing simulation of time or event-based behavior.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="at">@cocotb.test</span>()</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> my_test(dut):</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> RisingEdge(dut.clk)</span></code></pre></div>
+<h3 id="triggers">2. Triggers</h3>
+<p>Triggers are events that synchronize test execution with the
+simulator:</p>
+<ul>
+<li>RisingEdge(signal): wait for rising edge</li>
+<li>FallingEdge(signal): wait for falling edge</li>
+<li>Timer(time, units=‘ns’): wait for a specific time</li>
+<li>ReadOnly(): wait until the simulator finishes the current cycle</li>
+</ul>
+<h3 id="parallel-execution-forkjoin">3. Parallel Execution
+(fork/join)</h3>
+<p>You can launch tasks in parallel using cocotb.start_soon() similarly
+as with verilog fork join instruction.</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">initial</span> <span class="kw">begin</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">fork</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    task1<span class="op">();</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    task2<span class="op">();</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">join</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">$display</span><span class="op">(</span><span class="st">&quot;Both tasks completed&quot;</span><span class="op">);</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> task1():</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> Timer(<span class="dv">10</span>, units<span class="op">=</span><span class="st">&#39;ns&#39;</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    cocotb.log.info(<span class="st">&quot;Task 1 done&quot;</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> task2():</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> Timer(<span class="dv">20</span>, units<span class="op">=</span><span class="st">&#39;ns&#39;</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    cocotb.log.info(<span class="st">&quot;Task 2 done&quot;</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="at">@cocotb.test</span>()</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> test_parallel(dut):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    cocotb.start_soon(task1())</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>    cocotb.start_soon(task2())</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> Timer(<span class="dv">30</span>, units<span class="op">=</span><span class="st">&#39;ns&#39;</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    cocotb.log.info(<span class="st">&quot;Both tasks should be done&quot;</span>)</span></code></pre></div>
+<h3 id="subroutines-task">4. Subroutines (task)</h3>
+<p>Reusable functions are defined using async def</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> reset(dut):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    dut.rst.value <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> Timer(<span class="dv">10</span>, units<span class="op">=</span><span class="st">&#39;ns&#39;</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    dut.rst.value <span class="op">=</span> <span class="dv">0</span></span></code></pre></div>
+<h3 id="logging-and-errors">5. Logging and Errors</h3>
+<ul>
+<li>cocotb.log.info(“message”): print information</li>
+<li>assert condition, “message”: raise error if condition fails</li>
+</ul>
+<h2 id="verilog-vs.-cocotb-feature-equivalents">Verilog vs. Cocotb –
+Feature Equivalents</h2>
+<table>
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 57%" />
+<col style="width: 14%" />
+</colgroup>
+<thead>
+<tr>
+<th>Verilog Feature</th>
+<th>Cocotb Equivalent</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>initial</code> / <code>always</code></td>
+<td><code>@cocotb.test()</code> + <code>async def</code></td>
+<td>Test blocks</td>
+</tr>
+<tr>
+<td><code>posedge clk</code></td>
+<td><code>await RisingEdge(dut.clk)</code></td>
+<td>Wait for rising edge</td>
+</tr>
+<tr>
+<td><code>wait (cond)</code></td>
+<td><code>await ReadOnly(); if cond:</code> or
+<code>await Event()</code></td>
+<td>Wait for condition</td>
+</tr>
+<tr>
+<td><code>task</code></td>
+<td><code>async def name():</code></td>
+<td>Asynchronous subroutine</td>
+</tr>
+<tr>
+<td><code>fork/join</code></td>
+<td><code>cocotb.start_soon(func())</code></td>
+<td>Run in parallel</td>
+</tr>
+<tr>
+<td><code>$display(...)</code></td>
+<td><code>cocotb.log.info(...)</code></td>
+<td>Print messages</td>
+</tr>
+<tr>
+<td><code>$error(...)</code></td>
+<td><code>assert cond, "message"</code></td>
+<td>Assertion failure</td>
+</tr>
+</tbody>
+</table>
+<h2
+id="advanced-verification-componentes-what-are-drivers-monitors-and-scoreboards">Advanced
+verification componentes: What Are Drivers, Monitors, and
+Scoreboards?</h2>
+<p>These are testbench components that help you organize your
+verification code in a clean and reusable way. They are inspired by
+object-oriented verification methodologies like UVM (Universal
+Verification Methodology), but adapted to Python and Cocotb.</p>
+<h3 id="drivers-stimulus-generators">1. Drivers – Stimulus
+Generators</h3>
+<p>A driver is a component that sends inputs to the DUT (Device Under
+Test). It encapsulates the logic for applying values to input signals,
+often in a reusable and parameterized way.</p>
+<ul>
+<li>Keeps test code clean</li>
+<li>Allows reuse across multiple tests</li>
+<li>Makes it easier to randomize or sequence inputs</li>
+</ul>
+<p><em>Example Use Case</em></p>
+<p>Instead of writing this in every test:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>dut.a.value <span class="op">=</span> <span class="dv">5</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>dut.b.value <span class="op">=</span> <span class="dv">3</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> Timer(<span class="dv">2</span>, units<span class="op">=</span><span class="st">&#39;ns&#39;</span>)</span></code></pre></div>
+<p>You write:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> driver.send(<span class="dv">5</span>, <span class="dv">3</span>)</span></code></pre></div>
+<h3 id="monitors-output-observers">2. Monitors – Output Observers</h3>
+<p>A monitor is a passive component that watches the DUT’s outputs and
+records or reports them. It does not drive any signals — it just
+listens.</p>
+<ul>
+<li>Separates observation from checking</li>
+<li>Can log or store outputs for later comparison</li>
+<li>Useful for coverage collection or debugging</li>
+</ul>
+<p><em>Example Use Case</em></p>
+<p>Instead of checking outputs manually:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> RisingEdge(dut.clk)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>observed <span class="op">=</span> dut.<span class="bu">sum</span>.value</span></code></pre></div>
+<p>You write:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="cf">await</span> monitor.observe()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># monitor stores or logs the value internally</span></span></code></pre></div>
+<h3 id="scoreboards-output-checkers">3. Scoreboards – Output
+Checkers</h3>
+<p>A scoreboard is a component that compares the expected outputs (from
+a model or prediction) with the actual outputs (from the DUT). It’s the
+core of a self-checking testbench.</p>
+<ul>
+<li>Automates result checking</li>
+<li>Helps detect mismatches</li>
+<li>Makes your testbench scalable and maintainable</li>
+</ul>
+<p><em>Example Use Case</em></p>
+<p>Instead of writing:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> dut.<span class="bu">sum</span>.value <span class="op">==</span> expected</span></code></pre></div>
+<p>You write:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>scoreboard.add_expected(expected)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>scoreboard.add_actual(dut.<span class="bu">sum</span>.value)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>scoreboard.check()</span></code></pre></div>
+<h3 id="how-they-work-together">How They Work Together</h3>
+<ul>
+<li>Driver sends inputs to the DUT.</li>
+<li>Monitor observes outputs from the DUT.</li>
+<li>Scoreboard compares expected vs actual outputs.</li>
+</ul>
+</body>
+</html>
