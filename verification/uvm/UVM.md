@@ -3,13 +3,16 @@
 UVM is a framework of SystemVerilog classes from which fully functional testbenches can be built. The methodology specifies and lays out a set of guidlines to be followed for creation od verification testbenches. UVM provides a set of base classes from which more complex classes can be build by inheritance and adding into it certain functions required for verification enviroment.
 
 Advantages:
+
 * Ensure uniformity between different verification teams.
 * Flexibility.
 * Ease of mantaining testbenches.
 
 *Example:* The sequence-driver hanshake mechanishm is taken care of under the hood so that only stimulus need to be written. This saves quite a lot of time in setting up a testbench stucture since the foundation itself is well defined.
 
-![alt text](uvm_tb.png)
+![uvm tb](uvm_tb.png)
+
+📂 [Example: Pattern detection](examples/test_plan.md) 
 
 ## Components vs Objects
 
@@ -18,6 +21,7 @@ Every simulation testbench has a few key components like: drivers, monitors, sti
 *uvm_object* is the main class, it defines methods for common operations like copy, compare and print. Typically it is used to build testbench and testcase configurations. 
 
 There are two branches in hierarchy:
+
 * *uvm_component*: classes that define verification components: *uvm_driver, uvm_monitor, uvm_sequencer_ uvm_agent, uvm_test, uvm_env, uvm_scoreboard*.
 * *uvm_transaction*: classes that define data objects consumed and operated upong by verification components: *uvm_sequence_item, uvm_sequence_base, uvm_sequence*.
 
@@ -58,3 +62,7 @@ Methods that do not consume simulation time are functions and methods that consu
 **Why SystemVerilog testbench need phases and verilog testbench does not?**
 
 Verilog testbenches have all its components made of static containers or modules. Since a module is static, all modules will be created at beginning of the simulation and don't have to worry about any components getting called without being created or initialized. SystemVerilog introduces OOP features. This enables the creation of well structured entites that can be rused and desployed when required. These class objects can be created in the middle of the simulation. What means is that testbench components can be created at different times, and hance you could end up calling a copmponent while it hasn't been initialized yet leading to woring testbench outputs.  
+
+## Verification Testbench Example
+
+[Detect Pattern Example](examples/test_plan.md) verification of a pattern detector written in Verilog to identify a pattern in a stream of input values. On every clock there is a new input to the design and when it matches the pattern '1011', the output is set to 1.

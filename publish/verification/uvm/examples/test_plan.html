@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>test_plan</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../../../styles.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../../../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
+<h1 id="verification-testbench-example">Verification Testbench
+Example</h1>
+<h2 id="especification">Especification</h2>
+<p>The design is a pattern detector written in Verilog to identify a
+pattern in a stream of input values. On every clock there is a new input
+to the design and when it matches the pattern ‘1011’, the output is set
+to 1. The implemented design is <em>detect_pattern</em> module. It
+consists on a shift register and a comparator.</p>
+<h2 id="testbench">Testbench</h2>
+<ul>
+<li>The sequence generate random stream input values that will be passed
+to the driver as a sequence item.</li>
+<li>The driver receives the item and drives it to the DUT through a
+virtual interface.</li>
+<li>The monitor captures values on the DUT’s input and output, creates a
+packet and sends to the scoreboard.</li>
+<li>The scoreboard checks the functional correctness based on the values
+received from monitor.</li>
+</ul>
+<figure>
+<img src="../img/testbench_block_diagram.png"
+alt="testbench block diagram" />
+<figcaption aria-hidden="true">testbench block diagram</figcaption>
+</figure>
+<h3 id="sequence-item">Sequence Item</h3>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// This is the base transaction object. It will be used in the enviroment to </span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co">// initiate new transactions and capture transactions at DUT interface.</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>class Ittem extends uvm_sequence_item<span class="op">;</span> <span class="co">// extends the UVM provided class uv_sequence_item</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_object_utils(Item) </span><span class="co">// register object with a factory</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>rand bit in<span class="op">;</span> <span class="co">// Name of input port that shoud be randomize</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>bit out<span class="op">;</span> <span class="co">// Name of output port that shoud be captured</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">// typical function used to convert attributes to string</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> string convert2str<span class="op">();</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    return <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;in=%0d, out=%0d&quot;</span><span class="op">,</span> in<span class="op">,</span> out<span class="op">);</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> new <span class="op">(</span>string name <span class="op">=</span> <span class="st">&quot;Item&quot;</span><span class="op">)</span> <span class="co">// Constructor</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>    super.new<span class="op">(</span>name<span class="op">);</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="co">// constain block: expression used to limit the </span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co">// values of random variables </span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>constraint c1 <span class="op">{</span> in dist <span class="op">{</span><span class="dv">0</span><span class="op">:/</span><span class="dv">20</span><span class="op">,</span> <span class="dv">1</span><span class="op">:/</span><span class="dv">80</span><span class="op">};</span> <span class="op">}</span> </span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co">// in debe valor 0 con una probablidad del 20% </span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co">// y 1 con una probablidad del 80%</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="sequence">Sequence</h3>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>class gen_item_seq extends uvm_sequence<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_object_utils(gen_item_seq) </span><span class="co">// register object with a factory</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> new<span class="op">(</span>string name<span class="op">=</span><span class="st">&quot;gen_item_seq&quot;</span><span class="op">)</span> <span class="co">// constructor</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    super.new<span class="op">(</span>name<span class="op">);</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>rand int rum<span class="op">;</span> <span class="co">// config total number of items to be sent</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co">//num is prefered in range 10-50 but it can be modified by external configurations</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>constraint c1 <span class="op">{</span> soft num inside <span class="op">{[</span><span class="dv">10</span><span class="op">:</span><span class="dv">50</span><span class="op">]};}</span> </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">task</span> body<span class="op">();</span> <span class="co">// begin point of sequence</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">for</span> <span class="op">(</span>int i <span class="op">=</span> <span class="dv">0</span><span class="op">;</span> i <span class="op">&lt;</span> num<span class="op">;</span> i <span class="op">++)</span> <span class="kw">begin</span> <span class="co">// generates num items</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="co">// creates a new sequence item called m_item of kind Item</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>        Item m_item <span class="op">=</span> Item<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;m_item&quot;</span><span class="op">);</span> </span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>        <span class="co">// start transaction</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>        start_item<span class="op">(</span>m_item<span class="op">);</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>        <span class="co">// randomize value of rand variables applying restrictions</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>        m_item.randomize<span class="op">();</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>        <span class="co">// prints info</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>        <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;SEQ&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;Generate new item: %s&quot;</span><span class="op">,</span> m_item.convert2str<span class="op">()),</span> UVM_HIGH<span class="op">)</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>        <span class="co">// finish transaction</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>        finish_item<span class="op">(</span>m_item<span class="op">);</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;SEQ&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;Done generation of %0d items&quot;</span><span class="op">,</span> num<span class="op">),</span> UVM_LOW<span class="op">)</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a><span class="kw">endtask</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="driver">Driver</h3>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// The driver is responsible for driving transactions to the DUT</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>class driver extends uvm_driver #<span class="op">(</span>Item<span class="op">);</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_component_utils(driver)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> new<span class="op">(</span>string name <span class="op">=</span> <span class="st">&quot;driver&quot;</span><span class="op">,</span> uvm_component parent<span class="op">=</span>null<span class="op">);</span> <span class="co">//constructor</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    super.new<span class="op">(</span>name<span class="op">,</span> parent<span class="op">);</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>virtual des_if vif<span class="op">;</span> <span class="co">// creates virtual interface type of des_if</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span> <span class="co">// build phase function</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(!</span>uvm_config_db#<span class="op">(</span>virtual des_if<span class="op">)::</span>get<span class="op">(</span>this<span class="op">,</span> <span class="st">&quot;&quot;</span><span class="op">,</span> <span class="st">&quot;des_vif&quot;</span><span class="op">,</span> vif<span class="op">))</span> <span class="co">// gets virtual inteface from configuration data base of UVM</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="ot">`uvm_fatal</span><span class="op">(</span><span class="st">&quot;DRV&quot;</span><span class="op">,</span> <span class="st">&quot;Could not get vif&quot;</span><span class="op">)</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">task</span> run_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>    super.run_phase<span class="op">(</span>phase<span class="op">)</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">forever</span> <span class="kw">begin</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>        Item m_item<span class="op">;</span> <span class="co">// declares a transaction type of Item (parameter)</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>        <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;DRV&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;Wait for item from sequencer&quot;</span><span class="op">),</span> UVM_HIGH<span class="op">)</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        seq_item_port.get_next_item<span class="op">(</span>m_item<span class="op">);</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        drive_item<span class="op">(</span>m_item<span class="op">);</span> <span class="co">// convert item into DUT signals</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>        seq_item_port.item_done<span class="op">();</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="kw">endtask</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">task</span> drive_item<span class="op">(</span>Item m_item<span class="op">);</span> <span class="co">// convert item into DUT signals</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>    <span class="op">@(</span>vif.cb<span class="op">);</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    vif.cb.in <span class="op">&lt;=</span> m_item.in<span class="op">;</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="kw">endtask</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="monitor">Monitor</h3>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// The monitor has a virtual interface handle with wihic it </span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">// can monitor the events happening on the interface</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>class monitor extends uvm_monitor<span class="op">;</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_component_utils(monitor)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> new<span class="op">(</span>string name<span class="op">=</span><span class="st">&quot;monitor&quot;</span><span class="op">,</span> uvm_component parent<span class="op">=</span>null<span class="op">);</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    super.new<span class="op">(</span>name<span class="op">,</span> parent<span class="op">);</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>uvm_analysis_port  #<span class="op">(</span>Item<span class="op">)</span> mon_analysis_port<span class="op">;</span> <span class="co">// port to monitor</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>virtual des_if vif<span class="op">;</span> <span class="co">// creates virtual interface type of des_if</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(!</span>uvm_config_db#<span class="op">(</span>virtual des_if<span class="op">)::</span>get<span class="op">(</span>this<span class="op">,</span> <span class="st">&quot;&quot;</span><span class="op">,</span> <span class="st">&quot;des_vif&quot;</span><span class="op">,</span> vif<span class="op">))</span> <span class="co">// gets virtual inteface from configuration data base of UVM</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>      <span class="ot">`uvm_fatal</span><span class="op">(</span><span class="st">&quot;MON&quot;</span><span class="op">,</span> <span class="st">&quot;Could not get vif&quot;</span><span class="op">)</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    mon_analysis_port <span class="op">=</span> new <span class="op">(</span><span class="st">&quot;mon_analysis_port&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">task</span> run_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    super.run_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="co">// This task monitors the interface for a complete</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// transaction and writes into analysis port when complete</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">forever</span> <span class="kw">begin</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>      <span class="op">@</span> <span class="op">(</span>vif.cb<span class="op">);</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>            <span class="kw">if</span> <span class="op">(</span>vif.rstn<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>                Item item <span class="op">=</span> Item<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;item&quot;</span><span class="op">);</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>                item.in <span class="op">=</span> vif.in<span class="op">;</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>                item.out <span class="op">=</span> vif.cb.out<span class="op">;</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>                mon_analysis_port.write<span class="op">(</span>item<span class="op">);</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>              <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;MON&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;Saw item %s&quot;</span><span class="op">,</span> item.convert2str<span class="op">()),</span> UVM_HIGH<span class="op">)</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>            <span class="kw">end</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endtask</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="scoreboard">Scoreboard</h3>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// The scoreboard is responsible to check design functionality.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>class scoreboard extends uvm_scoreboard<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_component_utils(scoreboard)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> new<span class="op">(</span>string name<span class="op">=</span><span class="st">&quot;scoreboard&quot;</span><span class="op">,</span> uvm_component parent<span class="op">=</span>null<span class="op">);</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>super.new<span class="op">(</span>name<span class="op">,</span> parent<span class="op">);</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>bit<span class="op">[</span><span class="ot">`LENGTH</span><span class="dv">-1</span><span class="op">:</span><span class="dv">0</span><span class="op">]</span>    ref_pattern<span class="op">;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>bit<span class="op">[</span><span class="ot">`LENGTH</span><span class="dv">-1</span><span class="op">:</span><span class="dv">0</span><span class="op">]</span>    act_pattern<span class="op">;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>bit                 exp_out<span class="op">;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>uvm_analysis_imp #<span class="op">(</span>Item<span class="op">,</span> scoreboard<span class="op">)</span> m_analysis_imp<span class="op">;</span> <span class="co">// declare analysis port, first parameter is expected data type and second is where is handled</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    m_analysis_imp <span class="op">=</span> new<span class="op">(</span><span class="st">&quot;m_analysis_imp&quot;</span><span class="op">,</span> this<span class="op">);</span> <span class="co">// creates analysis port</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(!</span>uvm_config_db#<span class="op">(</span>bit<span class="op">[</span><span class="ot">`LENGTH</span><span class="dv">-1</span><span class="op">:</span><span class="dv">0</span><span class="op">])::</span>get<span class="op">(</span>this<span class="op">,</span> <span class="st">&quot;*&quot;</span><span class="op">,</span> <span class="st">&quot;ref_pattern&quot;</span><span class="op">,</span> ref_pattern<span class="op">))</span> <span class="co">// obtains ref pattern </span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>            <span class="ot">`uvm_fatal</span><span class="op">(</span><span class="st">&quot;SCBD&quot;</span><span class="op">,</span> <span class="st">&quot;Did not get ref_pattern !&quot;</span><span class="op">)</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> write<span class="op">(</span>Item item<span class="op">);</span> <span class="co">// Process received data</span></span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    act_pattern <span class="op">=</span> act_pattern <span class="op">&lt;&lt;</span> <span class="dv">1</span> <span class="op">|</span> item.in<span class="op">;</span></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>    <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;SCBD&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;in=%0d out=%0d ref=0b%0b act=0b%0b&quot;</span><span class="op">,</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>                               item.in<span class="op">,</span> item.out<span class="op">,</span> ref_pattern<span class="op">,</span> act_pattern<span class="op">),</span> UVM_LOW<span class="op">)</span></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Always check that expected out value is the actual observed value</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>    <span class="co">// Since it takes 1 clock for out to be updated after pattern match,</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>    <span class="co">// do the check first and then update exp_out value</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(</span>item.out <span class="op">!=</span> exp_out<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>      <span class="ot">`uvm_error</span><span class="op">(</span><span class="st">&quot;SCBD&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;ERROR ! out=%0d exp=%0d&quot;</span><span class="op">,</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>                                                item.out<span class="op">,</span> exp_out<span class="op">))</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span> <span class="kw">else</span> <span class="kw">begin</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>      <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;SCBD&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;PASS ! out=%0d exp=%0d&quot;</span><span class="op">,</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>                                  item.out<span class="op">,</span> exp_out<span class="op">),</span> UVM_HIGH<span class="op">)</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>    <span class="co">// If current index has reached the full pattern, then set exp_out to be 1</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>    <span class="co">// which will be checked in the next clock. If pattern is not complete, keep</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>    <span class="co">// exp_out to zero</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>    <span class="kw">if</span> <span class="op">(!(</span>ref_pattern <span class="op">^</span> act_pattern<span class="op">))</span> <span class="kw">begin</span></span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>      <span class="ot">`uvm_info</span><span class="op">(</span><span class="st">&quot;SCBD&quot;</span><span class="op">,</span> <span class="dt">$sformatf</span><span class="op">(</span><span class="st">&quot;Pattern found to match, next out should be 1&quot;</span><span class="op">),</span> UVM_LOW<span class="op">)</span></span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>        exp_out <span class="op">=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span> <span class="kw">else</span> <span class="kw">begin</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>      exp_out <span class="op">=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="agent">Agent</h3>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Create an intermediate container called &quot;agent&quot; to hold</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">// driver, monitor and sequencer</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>class agent extends uvm_agent<span class="op">;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_component_utils(agent)</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> new<span class="op">(</span>string name<span class="op">=</span><span class="st">&quot;agent&quot;</span><span class="op">,</span> uvm_component parent<span class="op">=</span>null<span class="op">);</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>super.new<span class="op">(</span>name<span class="op">,</span> parent<span class="op">);</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>driver          d0<span class="op">;</span>         <span class="co">// Driver handle</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>monitor         m0<span class="op">;</span>         <span class="co">// Monitor handle</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>uvm_sequencer #<span class="op">(</span>Item<span class="op">)</span>   s0<span class="op">;</span>         <span class="co">// Sequencer Handle</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span> <span class="co">// builds driver monitor and sequencer</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    s0 <span class="op">=</span> uvm_sequencer#<span class="op">(</span>Item<span class="op">)::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;s0&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    d0 <span class="op">=</span> driver<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;d0&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    m0 <span class="op">=</span> monitor<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;m0&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> void connect_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span> <span class="co">// connect sequencer with driver</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    super.connect_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    d0.seq_item_port.connect<span class="op">(</span>s0.seq_item_export<span class="op">);</span></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="enviroment">Enviroment</h3>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">// The environment is a container object simply to hold</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">// all verification  components together. This environment can</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">// then be reused later and all components in it would be</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">// automatically connected and available for use</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>class env extends uvm_env<span class="op">;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="ot">`uvm_component_utils</span><span class="op">(</span>env<span class="op">)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> new<span class="op">(</span>string name<span class="op">=</span><span class="st">&quot;env&quot;</span><span class="op">,</span> uvm_component parent<span class="op">=</span>null<span class="op">);</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    super.new<span class="op">(</span>name<span class="op">,</span> parent<span class="op">);</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  agent         a0<span class="op">;</span>         <span class="co">// Agent handle</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  scoreboard    sb0<span class="op">;</span>        <span class="co">// Scoreboard handle</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    a0 <span class="op">=</span> agent<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;a0&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    sb0 <span class="op">=</span> scoreboard<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;sb0&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>  virtual <span class="kw">function</span> void connect_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>    super.connect_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>    a0.m0.mon_analysis_port.connect<span class="op">(</span>sb0.m_analysis_imp<span class="op">);</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="test">Test</h3>
+<p>The base test class configures the enviroment, obtains the virtual
+interface and configures the reference patterns. It also applies reset,
+inits sequence and manage simulation end. While test_1011 extends the
+base test class in order to specialize it to match pattern 1011. It is
+easier to afterwards create new patterns.</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>class base_test extends uvm_test<span class="op">;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="ot">`uvm_component_utils(base_test)</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>env  e0<span class="op">;</span>  <span class="co">// Instantiate verification enviroment</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>bit<span class="op">[</span><span class="ot">`LENGTH</span><span class="dv">-1</span><span class="op">:</span><span class="dv">0</span><span class="op">]</span> pattern <span class="op">=</span> <span class="bn">4&#39;b1011</span><span class="op">;</span>  <span class="co">// Reference Pattern</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>gen_item_seq seq<span class="op">;</span>  <span class="co">// Instatiate sequence</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>virtual des_if vif<span class="op">;</span>  <span class="co">// Virtual interface to connect DUT</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Create environment</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  e0 <span class="op">=</span> env<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;e0&quot;</span><span class="op">,</span> this<span class="op">);</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Obtain virtual interface from uvm_config_db</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">if</span> <span class="op">(!</span>uvm_config_db#<span class="op">(</span>virtual des_if<span class="op">)::</span>get<span class="op">(</span>this<span class="op">,</span> <span class="st">&quot;&quot;</span><span class="op">,</span> <span class="st">&quot;des_vif&quot;</span><span class="op">,</span> vif<span class="op">))</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="ot">`uvm_fatal</span><span class="op">(</span><span class="st">&quot;TEST&quot;</span><span class="op">,</span> <span class="st">&quot;Did not get vif&quot;</span><span class="op">)</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Set interface into the agent inside the enviroment</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>  uvm_config_db#<span class="op">(</span>virtual des_if<span class="op">)::</span>set<span class="op">(</span>this<span class="op">,</span> <span class="st">&quot;e0.a0.*&quot;</span><span class="op">,</span> <span class="st">&quot;des_vif&quot;</span><span class="op">,</span> vif<span class="op">);</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Configure reference pattern</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  uvm_config_db#<span class="op">(</span>bit<span class="op">[</span><span class="ot">`LENGTH</span><span class="dv">-1</span><span class="op">:</span><span class="dv">0</span><span class="op">])::</span>set<span class="op">(</span>this<span class="op">,</span> <span class="st">&quot;*&quot;</span><span class="op">,</span> <span class="st">&quot;ref_pattern&quot;</span><span class="op">,</span> pattern<span class="op">);</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>  <span class="co">// Create sequence and randomize</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>  seq <span class="op">=</span> gen_item_seq<span class="op">::</span>type_id<span class="op">::</span>create<span class="op">(</span><span class="st">&quot;seq&quot;</span><span class="op">);</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  seq.randomize<span class="op">();</span></span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="kw">endfunction</span></span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">task</span> run_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  phase.raise_objection<span class="op">(</span>this<span class="op">);</span> <span class="co">// We raise objection to keep the test from completing</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  apply_reset<span class="op">();</span> </span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  seq.start<span class="op">(</span>e0.a0.s0<span class="op">);</span>  <span class="co">// Start sequencer from agent</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>  <span class="bn">#200</span><span class="op">;</span></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a>  phase.drop_objection<span class="op">(</span>this<span class="op">);</span>  <span class="co">// We drop objection to allow the test to complete</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="kw">endtask</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>virtual <span class="kw">task</span> apply_reset<span class="op">();</span></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a>    vif.rstn <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a>    vif.in <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>    <span class="kw">repeat</span><span class="op">(</span><span class="dv">5</span><span class="op">)</span> <span class="op">@</span> <span class="op">(</span><span class="kw">posedge</span> vif.clk<span class="op">);</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>    vif.rstn <span class="op">&lt;=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>    <span class="kw">repeat</span><span class="op">(</span><span class="dv">10</span><span class="op">)</span> <span class="op">@</span> <span class="op">(</span><span class="kw">posedge</span> vif.clk<span class="op">);</span></span>
+<span id="cb8-46"><a href="#cb8-46" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endtask</span></span>
+<span id="cb8-47"><a href="#cb8-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-48"><a href="#cb8-48" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>class test_1011 extends base_test<span class="op">;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="ot">`uvm_component_utils</span><span class="op">(</span>test_1011<span class="op">)</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">function</span> new<span class="op">(</span>string name<span class="op">=</span><span class="st">&quot;test_1011&quot;</span><span class="op">,</span> uvm_component parent<span class="op">=</span>null<span class="op">);</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    super.new<span class="op">(</span>name<span class="op">,</span> parent<span class="op">);</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  virtual <span class="kw">function</span> void build_phase<span class="op">(</span>uvm_phase phase<span class="op">);</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    pattern <span class="op">=</span> <span class="bn">4&#39;b1011</span><span class="op">;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    super.build_phase<span class="op">(</span>phase<span class="op">);</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    seq.randomize<span class="op">()</span> with <span class="op">{</span> num inside <span class="op">{[</span><span class="dv">300</span><span class="op">:</span><span class="dv">500</span><span class="op">]};</span> <span class="op">};</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">endfunction</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>endclass</span></code></pre></div>
+<h3 id="interface">Interface</h3>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">// The interface allows verification components to access DUT signals</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">// using a virtual interface handle</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>interface des_if <span class="op">(</span><span class="dt">input</span> bit clk<span class="op">);</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    logic rstn<span class="op">;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    logic in<span class="op">;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    logic out<span class="op">;</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    clocking cb <span class="op">@(</span><span class="kw">posedge</span> clk<span class="op">);</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>      <span class="kw">default</span> <span class="dt">input</span> <span class="bn">#1</span>step <span class="dt">output</span> <span class="bn">#3</span>ns<span class="op">;</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        <span class="dt">input</span> out<span class="op">;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        <span class="dt">output</span> in<span class="op">;</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    endclocking</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>endinterface</span></code></pre></div>
+<h3 id="testbench-top">Testbench top</h3>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> tb<span class="op">;</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  bit clk<span class="op">;</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">always</span> <span class="bn">#10</span> clk <span class="op">=~</span> clk<span class="op">;</span> <span class="co">// Generate clock</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  des_if _if <span class="op">(</span>clk<span class="op">);</span> <span class="co">// instantiate interface</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    detect_pattern u0   <span class="op">(</span> .clk<span class="op">(</span>clk<span class="op">),</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>                     .rstn<span class="op">(</span>_if.rstn<span class="op">),</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                     .i_data<span class="op">(</span>_if.in<span class="op">),</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>                     .or_dout<span class="op">(</span>_if.out<span class="op">));</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">initial</span> <span class="kw">begin</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    clk <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">;</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>    uvm_config_db#<span class="op">(</span>virtual des_if<span class="op">)::</span>set<span class="op">(</span>null<span class="op">,</span> <span class="st">&quot;uvm_test_top&quot;</span><span class="op">,</span> <span class="st">&quot;des_vif&quot;</span><span class="op">,</span> _if<span class="op">);</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    run_test<span class="op">(</span><span class="st">&quot;test_1011&quot;</span><span class="op">);</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">end</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div>
+</body>
+</html>

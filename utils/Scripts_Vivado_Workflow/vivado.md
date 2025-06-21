@@ -1,4 +1,4 @@
-# 📦 Scripts Vivado Workflow
+# Scripts Vivado Workflow
 
 This project includes a TCL + BAT based scripts for automation flow for creating, synthesizing, implementing, and generating the bitstream, memory configuration file and debug probes using Xilinx Vivado.
 

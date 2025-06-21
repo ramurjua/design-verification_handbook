@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>utils</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
+<h1 id="utils">Utils</h1>
+<p>A collection of useful tools, scripts, and small hardware hacks
+designed to simplify and speed up development workflows in DIY
+electronics and FPGA-based projects. These utilities are meant to reduce
+manual overhead and promote reusability across different environments
+and setups. Whether you’re looking to automate FPGA builds or repurpose
+low-cost microcontrollers for debugging, this section gathers practical
+solutions that can save you time and effort.</p>
+<h3 id="rasberrypi-pico-jtag">🔹 RasberryPi Pico JTAG</h3>
+<p><a href="../utils/JTAG_rp2040/xvc-pico.html">RasberryPi Pico JTAG</a> provides a
+cheap and open source method to program and FPGA is using a Rasberry
+Pico as a JTAG cable.</p>
+<h3 id="scripts-vivado-workflow">🔹 Scripts Vivado Workflow</h3>
+<p><a href="../utils/Scripts_Vivado_Workflow/vivado.html">Scripts Vivado
+Workflow</a> provides TCL + BAT scripts for automation flow for
+creating, synthesizing, implementing, and generating the bitstream,
+memory configuration file and debug probes using Xilinx Vivado.</p>
+<h3 id="qt-designer-gui">🔹 QT Designer GUI</h3>
+<p><a href="../utils/QT_GUI/qt_designer_gui.html">QT Designer GUI</a> provides a
+step by step tutorial to create a simple grpahical user interface using
+QT Designer and Python.</p>
+</body>
+</html>

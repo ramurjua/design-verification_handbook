@@ -1,0 +1,78 @@
+#! /c/Source/iverilog-install/bin/vvp
+:ivl_version "12.0 (devel)" "(s20150603-1539-g2693dd32b)";
+:ivl_delay_selection "TYPICAL";
+:vpi_time_precision - 12;
+:vpi_module "C:\iverilog\lib\ivl\system.vpi";
+:vpi_module "C:\iverilog\lib\ivl\vhdl_sys.vpi";
+:vpi_module "C:\iverilog\lib\ivl\vhdl_textio.vpi";
+:vpi_module "C:\iverilog\lib\ivl\v2005_math.vpi";
+:vpi_module "C:\iverilog\lib\ivl\va_math.vpi";
+:vpi_module "C:\iverilog\lib\ivl\v2009.vpi";
+S_0000024b8b3e34a0 .scope package, "$unit" "$unit" 2 1;
+ .timescale -9 -12;
+S_0000024b8b3e3630 .scope module, "counter" "counter" 3 1;
+ .timescale -9 -12;
+    .port_info 0 /INPUT 1 "clk";
+    .port_info 1 /INPUT 1 "rst";
+    .port_info 2 /INPUT 5 "ip_module";
+    .port_info 3 /OUTPUT 1 "o_tc";
+P_0000024b8b4154b0 .param/l "pw_counter_module" 0 3 2, +C4<00000000000000000000000000000101>;
+v0000024b8b3e37c0_0 .net *"_ivl_0", 31 0, L_0000024b8b413130;  1 drivers
+v0000024b8b3e3860_0 .net *"_ivl_10", 31 0, L_0000024b8b413810;  1 drivers
+v0000024b8b461c30_0 .net *"_ivl_12", 0 0, L_0000024b8b412c30;  1 drivers
+L_0000024b8b4622a0 .functor BUFT 1, C4<1>, C4<0>, C4<0>, C4<0>;
+v0000024b8b461cd0_0 .net/2u *"_ivl_14", 0 0, L_0000024b8b4622a0;  1 drivers
+L_0000024b8b4622e8 .functor BUFT 1, C4<0>, C4<0>, C4<0>, C4<0>;
+v0000024b8b461d70_0 .net/2u *"_ivl_16", 0 0, L_0000024b8b4622e8;  1 drivers
+L_0000024b8b4621c8 .functor BUFT 1, C4<000000000000000000000000000>, C4<0>, C4<0>, C4<0>;
+v0000024b8b461e10_0 .net *"_ivl_3", 26 0, L_0000024b8b4621c8;  1 drivers
+v0000024b8b461eb0_0 .net *"_ivl_4", 31 0, L_0000024b8b412cd0;  1 drivers
+L_0000024b8b462210 .functor BUFT 1, C4<000000000000000000000000000>, C4<0>, C4<0>, C4<0>;
+v0000024b8b461f50_0 .net *"_ivl_7", 26 0, L_0000024b8b462210;  1 drivers
+L_0000024b8b462258 .functor BUFT 1, C4<00000000000000000000000000000001>, C4<0>, C4<0>, C4<0>;
+v0000024b8b461ff0_0 .net/2u *"_ivl_8", 31 0, L_0000024b8b462258;  1 drivers
+o0000024b8b417168 .functor BUFZ 1, C4<z>; HiZ drive
+v0000024b8b462120_0 .net "clk", 0 0, o0000024b8b417168;  0 drivers
+o0000024b8b417198 .functor BUFZ 5, C4<zzzzz>; HiZ drive
+v0000024b8b4136d0_0 .net "ip_module", 4 0, o0000024b8b417198;  0 drivers
+v0000024b8b413630_0 .net "o_tc", 0 0, L_0000024b8b4138b0;  1 drivers
+v0000024b8b412e10_0 .var "rp_counter", 4 0;
+o0000024b8b417228 .functor BUFZ 1, C4<z>; HiZ drive
+v0000024b8b413770_0 .net "rst", 0 0, o0000024b8b417228;  0 drivers
+E_0000024b8b414eb0 .event posedge, v0000024b8b462120_0;
+L_0000024b8b413130 .concat [ 5 27 0 0], v0000024b8b412e10_0, L_0000024b8b4621c8;
+L_0000024b8b412cd0 .concat [ 5 27 0 0], o0000024b8b417198, L_0000024b8b462210;
+L_0000024b8b413810 .arith/sub 32, L_0000024b8b412cd0, L_0000024b8b462258;
+L_0000024b8b412c30 .cmp/eq 32, L_0000024b8b413130, L_0000024b8b413810;
+L_0000024b8b4138b0 .functor MUXZ 1, L_0000024b8b4622e8, L_0000024b8b4622a0, L_0000024b8b412c30, C4<>;
+    .scope S_0000024b8b3e3630;
+T_0 ;
+    %wait E_0000024b8b414eb0;
+    %load/vec4 v0000024b8b413770_0;
+    %flag_set/vec4 8;
+    %jmp/0xz  T_0.0, 8;
+    %pushi/vec4 0, 0, 5;
+    %assign/vec4 v0000024b8b412e10_0, 0;
+    %jmp T_0.1;
+T_0.0 ;
+    %load/vec4 v0000024b8b412e10_0;
+    %load/vec4 v0000024b8b4136d0_0;
+    %cmp/u;
+    %jmp/0xz  T_0.2, 5;
+    %load/vec4 v0000024b8b412e10_0;
+    %addi 1, 0, 5;
+    %assign/vec4 v0000024b8b412e10_0, 0;
+    %jmp T_0.3;
+T_0.2 ;
+    %pushi/vec4 0, 0, 5;
+    %assign/vec4 v0000024b8b412e10_0, 0;
+T_0.3 ;
+T_0.1 ;
+    %jmp T_0;
+    .thread T_0;
+# The file index is used to find the file name in the following table.
+:file_names 4;
+    "N/A";
+    "<interactive>";
+    "-";
+    "counter.v";

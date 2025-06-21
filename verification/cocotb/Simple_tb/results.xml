@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1748349943" />
+    <testcase name="adder_basic_test" classname="test_adder" file="C:\Users\ramuj\Desktop\FPGA_Devs\digital_design_verification_learns\verification\cocotb\example\test_adder.py" lineno="5" time="0.001997709274291992" sim_time_ns="20.001" ratio_time="10011.967335481562" />
+  </testsuite>
+</testsuites>

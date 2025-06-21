@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>counter_example</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../../../styles.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../../../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
+<h2 id="using-advanced-verification-components-counter-example">Using
+advanced verification components: counter example</h2>
+<p>The following steps will describe how to verify a parametrized
+up-counter, the files needed are in this folder.</p>
+<ol type="1">
+<li>Define the Driver:</li>
+</ol>
+<p>The driver is responsible for applying inputs to the DUT:</p>
+<ul>
+<li>init: constructor function, it passes the dut</li>
+<li>reset: applies a reset pulse</li>
+<li>send: sets the ip_module input value</li>
+</ul>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CounterDriver:</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, dut):</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.dut <span class="op">=</span> dut</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">async</span> <span class="kw">def</span> reset(<span class="va">self</span>):</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.dut.rst.value <span class="op">=</span> <span class="dv">1</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> RisingEdge(<span class="va">self</span>.dut.clk)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.dut.rst.value <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> RisingEdge(<span class="va">self</span>.dut.clk)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">async</span> <span class="kw">def</span> send(<span class="va">self</span>, ip_module_val):</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.dut.ip_module.value <span class="op">=</span> ip_module_val</span></code></pre></div>
+<p>Notice that the parameter pw_counter_module is a Verilog parameter,
+which means it must be set before the simulation is compiled and run.
+This is done via the Makefile or the simulator command line.</p>
+<table>
+<colgroup>
+<col style="width: 30%" />
+<col style="width: 23%" />
+<col style="width: 46%" />
+</colgroup>
+<thead>
+<tr>
+<th>Task</th>
+<th>Where It Happens</th>
+<th>How</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Set pw_counter_module</td>
+<td>Makefile / CLI</td>
+<td>make PW_COUNTER_MODULE=6</td>
+</tr>
+<tr>
+<td>Use pw_counter_module</td>
+<td>Verilog</td>
+<td>parameter pw_counter_module = …</td>
+</tr>
+<tr>
+<td>React to it in test</td>
+<td>Python</td>
+<td>len(dut.ip_module)</td>
+</tr>
+</tbody>
+</table>
+<ol start="2" type="1">
+<li>Define the Monitor:</li>
+</ol>
+<p>The monitor observes DUT outputs and passes them to scoreboard:</p>
+<ul>
+<li>init: constructor function</li>
+<li>observe: watches <em>o_tc</em> during n cycles after a rising clock
+edge and calls the callback with its value. A callback is simply a
+function that is passed as an argument to another function or object,
+with the intention that it will be called later — usually when a
+specific event occurs.</li>
+</ul>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CounterMonitor:</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, dut, callback):</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.dut <span class="op">=</span> dut</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.val <span class="op">=</span> <span class="dv">10</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.callback <span class="op">=</span> callback</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.ready <span class="op">=</span> Event()  <span class="co"># sync signal</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">async</span> <span class="kw">def</span> observe_n_cycles(<span class="va">self</span>, n):</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">await</span> <span class="va">self</span>.ready.wait()</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(n):</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>      <span class="cf">await</span> RisingEdge(<span class="va">self</span>.dut.clk)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>      val <span class="op">=</span> <span class="bu">int</span>(<span class="va">self</span>.dut.o_tc.value)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>      <span class="va">self</span>.val <span class="op">=</span> val</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      <span class="va">self</span>.callback(val)</span></code></pre></div>
+<ol start="3" type="1">
+<li>Define the scoreboard:</li>
+</ol>
+<p>The scoreboard compares expected and actual outputs:</p>
+<ul>
+<li>add_expected: adds expected output value</li>
+<li>add_actual: adds actual output value</li>
+<li>compare: compares actual output with expected and raises an error if
+the differ</li>
+</ul>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> CounterScoreboard:</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.expected <span class="op">=</span> []</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.actual <span class="op">=</span> []</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> add_expected(<span class="va">self</span>, value):</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.expected.append(value)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> add_actual(<span class="va">self</span>, value):</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.actual.append(value)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> compare(<span class="va">self</span>):</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="va">self</span>.actual <span class="op">==</span> <span class="va">self</span>.expected, <span class="ss">f&quot;Mismatch! Expected </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>expected<span class="sc">}</span><span class="ss">, got </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>actual<span class="sc">}</span><span class="ss">&quot;</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Clean lists for next test</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.expected <span class="op">=</span> []</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="va">self</span>.actual <span class="op">=</span> []</span></code></pre></div>
+<ol start="4" type="1">
+<li>Test flow:</li>
+</ol>
+<ul>
+<li>Start the clock: A 10 ns clock is created using cocotb.clock.Clock
+and started asynchronously with cocotb.start_soon().</li>
+<li>Initialize the driver and scoreboard: A CounterDriver is
+instantiated to control inputs, and a CounterScoreboard is used to track
+expected vs. actual outputs.</li>
+<li>Connect the monitor to the scoreboard: A CounterMonitor is created
+with a callback that forwards observed values to the scoreboard using
+scoreboard.add_actual().</li>
+<li>Reset the DUT: The reset() method of the driver is awaited to ensure
+the DUT starts from a known state.</li>
+<li>Determine input width: The bit width of the DUT’s ip_module input is
+read using len(dut.ip_module) to calculate valid input limits.</li>
+<li>Generate a random test value: A random integer is selected between 1
+and the maximum value allowed by the input width.</li>
+<li>Run the test scenario: The run_counter_test() coroutine is called
+with all components and the test value to drive the DUT and perform
+checking.</li>
+</ul>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@cocotb.test</span>()</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> test_counter(dut):</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  clock <span class="op">=</span> Clock(dut.clk, <span class="dv">10</span>, units<span class="op">=</span><span class="st">&quot;ns&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  cocotb.start_soon(clock.start())</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  driver <span class="op">=</span> CounterDriver(dut)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  scoreboard <span class="op">=</span> CounterScoreboard()</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> monitor_callback(value):</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>      scoreboard.add_actual(value)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  monitor <span class="op">=</span> CounterMonitor(dut, monitor_callback)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> driver.reset()</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  bit_width <span class="op">=</span> <span class="bu">len</span>(dut.ip_module)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  max_val <span class="op">=</span> <span class="dv">2</span><span class="op">**</span>bit_width <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  value <span class="op">=</span> random.randint(<span class="dv">1</span>, max_val)</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> run_counter_test(dut, driver, monitor, scoreboard, value)</span></code></pre></div>
+<ol start="5" type="1">
+<li>Test scenario:</li>
+</ol>
+<ul>
+<li>Validate the input value: The bit width of ip_module is determined,
+and an assertion ensures ip_module_val fits within this width.</li>
+<li>Log the test configuration: The bit width and test value are logged
+for traceability and debugging.</li>
+<li>Start the monitor coroutine: monitor.observe_n_cycles(ip_module_val)
+is scheduled to run asynchronously but will wait until explicitly
+triggered.</li>
+<li>Apply stimulus to DUT: The driver sends the ip_module_val to the DUT
+using driver.send().</li>
+<li>Trigger monitoring: The monitor is activated by setting
+monitor.ready right before the DUT processes the new input.</li>
+<li>Sync with DUT clock: The test waits for one rising clock edge to
+allow the DUT to latch the input value.</li>
+<li>Feed expected output to scoreboard: For ip_module_val - 1 clock
+cycles, a 0 is expected on o_tc, and each step is logged.</li>
+<li>Expect terminal count signal: After the countdown, a final 1 is
+expected on o_tc, with logging for traceability.</li>
+<li>Verify correctness: The scoreboard compares the list of expected
+vs. actual outputs to check for test pass/fail.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> run_counter_test(dut, driver, monitor, scoreboard, ip_module_val):</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check ip module val</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  bit_width <span class="op">=</span> <span class="bu">len</span>(dut.ip_module)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  max_val <span class="op">=</span> <span class="dv">2</span><span class="op">**</span>bit_width <span class="op">-</span> <span class="dv">1</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">assert</span> ip_module_val <span class="op">&lt;=</span> max_val, <span class="ss">f&quot;ip_module value </span><span class="sc">{</span>ip_module_val<span class="sc">}</span><span class="ss"> exceeds </span><span class="sc">{</span>bit_width<span class="sc">}</span><span class="ss"> bits&quot;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  dut._log.info(<span class="ss">f&quot;Testing with pw_counter_module=</span><span class="sc">{</span>bit_width<span class="sc">}</span><span class="ss">, ip_module=</span><span class="sc">{</span>ip_module_val<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Starts monitor but not launch it until event raises</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  cocotb.start_soon(monitor.observe_n_cycles(ip_module_val))</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Set DUT stimuli</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> driver.send(ip_module_val)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Launch observation right before the first edge</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  monitor.ready.<span class="bu">set</span>()</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Wait one clk to the DUT notice the value seted</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> RisingEdge(dut.clk)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Generate the expected sequence: ip_module_val-1 times 0 and after 1</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(ip_module_val<span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>      scoreboard.add_expected(<span class="dv">0</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>      dut._log.info(<span class="ss">f&quot;Count=</span><span class="sc">{</span><span class="bu">int</span>(dut.rp_counter)<span class="sc">}</span><span class="ss"> TC=</span><span class="sc">{</span>dut<span class="sc">.</span>o_tc<span class="sc">}</span><span class="ss">, Expected 0, Monitor </span><span class="sc">{</span><span class="bu">int</span>(monitor.val)<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>      <span class="cf">await</span> RisingEdge(dut.clk)</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  scoreboard.add_expected(<span class="dv">1</span>)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  dut._log.info(<span class="ss">f&quot;Count=</span><span class="sc">{</span><span class="bu">int</span>(dut.rp_counter)<span class="sc">}</span><span class="ss"> TC=</span><span class="sc">{</span>dut<span class="sc">.</span>o_tc<span class="sc">}</span><span class="ss"> Expected 1, Monitor </span><span class="sc">{</span><span class="bu">int</span>(monitor.val)<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">await</span> RisingEdge(dut.clk)</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Compare complete lists</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  scoreboard.compare()</span></code></pre></div>
+<ol start="6" type="1">
+<li>Run the test providing the PW_COUNTER_MODULE value:</li>
+</ol>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">make</span> PW_COUNTER_MODULE=6</span></code></pre></div>
+<h3 id="conclusion">Conclusion</h3>
+<p>When performing this kind of cocotb-based test for a sequential
+digital module like a counter, several tricky synchronization and
+coordination issues need to be carefully handled. Here’s a breakdown of
+key considerations:</p>
+<p>🔁 <strong>Clock Synchronization</strong></p>
+<p>Everything is clock-driven: In synchronous designs, all events (input
+sampling, output changes) happen on clock edges, so you must carefully
+align your stimulus and monitoring with the rising edge of the
+clock.</p>
+<p>Wait at least one cycle after applying input: Signals like ip_module
+must be stable before the rising edge to be correctly latched by the
+DUT.</p>
+<p>⏱ <strong>Timing Between Driver and Monitor</strong></p>
+<p>Race conditions: If the monitor starts observing before the DUT
+processes the input, it may capture irrelevant or invalid data.</p>
+<p>Manual control of monitor activation: In the test,
+monitor.observe_n_cycles() is launched early, but doesn’t start
+capturing until monitor.ready.set() is called — after the stimulus is
+applied. This ensures correct alignment between observation and the
+DUT’s active behavior.</p>
+<p>Edge-sensitive behavior: Monitoring should typically begin on the
+first rising edge after the DUT receives input. Any mismatch here can
+lead to off-by-one errors in expected vs. actual output.</p>
+<p>📋 <strong>Scoreboard Accuracy</strong></p>
+<p>Expected values must match DUT exactly: The test must predict
+precisely how long o_tc should remain 0 before it turns 1, based on the
+input value. Even a single misplaced expected value can cause the test
+to fail.</p>
+<p>Timing of add_expected calls: Each expected value should be added
+immediately before or in parallel with the await RisingEdge(dut.clk)
+that captures the actual value. This keeps both timelines in sync.</p>
+<p>🧪 <strong>Input Validity</strong></p>
+<p>Bit-width awareness: Inputs like ip_module must not exceed the
+declared signal width. The test safeguards against this by dynamically
+computing the bit width and asserting bounds.</p>
+<p>Random inputs: Using randomized inputs improves test coverage, but
+increases the risk of timing mismatches or edge-case bugs — especially
+for small or max values.</p>
+<p>🔄 <strong>Reset Behavior</strong></p>
+<p>Always reset before test logic starts: Ensuring the DUT starts from a
+clean state is critical. Skipping or improperly timing the reset can
+cause false negatives.</p>
+<p>Reset must also be aligned with the clock: Reset pulses should be
+asserted/deasserted on appropriate clock edges to avoid metastability in
+simulation.</p>
+<p>📋 <strong>Observability and Logging</strong></p>
+<p>Log internal DUT values (like rp_counter) during simulation to help
+debug discrepancies.</p>
+<p>Make logs match expectations: Ensure that logs include cycle number,
+DUT outputs, expected values, and monitor outputs to simplify
+traceability.</p>
+<p>🧵 <strong>Coroutines and Parallelism</strong></p>
+<p>Asynchronous execution (e.g., start_soon()): The test depends on
+several components running in parallel (driver, monitor, clock), and
+cocotb uses Python coroutines for this. Misusing await or failing to
+start_soon() a process can lead to deadlocks or missed signals.</p>
+<p>Ensure all needed coroutines are running before stimulus is sent or
+verification begins.</p>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>digital_design_concepts</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <div id="nav-placeholder"></div>
+  <script>
+    fetch("../nav.html")
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById("nav-placeholder").innerHTML = data;
+      });
+  </script>
+  
+<h2 id="digital-design-concepts">Digital Design Concepts</h2>
+<h3 id="difference-between-blocking-vs-non-blocking">Difference between
+Blocking vs Non-blocking?</h3>
+<table>
+<colgroup>
+<col style="width: 32%" />
+<col style="width: 29%" />
+<col style="width: 38%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th><strong>Blocking (<code>=</code>)</strong></th>
+<th><strong>Non-Blocking (<code>&lt;=</code>)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Execution Order</strong></td>
+<td>Executes <strong>immediately</strong> within the same time step
+(like sequential code).</td>
+<td>Executes <strong>in parallel</strong>, scheduling updates for the
+next time step.</td>
+</tr>
+<tr>
+<td><strong>Use Case</strong></td>
+<td>Used for <strong>combinational logic</strong> (e.g.,
+<code>always @(*)</code>).</td>
+<td>Used for <strong>sequential logic</strong> (e.g.,
+<code>always @(posedge clk)</code>).</td>
+</tr>
+<tr>
+<td><strong>Effect on Simulation</strong></td>
+<td>Can cause <strong>race conditions</strong> in sequential
+designs.</td>
+<td>Prevents race conditions by ensuring updates happen at the correct
+time.</td>
+</tr>
+<tr>
+<td><strong>Register Behavior</strong></td>
+<td>Doesn’t correctly model <strong>flip-flops</strong> or
+registers.</td>
+<td>Properly models <strong>flip-flops</strong> and registers.</td>
+</tr>
+<tr>
+<td><strong>Execution Example</strong></td>
+<td>Executes immediately, affecting subsequent statements.</td>
+<td>Updates all signals at the same time in a clock cycle.</td>
+</tr>
+</tbody>
+</table>
+<p><em>Example 1: Blocking Assignment (<code>=</code>)</em></p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always</span> <span class="op">@(</span>*<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    A <span class="op">=</span> B<span class="op">;</span> </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    C <span class="op">=</span> A<span class="op">;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div>
+<p>Behavior: Since A = B executes first, C = A uses the updated value of
+A.</p>
+<p><em>Example 2: Non-blocking Assignment (<code>&lt;=</code>)</em></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">always</span> <span class="op">@(</span><span class="kw">posedge</span> clk<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    A <span class="op">&lt;=</span> B<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    C <span class="op">&lt;=</span> A<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div>
+<p>Behavior: A doesn’t update immediately. Instead, C gets the old value
+of A, because both assignments happen simultaneously at the end of the
+clock cycle.</p>
+<p><em>Rule of thumb</em></p>
+<ul>
+<li>Use blocking for combinacional logic.</li>
+<li>Use non-blocking for sequential logic.</li>
+</ul>
+<h3 id="difference-between-a-task-and-a-function-in-verilog">Difference
+between a task and a function in Verilog?</h3>
+<table>
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 33%" />
+<col style="width: 35%" />
+</colgroup>
+<thead>
+<tr>
+<th>Característica</th>
+<th>Task</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Uso principal</td>
+<td>Realizar operaciones complejas o secuenciales</td>
+<td>Realizar operaciones combinacionales y devolver un solo valor</td>
+</tr>
+<tr>
+<td>Retorno de valor</td>
+<td>Opcional, usando <code>output</code></td>
+<td>Obligatorio, devuelve un valor directamente</td>
+</tr>
+<tr>
+<td>Tiempo de ejecución</td>
+<td>Puede contener declaraciones de tiempo como <code>#</code>,
+<code>@</code>, <code>wait</code></td>
+<td>No puede contener declaraciones de tiempo</td>
+</tr>
+<tr>
+<td>Número de valores de retorno</td>
+<td>Múltiples mediante <code>output</code></td>
+<td>Solo un valor de retorno</td>
+</tr>
+<tr>
+<td>Llamada desde</td>
+<td>Siempre se llama desde un <strong>procedural block</strong></td>
+<td>Puede llamarse desde cualquier expresión</td>
+</tr>
+<tr>
+<td>Ejecución en paralelo</td>
+<td>No soporta ejecución paralela</td>
+<td>Siempre se ejecuta de manera combinacional</td>
+</tr>
+<tr>
+<td>Uso de argumentos</td>
+<td>Permite múltiples tipos (input, output, inout)</td>
+<td>Solo permite argumentos de tipo <code>input</code></td>
+</tr>
+<tr>
+<td>Contexto de uso</td>
+<td>Tareas complejas como testbenches y secuencias de eventos</td>
+<td>Operaciones matemáticas, lógicas o combinacionales</td>
+</tr>
+<tr>
+<td>Ejemplo de declaración</td>
+<td><code>task add(input a, b; output sum);</code></td>
+<td><code>function [7:0] add(input [7:0] a, b);</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="difference-between-wire-and-reg">Difference between wire and
+reg?</h3>
+<p>The net (wire, tri) is used for physical connection between
+structural elements. Value is assigned by a continuous assignment or a
+gate output or port of a module. It can not store any value. The values
+can be either read or assigned. Default value is z.</p>
+<p>The register (reg, integer, time, real, real-time) represents an
+abstract data storage element and they are not the physical registers.
+Value is assigned only within an initial or an always statement. It can
+store the value. Default value is x.</p>
+<h3 id="difference-between-a-flip-flop-and-a-latch">Difference between a
+flip flop and a latch?</h3>
+<table>
+<colgroup>
+<col style="width: 44%" />
+<col style="width: 31%" />
+<col style="width: 24%" />
+</colgroup>
+<thead>
+<tr>
+<th>Feature</th>
+<th><strong>Flip-Flop</strong></th>
+<th><strong>Latch</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Triggering</strong></td>
+<td>Edge-triggered (rising or falling edge of the clock).</td>
+<td>Level-sensitive (transparent when enable is high).</td>
+</tr>
+<tr>
+<td><strong>Clock Dependency</strong></td>
+<td>Requires a clock signal to change state.</td>
+<td>Can change state anytime when enabled.</td>
+</tr>
+<tr>
+<td><strong>Storage Type</strong></td>
+<td>Synchronous storage element.</td>
+<td>Asynchronous storage element.</td>
+</tr>
+<tr>
+<td><strong>Timing Control</strong></td>
+<td>Captures data only at clock edges.</td>
+<td>Follows input while enabled, holds value otherwise.</td>
+</tr>
+<tr>
+<td><strong>Power Consumption</strong></td>
+<td>Higher power consumption (clocking overhead).</td>
+<td>Lower power (but can have glitches).</td>
+</tr>
+<tr>
+<td><strong>Common Usage</strong></td>
+<td>Registers, counters, memory elements.</td>
+<td>Buffering, metastability handling (synchronizers).</td>
+</tr>
+</tbody>
+</table>
+<p><em>Latches Can Cause Timing Issues:</em></p>
+<p>Since latches are transparent while enabled, they can introduce
+glitches in high-speed circuits.</p>
+<p>Flip-flops are safer because they only update on clock edges,
+reducing race conditions.</p>
+<p><em>D-latch in Verilog</em></p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> d_latch <span class="op">(</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">input</span> logic D<span class="op">,</span>      <span class="co">// Data input</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">input</span> logic En<span class="op">,</span>     <span class="co">// Enable signal</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">output</span> logic Q<span class="op">,</span>     <span class="co">// Output</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">output</span> logic Qn     <span class="co">// Complementary output</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">always</span> <span class="op">@(</span>*<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="op">(</span>En<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>            Q  <span class="op">=</span> D<span class="op">;</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            Qn <span class="op">=</span> <span class="op">~</span>D<span class="op">;</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div>
+<p><em>D-flip-flop</em></p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> d_flip_flop <span class="op">(</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">input</span> logic D<span class="op">,</span>      <span class="co">// Data input</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">input</span> logic clk<span class="op">,</span>    <span class="co">// Clock input</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">input</span> logic rst_n<span class="op">,</span>  <span class="co">// Active-low reset</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">output</span> logic Q<span class="op">,</span>     <span class="co">// Output</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">output</span> logic Qn     <span class="co">// Complementary output</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="op">);</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">always</span> <span class="op">@(</span><span class="kw">posedge</span> clk <span class="dt">or</span> <span class="kw">negedge</span> rst_n<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="op">(!</span>rst_n<span class="op">)</span> <span class="kw">begin</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>            Q  <span class="op">&lt;=</span> <span class="dv">0</span><span class="op">;</span>  </span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            Qn <span class="op">&lt;=</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span> <span class="kw">else</span> <span class="kw">begin</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>            Q  <span class="op">&lt;=</span> D<span class="op">;</span>  </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            Qn <span class="op">&lt;=</span> <span class="op">~</span>D<span class="op">;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        <span class="kw">end</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">end</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="kw">endmodule</span></span></code></pre></div>
+<h3
+id="what-are-regular-delay-control-and-intra-assignment-delay-control">What
+are regular delay control and Intra-assignment delay control?</h3>
+<p>The regular delay control delays the execution of the entire
+statement by a specified value. The non-zero delay is specified at the
+LHS of the procedural statement.</p>
+<p><em>Example: #5 data = i_value;</em></p>
+<p>In this case, the result signal value will be updated after 5-time
+units for change happen in its input.</p>
+<p>Intra-assignment delay control delays computed value assignment by a
+specified value. The RHS operand expression is evaluated at the current
+simulation time and assigned to the LHS operand after a specified delay
+value.</p>
+<p><em>Example: data = #5 i_value;</em></p>
+<h3 id="what-is-0-in-verilog-and-its-usage">What is #0 in Verilog and
+its usage?</h3>
+<p>Zero delay control is used to control execution order when multiple
+procedural blocks try to update values of the same variable. Both always
+and initial blocks execution order is non-deterministic as they start
+evaluation at the same simulation time. The statement having zero
+control delay executes last, thus it avoids race conditions.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="dt">reg</span> <span class="op">[</span><span class="dv">2</span><span class="op">:</span><span class="dv">0</span><span class="op">]</span> data<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">initial</span> <span class="kw">begin</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  data <span class="op">=</span> <span class="dv">2</span><span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">initial</span> <span class="kw">begin</span> </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="bn">#0</span> data <span class="op">=</span> <span class="dv">3</span><span class="op">;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div>
+<p>Without zero delay control, the ‘data’ variable may have a value of
+either 2 or 3 due to race conditions. Having zero delay statement as
+specified in the above code guarantees the outcome to be 3. However, it
+is not recommended to assign value to the variable at the same
+simulation time.</p>
+<h3 id="what-is-timescale">What is `timescale?</h3>
+<p>It is a ‘compile directive’ and is used for the measurement of
+simulation time and delay.</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode verilog"><code class="sourceCode verilog"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">`timescale </span><span class="fl">&lt;time_unit&gt;</span><span class="ot">/</span><span class="fl">&lt;time_precision&gt;</span></span></code></pre></div>
+<ul>
+<li>time_unit: Measurement for simulation time and delay.</li>
+<li>time_precision: Rounding the simulation time values means the
+simulator can at least advance by a specified value.</li>
+</ul>
+</body>
+</html>

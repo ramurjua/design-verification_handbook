@@ -1,4 +1,4 @@
-# ✅ Utils
+# Utils
 
 A collection of useful tools, scripts, and small hardware hacks designed to simplify and speed up development workflows in DIY electronics and FPGA-based projects. These utilities are meant to reduce manual overhead and promote reusability across different environments and setups. Whether you're looking to automate FPGA builds or repurpose low-cost microcontrollers for debugging, this section gathers practical solutions that can save you time and effort.
 

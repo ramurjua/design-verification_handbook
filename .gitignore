@@ -1,2 +1,6 @@
 uvm/examples/eda_playground/
 PrepareYourInterview.md
+*.html
+*.css
+!publish/**/*.html
+!publish/**/*.css
