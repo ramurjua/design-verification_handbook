@@ -23,7 +23,7 @@ class CounterMonitor:
         self.dut = dut
         self.val = 10
         self.callback = callback
-        self.ready = Event()  # señal de sincronización
+        self.ready = Event()  # sync signal
 
     async def observe_n_cycles(self, n):
       await self.ready.wait()
@@ -47,33 +47,27 @@ class CounterScoreboard:
 
     def compare(self):
         assert self.actual == self.expected, f"Mismatch! Expected {self.expected}, got {self.actual}"
-        # Limpia para el siguiente test
+        # Clean lists for next test
         self.expected = []
         self.actual = []
 
 
 # Test case
 async def run_counter_test(dut, driver, monitor, scoreboard, ip_module_val):
+
     bit_width = len(dut.ip_module)
     max_val = 2**bit_width - 1
 
     assert ip_module_val <= max_val, f"ip_module value {ip_module_val} exceeds {bit_width} bits"
     dut._log.info(f"Testing with pw_counter_module={bit_width}, ip_module={ip_module_val}")
 
-   # 1. Arranca el monitor pero está esperando el evento
     cocotb.start_soon(monitor.observe_n_cycles(ip_module_val))
 
-    # 2. Envía estímulo al DUT
     await driver.send(ip_module_val)
 
-    # 3. Lanza la observación exactamente antes del primer flanco
     monitor.ready.set()
-
-    # 4. Ahora sí, espera un ciclo para que el DUT registre
     await RisingEdge(dut.clk)
 
-
-    # Genera la secuencia esperada: ip_module_val-1 veces 0 y luego 1
     for _ in range(ip_module_val-1):
         scoreboard.add_expected(0)
         dut._log.info(f"Count={int(dut.rp_counter)} TC={dut.o_tc}, Expected 0, Monitor {int(monitor.val)}")
@@ -83,7 +77,6 @@ async def run_counter_test(dut, driver, monitor, scoreboard, ip_module_val):
     dut._log.info(f"Count={int(dut.rp_counter)} TC={dut.o_tc} Expected 1, Monitor {int(monitor.val)}")
     await RisingEdge(dut.clk)
 
-    # Compara listas completas
     scoreboard.compare()
 
 # Main test
@@ -105,9 +98,7 @@ async def test_counter(dut):
 
     bit_width = len(dut.ip_module)
     max_val = 2**bit_width - 1
-    num_tests = 5
 
-    random_values = [random.randint(1, max_val) for _ in range(num_tests)]
+    value = random.randint(1, max_val)
 
-    """ for ip_module_val in random_values: """
-    await run_counter_test(dut, driver, monitor, scoreboard, 4)
+    await run_counter_test(dut, driver, monitor, scoreboard, value)
