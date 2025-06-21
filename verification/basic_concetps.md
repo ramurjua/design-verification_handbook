@@ -43,6 +43,13 @@ Digital design verification is the process of testing and validating the correct
         * Testbenches: The environment where your design gets tested.
         * Transactions: Defined data packets that are sent across interfaces.
         * Sequences: A series of transactions or commands that are run during verification.
+* **Cocotb (Coroutine-based Co-simulation Testbench)**:
+    * Cocotb is a Python-based verification framework that allows writing testbenches in Python instead of SystemVerilog or VHDL. It integrates with standard simulators and provides a modern, flexible approach to verification.
+    * Key aspects:
+        * Python Coroutines: Use async/await to model test flow and concurrency.
+        * Simulator Integration: Works with simulators like Icarus Verilog, Verilator, Questa, etc.
+        * Extensibility: Leverages Python’s ecosystem (e.g., random, numpy, json, unittest) for data generation, analysis, and scripting.
+Usability: Easier for teams with software backgrounds or for rapid prototyping and IP-level verification.
 * **Coverage-Driven Verification (CDV)**:
     * This approach focuses on ensuring that all parts of the design are tested through a combination of code coverage and functional coverage.
     * It ensures that all the design's possible scenarios (including corner cases) are covered during simulation.

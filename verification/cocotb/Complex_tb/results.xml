@@ -1,0 +1,6 @@
+<testsuites name="results">
+  <testsuite name="all" package="all">
+    <property name="random_seed" value="1750496027" />
+    <testcase name="test_counter" classname="test_counter" file="C:\Users\ramuj\Desktop\FPGA_Devs\digital_design_verification_learns\verification\cocotb\Complex_tb\test_counter.py" lineno="92" time="0.005984067916870117" sim_time_ns="40.001" ratio_time="6684.58322259851" />
+  </testsuite>
+</testsuites>

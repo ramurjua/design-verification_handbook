@@ -10,7 +10,9 @@ Advantages:
 
 *Example:* The sequence-driver hanshake mechanishm is taken care of under the hood so that only stimulus need to be written. This saves quite a lot of time in setting up a testbench stucture since the foundation itself is well defined.
 
-![alt text](uvm_tb.png)
+![uvm tb](uvm_tb.png)
+
+📂 [Example: Pattern detection](examples/test_plan.md) 
 
 ## Components vs Objects
 
