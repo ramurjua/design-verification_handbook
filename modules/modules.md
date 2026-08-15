@@ -13,3 +13,7 @@ This section contains digital design modules that have been successfully develop
 ### 🔹 Clark Park Direct & Inverse & DDS
 
 [Clark Park Direct & Inverse & DDS](clarkpark/clarkpark.md) modules that performs the clark-park transformations in amplitud invariant mode and clark-park inverse transformations. There is also a module to generate sin and cos waveforms of selected frequency.
+
+### 🔹 2-Level Modulator
+
+[2-Level Modulator](modulador_2lvl/modulador_2lvl.md) module that generates the PWM signals for a 3-phase 2-level power converter from three modulating signals, using a configurable triangular or sawtooth carrier.

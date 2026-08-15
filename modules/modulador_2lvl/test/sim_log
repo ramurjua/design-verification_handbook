@@ -1,0 +1,9 @@
+VCD info: dumpfile modulador_tb.vcd opened for output.
+VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
+[INFO] >> Setting initial conditions.
+INFO: ./modulador_tb.sv:108: Resetting module.
+      Time: 0  Scope: modulador_tb.reset_task
+INFO: ./modulador_tb.sv:111: Release Reset
+      Time: 0  Scope: modulador_tb.reset_task
+[INFO] >> Test init
+./modulador_tb.sv:83: $finish called at 2000180 (10ns)
