@@ -46,6 +46,26 @@ always@(posedge clk) begin
   end
 end
 
+/* i_dv is asserted by the caller whenever it likes, uncorrelated with our
+   own free-running preescaler - it can land on the exact same cycle the
+   preescaler was already about to wrap on its own. Without this guard,
+   st_start would see that stale/coincidental tick immediately and exit
+   after just 1 cycle instead of a full p_preescaler-cycle period,
+   truncating the start bit and desyncing every bit that follows it for
+   the rest of the byte. The receiver never has this problem itself: it
+   only detects the start bit (and enters its own st_start) one cycle
+   after we assert it, by which point any such stale tick has already
+   passed, so it naturally always gets a full period for free.
+   NOTE: this can't happen on the st_stop -> st_start transition between
+   bytes of a multi-byte transfer, since that transition is itself gated
+   on r_uart_tick - by the time we're actually sitting in st_start there,
+   that tick has already expired, so no guard is needed there. */
+reg r_start_just_entered;
+always@(posedge clk) begin
+  if(rst) r_start_just_entered <= 1'b0;
+  else r_start_just_entered <= (r3_state == st_idle && i_dv);
+end
+
 
 /*
 
@@ -74,7 +94,7 @@ always@(posedge clk) begin
       end
       st_start: begin // Start bit
 
-        if(r_uart_tick) r3_state <= st_transmit;
+        if(r_uart_tick && !r_start_just_entered) r3_state <= st_transmit;
         else r3_state <= st_start;
         
         r8_byte_send <= rp_data[r16_data_index -: 8]; // Get byte

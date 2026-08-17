@@ -314,7 +314,7 @@ module scope_tb();
       send_byte(8'h00);
       send_byte(8'h00);
       send_byte(SCOPE_CMD_GET_STATUS ^ 8'h00 ^ 8'h00);
-      wait_rx_count(7, 2000); /* sync,cmd,lenh,lenl,state,fill_h,fill_l,chk = 8, but len=3 -> total 8 */
+      wait_rx_count(8, 2000); /* sync,cmd,lenh,lenl,state,fill_h,fill_l,chk = 8, but len=3 -> total 8 */
 
       if (rx_buf[4] == {6'd0, SCOPE_ST_DONE}) done = 1'b1;
 

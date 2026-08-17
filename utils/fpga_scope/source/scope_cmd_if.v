@@ -188,6 +188,12 @@ assign o_stream_tx_ready = (r4_state == CST_STREAM_BYTE) && !r_stream_have_sampl
 
 wire w_sys_idle = (o_active_mode == SCOPE_MODE_SCOPE) ? (i_ctrl_state == SCOPE_ST_IDLE) : (!i_stream_running);
 
+/* w_tx_ready only drops the cycle *after* r_tx_dv is asserted (u_uart_tx's
+   own idle->st_start transition takes a cycle to land), so every send state
+   below re-checks "&& !r_tx_dv" too - otherwise the still-stale w_tx_ready
+   lets the very next cycle fire a second, premature byte before uart_tx has
+   reacted to the first one, shifting every following byte by one position. */
+
 always @(posedge clk) begin
   o_ctrl_cmd_arm      <= 1'b0;
   o_ctrl_cmd_abort    <= 1'b0;
@@ -359,7 +365,7 @@ always @(posedge clk) begin
       /* ---- generic small-response header/payload/checksum ---- */
 
       CST_SEND_HDR: begin
-        if (w_tx_ready) begin
+        if (w_tx_ready && !r_tx_dv) begin
           case (r2_hdr_idx)
             2'd0: begin r8_tx_byte <= SCOPE_SYNC_DEV; r_tx_dv <= 1'b1; r8_tx_chk_acc <= 8'd0; end
             2'd1: begin r8_tx_byte <= r8_resp_cmd; r_tx_dv <= 1'b1; r8_tx_chk_acc <= r8_tx_chk_acc ^ r8_resp_cmd; end
@@ -380,7 +386,7 @@ always @(posedge clk) begin
       end
 
       CST_SEND_LOCAL: begin
-        if (w_tx_ready) begin
+        if (w_tx_ready && !r_tx_dv) begin
           r8_tx_byte    <= r8_resp_payload[r5_send_idx];
           r_tx_dv <= 1'b1;
           r8_tx_chk_acc <= r8_tx_chk_acc ^ r8_resp_payload[r5_send_idx];
@@ -391,7 +397,7 @@ always @(posedge clk) begin
       end
 
       CST_SEND_CHK: begin
-        if (w_tx_ready) begin
+        if (w_tx_ready && !r_tx_dv) begin
           r8_tx_byte <= r8_tx_chk_acc;
           r_tx_dv <= 1'b1;
 
@@ -408,7 +414,7 @@ always @(posedge clk) begin
              buffer is read sample by sample instead of a local array ---- */
 
       CST_DUMP_HDR: begin
-        if (w_tx_ready) begin
+        if (w_tx_ready && !r_tx_dv) begin
           case (r2_hdr_idx)
             2'd0: begin r8_tx_byte <= SCOPE_SYNC_DEV; r_tx_dv <= 1'b1; r8_tx_chk_acc <= 8'd0; end
             2'd1: begin r8_tx_byte <= r8_resp_cmd; r_tx_dv <= 1'b1; r8_tx_chk_acc <= r8_tx_chk_acc ^ r8_resp_cmd; end
@@ -440,7 +446,7 @@ always @(posedge clk) begin
       end
 
       CST_DUMP_SENDBYTE: begin
-        if (w_tx_ready) begin
+        if (w_tx_ready && !r_tx_dv) begin
           r8_tx_byte    <= r_dump_sample_reg[8*r4_dump_byte_idx +: 8];
           r_tx_dv <= 1'b1;
           r8_tx_chk_acc <= r8_tx_chk_acc ^ r_dump_sample_reg[8*r4_dump_byte_idx +: 8];
@@ -465,7 +471,7 @@ always @(posedge clk) begin
           r_stream_have_sample <= 1'b1;
           r4_stream_byte_idx   <= p_frame_bytes[3:0] - 4'd1;
         end
-        else if (r_stream_have_sample && w_tx_ready) begin
+        else if (r_stream_have_sample && w_tx_ready && !r_tx_dv) begin
           r8_tx_byte <= r_stream_sample_reg[8*r4_stream_byte_idx +: 8];
           r_tx_dv <= 1'b1;
 
