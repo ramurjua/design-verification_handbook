@@ -232,6 +232,19 @@ module scope_tb();
 
     /* ---- MODE_STREAM: switch mode and stream a short burst ---- */
     $display("[INFO] >> Test 5: CMD_SET_MODE + CMD_STREAM_START");
+
+    /* CMD_SET_MODE is only accepted while idle (docs/protocol.md) - the
+       CMD_DUMP above leaves scope_ctrl parked in ST_DONE, not ST_IDLE, so
+       an explicit CMD_ABORT is required first to return there. */
+    clear_rx();
+    send_byte(SCOPE_SYNC_HOST);
+    send_byte(SCOPE_CMD_ABORT);
+    send_byte(8'h00);
+    send_byte(8'h00);
+    send_byte(SCOPE_CMD_ABORT ^ 8'h00 ^ 8'h00);
+    wait_rx_count(6, 2000);
+    check_byte(4, SCOPE_STATUS_OK, "ABORT status");
+
     clear_rx();
     send_byte(SCOPE_SYNC_HOST);
     send_byte(SCOPE_CMD_SET_MODE);

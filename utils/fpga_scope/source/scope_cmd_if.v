@@ -157,6 +157,7 @@ localparam CST_IDLE           = 4'd0,
            CST_DUMP_HDR       = 4'd4,
            CST_DUMP_ADDR      = 4'd5,
            CST_DUMP_WAIT      = 4'd6,
+           CST_DUMP_LATCH     = 4'd9,
            CST_DUMP_SENDBYTE  = 4'd7,
            CST_STREAM_BYTE    = 4'd8;
 
@@ -175,10 +176,17 @@ reg r_post_action;
 reg [p_addr_width-1:0] r_dump_addr;
 reg [15:0] r16_dump_samples_left;
 reg [3:0] r4_dump_byte_idx;
-reg [p_frame_width-1:0] r_dump_sample_reg;
+/* byte-padded (p_frame_bytes*8), not bit-tight (p_frame_width): sent out
+   p_frame_bytes*8 -: 8 at a time below, and p_frame_width isn't generally
+   a multiple of 8 (e.g. 2 channels x 1 bit = 2 bits, 1 byte) - indexing a
+   [p_frame_width-1:0] reg with an 8-bit slice would read past its declared
+   range and pull in X for the padding bits. The narrower i_buf_rd_data
+   zero-extends into this on assignment, same as it's laid out in the
+   capture buffer/GET_INFO's own byte-packed view. */
+reg [(p_frame_bytes*8)-1:0] r_dump_sample_reg;
 
 /* stream burst */
-reg [p_frame_width-1:0] r_stream_sample_reg;
+reg [(p_frame_bytes*8)-1:0] r_stream_sample_reg; /* byte-padded, see r_dump_sample_reg above */
 reg [3:0] r4_stream_byte_idx;
 reg r_stream_have_sample;
 
@@ -438,8 +446,19 @@ always @(posedge clk) begin
         r4_state      <= CST_DUMP_WAIT;
       end
 
+      /* scope_capture_buffer's or_rd_data is a registered (BRAM-style) read
+         output: i_rd_en/i_rd_addr asserted this state only become visible to
+         the buffer next cycle, and its own registered read then takes one
+         more cycle after that to land in or_rd_data - so the earliest cycle
+         i_buf_rd_data is actually valid is 2 states after CST_DUMP_ADDR, not
+         1. Capturing here (right after deasserting rd_en) would grab the
+         *previous* read's stale value instead. */
       CST_DUMP_WAIT: begin
-        o_buf_rd_en        <= 1'b0;
+        o_buf_rd_en <= 1'b0;
+        r4_state    <= CST_DUMP_LATCH;
+      end
+
+      CST_DUMP_LATCH: begin
         r_dump_sample_reg  <= i_buf_rd_data;
         r4_dump_byte_idx   <= p_frame_bytes[3:0] - 4'd1; /* MSB first */
         r4_state           <= CST_DUMP_SENDBYTE;

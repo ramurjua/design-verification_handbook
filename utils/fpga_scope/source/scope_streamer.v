@@ -15,7 +15,7 @@ module scope_streamer # (
 
   output reg o_running,   /* GET_STATUS state bit: 0 = idle, 1 = running */
   output o_sample_valid,  /* 1-cycle pulse: o_sample_data should be sent now */
-  output reg [p_frame_width-1:0] o_sample_data,
+  output [p_frame_width-1:0] o_sample_data,
   output [15:0] o_remaining_count /* samples left in this burst, for GET_STATUS */
 );
 
@@ -37,13 +37,18 @@ scope_decimator decim (
 
 reg [31:0] r32_remaining;
 
+/* o_sample_data is a plain combinational pass-through (not registered) so
+   it's valid on the exact same cycle o_sample_valid pulses - the consumer
+   only ever looks at it when valid is high, so there's no need (and no
+   BRAM to model, unlike scope_capture_buffer) to register it and add a
+   cycle of latency between the two. */
 assign o_sample_valid = w_take_sample;
+assign o_sample_data  = i_sample_data;
 
 always @(posedge clk) begin
   if (rst) begin
     o_running      <= 1'b0;
     r32_remaining  <= 32'd0;
-    o_sample_data  <= {p_frame_width{1'b0}};
   end
   else if (i_cmd_abort) begin
     o_running <= 1'b0;
@@ -53,7 +58,6 @@ always @(posedge clk) begin
     r32_remaining <= i_sample_count_in;
   end
   else if (w_take_sample) begin
-    o_sample_data <= i_sample_data;
     r32_remaining <= r32_remaining - 32'd1;
     if (r32_remaining == 32'd1) o_running <= 1'b0; /* burst complete, auto-return to idle */
   end
