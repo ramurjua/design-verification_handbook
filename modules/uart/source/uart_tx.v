@@ -1,8 +1,8 @@
 module uart_tx # (
-  parameter p_preescaler = 8, /* clock preescaler to set baudrate (it should be more than 0) */
+  parameter p_preescaler = 8, /* clock cycles per bit: clock frequency / baudrate (it should be more than 0) */
   parameter p_data_buffer = 16 /* number of bytes to send */
 )(
-  input clk, 
+  input clk,
   input rst, /* synchronous reset */
   input [8*p_data_buffer-1:0] ip_data, /* data to send */
   input i_dv, /* input data valid */
@@ -10,11 +10,8 @@ module uart_tx # (
   output o_tx /* uart transmission line */
 );
 
-localparam lpw_preescaler_counter = $clog2(p_preescaler);
+localparam lpw_preescaler_counter = (p_preescaler > 1) ? $clog2(p_preescaler) : 1;
 localparam lp_max_data_bit = (p_data_buffer*8) - 1;
-
-reg [lpw_preescaler_counter-1:0] rp_preescaler_counter;
-reg r_uart_tick;
 
 localparam st_idle = 3'd0;
 localparam st_start = 3'd1;
@@ -28,44 +25,18 @@ reg [7:0] r8_byte_send; /* Actual byte sending */
 reg [15:0] r16_data_index; /* byte data index */
 reg [2:0] r3_nBit; /* bit counter inside a bytes */
 
-/* Baudrate preescaler */
-always@(posedge clk) begin
-  if(rst) begin
-    rp_preescaler_counter <= 0;
-    r_uart_tick <= 1'b0;
-  end
-  else begin
-    if(rp_preescaler_counter < (p_preescaler-1)) begin
-      rp_preescaler_counter <= rp_preescaler_counter + 1;
-      r_uart_tick <= 1'b0;
-    end
-    else begin
-      rp_preescaler_counter <= 0;
-      r_uart_tick <= 1'b1;
-    end
-  end
-end
+/* Baudrate preescaler: held at zero while idle and restarted on every
+   start bit, so every bit on the line (start bit included) lasts exactly
+   p_preescaler clock cycles no matter when i_dv arrives. A receiver that
+   times itself from the start bit edge, like any standard UART, depends
+   on that. */
+reg [lpw_preescaler_counter-1:0] rp_preescaler_counter;
+wire w_uart_tick = (rp_preescaler_counter == (p_preescaler-1));
 
-/* i_dv is asserted by the caller whenever it likes, uncorrelated with our
-   own free-running preescaler - it can land on the exact same cycle the
-   preescaler was already about to wrap on its own. Without this guard,
-   st_start would see that stale/coincidental tick immediately and exit
-   after just 1 cycle instead of a full p_preescaler-cycle period,
-   truncating the start bit and desyncing every bit that follows it for
-   the rest of the byte. The receiver never has this problem itself: it
-   only detects the start bit (and enters its own st_start) one cycle
-   after we assert it, by which point any such stale tick has already
-   passed, so it naturally always gets a full period for free.
-   NOTE: this can't happen on the st_stop -> st_start transition between
-   bytes of a multi-byte transfer, since that transition is itself gated
-   on r_uart_tick - by the time we're actually sitting in st_start there,
-   that tick has already expired, so no guard is needed there. */
-reg r_start_just_entered;
 always@(posedge clk) begin
-  if(rst) r_start_just_entered <= 1'b0;
-  else r_start_just_entered <= (r3_state == st_idle && i_dv);
+  if(rst || r3_state == st_idle || w_uart_tick) rp_preescaler_counter <= 0;
+  else rp_preescaler_counter <= rp_preescaler_counter + 1;
 end
-
 
 /*
 
@@ -83,46 +54,54 @@ always@(posedge clk) begin
   else begin
     case(r3_state)
       st_idle: begin // Register inputs
-        
+
         if(i_dv) r3_state <= st_start;
         else r3_state <= st_idle;
-            
-        rp_data <= ip_data;   
+
+        rp_data <= ip_data;
         r16_data_index <= lp_max_data_bit; // Init data index to max bit (send first MSB byte)
         r3_nBit <= 3'd0; // Init byte index to bit 0 (send first bit 0 of byte high)
 
       end
       st_start: begin // Start bit
 
-        if(r_uart_tick && !r_start_just_entered) r3_state <= st_transmit;
+        if(w_uart_tick) r3_state <= st_transmit;
         else r3_state <= st_start;
-        
+
         r8_byte_send <= rp_data[r16_data_index -: 8]; // Get byte
 
       end
       st_transmit: begin // Transmit a byte
 
-        if(r_uart_tick && r3_nBit == 7) r3_state <= st_stop; // 8 bits send
+        if(w_uart_tick && r3_nBit == 7) r3_state <= st_stop; // 8 bits send
         else r3_state <= st_transmit;
 
-        r3_nBit <= (r_uart_tick) ? r3_nBit + 1 : r3_nBit; // Bit counter
+        r3_nBit <= (w_uart_tick) ? r3_nBit + 1 : r3_nBit; // Bit counter
 
       end
       st_stop: begin // Stop bit (1 stop bit)
 
-      if(r_uart_tick && r16_data_index == 7) r3_state <= st_idle; // Last byte sended
-      else if(r_uart_tick && r16_data_index > 7) r3_state <= st_start; // Continue with next byte
-      else r3_state <= st_stop; 
+      if(w_uart_tick && r16_data_index == 7) r3_state <= st_idle; // Last byte sended
+      else if(w_uart_tick && r16_data_index > 7) r3_state <= st_start; // Continue with next byte
+      else r3_state <= st_stop;
 
-      r16_data_index <= (r_uart_tick) ? r16_data_index - 8 : r16_data_index; // Byte counter
+      r16_data_index <= (w_uart_tick) ? r16_data_index - 8 : r16_data_index; // Byte counter
 
       end
+      default: r3_state <= st_idle;
     endcase
   end
 end
 
-/* TX Output */
-assign o_tx = (r3_state == st_transmit) ? r8_byte_send[r3_nBit] : ((r3_state == st_start) ? 1'b0 : 1'b1);
+/* TX Output, registered so the pin never sees decoding glitches */
+reg r_tx;
+
+always@(posedge clk) begin
+  if(rst) r_tx <= 1'b1;
+  else r_tx <= (r3_state == st_transmit) ? r8_byte_send[r3_nBit] : ((r3_state == st_start) ? 1'b0 : 1'b1);
+end
+
+assign o_tx = r_tx;
 
 /* Ready */
 assign o_ready = (r3_state == st_idle) ? 1'b1 : 1'b0;
