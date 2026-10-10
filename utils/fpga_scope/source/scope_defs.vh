@@ -18,8 +18,7 @@ localparam [7:0] SCOPE_CMD_STREAM_START = 8'h08; /* payload: 4 B sample_count; C
 localparam [7:0] SCOPE_STATUS_OK       = 8'h00;
 localparam [7:0] SCOPE_STATUS_ERROR    = 8'h01;
 
-/* Operating modes, selected at runtime via CMD_SET_MODE, gated by which
-   p_enable_*_mode build-time parameters scope_top was instantiated with */
+/* Operating modes, selected at runtime via CMD_SET_MODE (both always built in) */
 localparam [0:0] SCOPE_MODE_SCOPE  = 1'd0; /* ring-buffer capture + trigger */
 localparam [0:0] SCOPE_MODE_STREAM = 1'd1; /* continuous live sample streaming, no buffering */
 

@@ -11,25 +11,26 @@ how many channels/bits it was built with.
 
 ## Modes
 
-`scope_top` supports more than one operating mode, each of which can be compiled
-out entirely at build time via a `p_enable_*_mode` parameter (a "module enable" —
-no LUTs/BRAM for a mode you don't use). `CMD_GET_INFO` reports which modes this
-particular build actually has, so the GUI only offers the tabs that exist:
+`scope_top` has two operating modes, both always built in (there is no
+build-time enable). `CMD_GET_INFO` still reports them in `modes_supported` so a
+host never has to assume:
 
-| Mode            | id  | Build-time enable         | Behaviour                                             |
-|------------------|-----|-----------------------------|--------------------------------------------------------|
-| `MODE_SCOPE`     | 0   | `p_enable_scope_mode`       | ring-buffer capture + trigger, this is the original oscilloscope described above |
-| `MODE_STREAM`    | 1   | `p_enable_stream_mode`      | continuous live sample streaming straight to the host, no ring buffer, no trigger — for a live plotter / logic-probe view |
+| Mode            | id  | Behaviour                                             |
+|------------------|-----|--------------------------------------------------------|
+| `MODE_SCOPE`     | 0   | ring-buffer capture + trigger, the classic oscilloscope |
+| `MODE_STREAM`    | 1   | live sample streaming straight to the host in count-bounded bursts, no ring buffer, no trigger — for a live plotter / logic-probe view |
 
 The active mode is selected at runtime with `CMD_SET_MODE` and only one mode is
-active at a time. Switching modes is only accepted while idle. Both modes reuse
-the `decimation` field from the last `CMD_SET_TRIGGER` as their sample-rate
-divider; the trigger/pre/post fields are simply unused in `MODE_STREAM`.
+active at a time; the core comes out of reset in `MODE_SCOPE`. Switching modes
+is only accepted while idle. Both modes reuse the `decimation` field from the
+last `CMD_SET_TRIGGER` as their sample-rate divider; the trigger/pre/post fields
+are simply unused in `MODE_STREAM`.
 
 ## Physical layer
 
-Plain async UART, 8N1, baud rate set by the `p_uart_preescaler` parameter (see
-`uart.md`) — there is no autobaud, the host must know the configured rate.
+Plain async UART, 8N1. The baud rate is `clock frequency / p_uart_preescaler`
+(see the [UART module](../../../modules/uart/uart.md)) — there is no autobaud,
+the host must know the configured rate.
 
 ## Framing
 
@@ -56,12 +57,12 @@ corrupted byte can't permanently wedge the link.
 | Opcode | Name                | Mode           | Payload out                                     | Payload in (response)                             |
 |--------|---------------------|----------------|---------------------------------------------------|-----------------------------------------------------|
 | 0x01   | `CMD_GET_INFO`      | any            | none                                              | see [GET_INFO response](#get_info-response)          |
-| 0x02   | `CMD_SET_TRIGGER`   | idle           | see [SET_TRIGGER payload](#set_trigger-payload)   | 1 B status (`0x00`=OK, `0x01`=error)                 |
+| 0x02   | `CMD_SET_TRIGGER`   | idle           | see [SET_TRIGGER payload](#set_trigger-payload-15-bytes)   | 1 B status (`0x00`=OK, `0x01`=error)                 |
 | 0x03   | `CMD_ARM`           | scope          | none                                              | 1 B status                                           |
 | 0x04   | `CMD_GET_STATUS`    | any            | none                                              | see [GET_STATUS response](#get_status-response)      |
 | 0x05   | `CMD_DUMP`          | scope (done)   | none                                              | raw stream, see [CMD_DUMP](#cmd_dump)                |
 | 0x06   | `CMD_ABORT`         | any            | none                                              | 1 B status; aborts a capture or stops a stream        |
-| 0x07   | `CMD_SET_MODE`      | idle           | 1 B mode id (`0`=scope, `1`=stream)               | 1 B status; NACK if that mode isn't built in          |
+| 0x07   | `CMD_SET_MODE`      | idle           | 1 B mode id (`0`=scope, `1`=stream)               | 1 B status                                            |
 | 0x08   | `CMD_STREAM_START`  | stream (idle)  | 4 B sample_count, big-endian                      | 1 B status, then raw sample burst, see [streaming](#stream-mode) |
 
 ### GET_INFO response
@@ -71,10 +72,10 @@ Lets the GUI auto-adapt to whatever project the core was built into.
 | Field             | Size | Meaning                                                        |
 |-------------------|------|-----------------------------------------------------------------|
 | protocol_version  | 1 B  | currently `0x01`                                                 |
-| modes_supported   | 1 B  | bitmask: bit0 = `MODE_SCOPE` built in, bit1 = `MODE_STREAM` built in |
+| modes_supported   | 1 B  | bitmask: bit0 = `MODE_SCOPE`, bit1 = `MODE_STREAM` (currently always `0x03`) |
 | num_channels      | 1 B  | number of configured channels (1-8)                              |
 | channel_widths[8] | 8 B  | width in bits (1-8) of each channel lane; `0` = lane unused       |
-| buffer_depth_log2 | 1 B  | ring buffer depth is `2^buffer_depth_log2` samples (0 if `MODE_SCOPE` not built) |
+| buffer_depth_log2 | 1 B  | ring buffer depth is `2^buffer_depth_log2` samples |
 | frame_bytes       | 1 B  | bytes per sample = `ceil(sum(channel_widths) / 8)`                |
 | clk_freq_hz        | 4 B  | sample clock frequency, big-endian, for the GUI's time axis      |
 
@@ -105,6 +106,10 @@ bits 2:0 : bit_select      which bit of the channel's own width is used as the
 `pre_trigger_count + post_trigger_count` must be <= `2^buffer_depth_log2`; the core
 clamps rather than rejecting if it isn't (see `scope_ctrl.v`).
 
+After `CMD_ARM` the core ignores trigger events until `pre_trigger_count` samples
+have been written, so the dumped window never contains samples from before the
+arm.
+
 ### GET_STATUS response
 
 The meaning of `state` depends on the currently-selected mode (`CMD_SET_MODE`):
@@ -126,7 +131,9 @@ channel's own bits are right-justified within its slice (a 3-bit channel uses
 the low 3 bits of its slice). There is no real-time deadline on this transfer;
 the host reads at whatever rate the UART delivers.
 
-After a dump completes the core returns to `idle` automatically.
+A dump does **not** return the core to `idle`: it stays in `done` (so the same
+capture can be dumped again) until `CMD_ABORT` is sent. `CMD_ARM`,
+`CMD_SET_TRIGGER` and `CMD_SET_MODE` are all rejected until then.
 
 Because `LEN` is a 16-bit field, `(pre_trigger_count + post_trigger_count) * frame_bytes`
 must not exceed 65535. For wide frames pick `buffer_depth_log2` accordingly
@@ -181,3 +188,7 @@ A command that is structurally invalid for the current state — most notably
 `CMD_DUMP` sent while not in `done`, or `CMD_STREAM_START` while not idle — gets
 no response at all, the same way a bad checksum does. The host should always
 poll `CMD_GET_STATUS` before `CMD_DUMP`/`CMD_STREAM_START` rather than racing them.
+
+While a `CMD_DUMP` transfer or a stream burst is in flight the core processes
+only `CMD_ABORT`; any other command sent in that window is dropped without a
+response.

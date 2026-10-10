@@ -71,6 +71,15 @@ module scope_tb();
     .or_dv(w_host_rx_dv)
   );
 
+  /**** Optional free-running square wave on ch0 (period 4 cycles) ****/
+  reg r_ch0_free_run = 1'b0;
+  reg [1:0] r2_free_run_counter = 2'd0;
+
+  always @(posedge clk) begin
+    r2_free_run_counter <= r2_free_run_counter + 2'd1;
+    if (r_ch0_free_run) r_ch0 <= {7'd0, r2_free_run_counter[1]};
+  end
+
   /**** Response byte capture ****/
   reg [7:0] rx_buf [0:511];
 
@@ -173,7 +182,7 @@ module scope_tb();
     /* ---- CMD_SET_TRIGGER: ch0 rising edge, pre=4, post=4, decim=1 ---- */
     $display("[INFO] >> Test 2: CMD_SET_TRIGGER");
     clear_rx();
-    send_set_trigger();
+    send_set_trigger(8'd4, 8'd4);
     wait_rx_count(6, 2000);
     check_byte(0, SCOPE_SYNC_DEV, "SET_TRIGGER sync");
     check_byte(1, SCOPE_CMD_SET_TRIGGER, "SET_TRIGGER cmd echo");
@@ -275,6 +284,43 @@ module scope_tb();
     check_byte(10, 8'd1, "stream sample 4");
     $display("[OK] CMD_STREAM_START burst matches expected");
 
+    /* ---- pre-trigger holdoff: a trigger that arrives before the
+       pre-trigger window has filled must be ignored, otherwise the start
+       of the dump is whatever the buffer held before ---- */
+    $display("[INFO] >> Test 6: trigger arriving before the pre-trigger window is full");
+    #(`clkcycle*400); /* let the burst's last byte leave the wire */
+
+    clear_rx();
+    send_byte(SCOPE_SYNC_HOST);
+    send_byte(SCOPE_CMD_SET_MODE);
+    send_byte(8'h00);
+    send_byte(8'h01);
+    send_byte(SCOPE_MODE_SCOPE);
+    send_byte(SCOPE_CMD_SET_MODE ^ 8'h00 ^ 8'h01 ^ SCOPE_MODE_SCOPE);
+    wait_rx_count(6, 2000);
+    check_byte(4, SCOPE_STATUS_OK, "SET_MODE(scope) status");
+
+    clear_rx();
+    send_set_trigger(8'd12, 8'd4);
+    wait_rx_count(6, 2000);
+    check_byte(4, SCOPE_STATUS_OK, "SET_TRIGGER status");
+
+    r_ch0_free_run <= 1'b1; /* rising edge every 4 cycles: the first one comes long before 12 samples are in */
+    clear_rx();
+    send_byte(SCOPE_SYNC_HOST);
+    send_byte(SCOPE_CMD_ARM);
+    send_byte(8'h00);
+    send_byte(8'h00);
+    send_byte(SCOPE_CMD_ARM ^ 8'h00 ^ 8'h00);
+    wait_rx_count(6, 2000);
+    check_byte(4, SCOPE_STATUS_OK, "ARM status");
+
+    poll_until_done();
+    check_byte(5, 8'd0, "fill_count hi");
+    check_byte(6, 8'd16, "fill_count lo");
+    r_ch0_free_run <= 1'b0;
+    $display("[OK] capture waited for the pre-trigger window");
+
     #(`clkcycle*20);
 
     if (error_counter == 0) $display("[PASS] All checks passed.");
@@ -283,7 +329,7 @@ module scope_tb();
     $finish();
   end
 
-  task send_set_trigger;
+  task send_set_trigger(input [7:0] pre, input [7:0] post);
     reg [7:0] chk;
   begin
     chk = SCOPE_CMD_SET_TRIGGER ^ 8'h00 ^ 8'd15;
@@ -304,9 +350,9 @@ module scope_tb();
     send_byte(8'h00); chk = chk ^ 8'h00;
     send_byte(8'h00); chk = chk ^ 8'h00; /* combine_mode = AND */
     send_byte(8'h00); chk = chk ^ 8'h00; /* pre_trigger_count hi */
-    send_byte(8'd4);  chk = chk ^ 8'd4;  /* pre_trigger_count lo */
+    send_byte(pre);   chk = chk ^ pre;   /* pre_trigger_count lo */
     send_byte(8'h00); chk = chk ^ 8'h00; /* post_trigger_count hi */
-    send_byte(8'd4);  chk = chk ^ 8'd4;  /* post_trigger_count lo */
+    send_byte(post);  chk = chk ^ post;  /* post_trigger_count lo */
     send_byte(8'h00); chk = chk ^ 8'h00; /* decimation hi */
     send_byte(8'd1);  chk = chk ^ 8'd1;  /* decimation lo */
 

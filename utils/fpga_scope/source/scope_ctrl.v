@@ -96,7 +96,10 @@ always @(posedge clk) begin
           if (o_fill_count < r17_pre_clamped[15:0]) o_fill_count <= o_fill_count + 16'd1;
         end
 
-        if (i_trigger) begin
+        /* a trigger only counts once the pre-trigger window is full: taking
+           one earlier would make the dump start in samples that were never
+           written during this capture */
+        if (i_trigger && o_fill_count >= r17_pre_clamped[15:0]) begin
           o_state           <= SCOPE_ST_CAPTURING;
           o_dump_start_addr <= r_wr_ptr - r17_pre_clamped[p_addr_width-1:0];
           o_dump_count      <= r17_pre_clamped[15:0] + r17_post_clamped[15:0];
