@@ -1,0 +1,4 @@
+pyserial
+fastapi
+uvicorn[standard]
+httpx  # only for test_app.py

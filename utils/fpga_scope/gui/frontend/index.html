@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>fpga_scope</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>fpga_scope</h1>
+    <form id="conn">
+      <label>Port <select id="port"></select></label>
+      <button type="button" id="refresh" title="Rescan serial ports">Rescan</button>
+      <label>Baud <input id="baud" type="number" min="1" value="115200"></label>
+      <button type="submit" id="connect" class="primary">Connect</button>
+    </form>
+    <div id="status"><span class="dot"></span><span id="state-label">Disconnected</span></div>
+  </header>
+
+  <p id="info">Not connected.</p>
+  <div id="error" role="alert" hidden><span id="error-text"></span><button type="button" id="error-close">Dismiss</button></div>
+
+  <main>
+    <aside>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tab-scope" aria-selected="true">Scope</button>
+        <button type="button" role="tab" id="tab-stream" aria-selected="false">Stream</button>
+      </div>
+
+      <section id="panel-scope">
+        <h2>Trigger</h2>
+        <div id="triggers" class="triggers"></div>
+        <label class="row">Combine
+          <select id="combine">
+            <option value="and">All conditions (AND)</option>
+            <option value="or">Any condition (OR)</option>
+          </select>
+        </label>
+        <h2>Window</h2>
+        <label class="row">Samples before trigger <input id="pre" type="number" min="0" value="100"></label>
+        <label class="row">Samples after trigger <input id="post" type="number" min="0" value="300"></label>
+        <label class="row">Sample every N clocks <input id="decim" type="number" min="1" max="65535" value="1"></label>
+        <p id="scope-hint" class="hint"></p>
+        <div class="buttons">
+          <button type="button" id="arm" class="primary">Arm</button>
+          <button type="button" id="abort">Abort</button>
+        </div>
+      </section>
+
+      <section id="panel-stream" hidden>
+        <h2>Live stream</h2>
+        <label class="row">Sample every N clocks <input id="s-decim" type="number" min="1" max="65535" value="1"></label>
+        <label class="row">Samples per burst <input id="s-batch" type="number" min="1" max="10000" value="200"></label>
+        <label class="row">Samples on screen <input id="s-window" type="number" min="10" max="100000" value="2000"></label>
+        <p class="hint">Samples arrive in bursts at whatever rate the UART allows, so the horizontal axis is in samples, not time.</p>
+        <div class="buttons">
+          <button type="button" id="s-start" class="primary">Start</button>
+          <button type="button" id="s-stop">Stop</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="plot">
+      <div class="plot-head">
+        <h2 id="plot-title">No data yet</h2>
+        <span id="plot-sub"></span>
+        <button type="button" id="csv" disabled>Download CSV</button>
+      </div>
+      <div id="plot-wrap">
+        <canvas id="plot" tabindex="0" aria-label="Waveform plot. Use the left and right arrow keys to read values."></canvas>
+        <div id="tooltip" hidden></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
