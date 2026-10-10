@@ -13,3 +13,7 @@ A collection of useful tools, scripts, and small hardware hacks designed to simp
 ### 🔹 QT Designer GUI
 
 [QT Designer GUI](QT_GUI/qt_designer_gui.md) provides a step by step tutorial to create a simple grpahical user interface using QT Designer and Python.
+
+### 🔹 FPGA Scope
+
+[FPGA Scope](fpga_scope/fpga_scope.md) is a logic analyzer / oscilloscope core that is instantiated inside an FPGA design and controlled from a browser through a USB-UART adapter. It captures up to 8 internal signals around a trigger, or streams them live, with no vendor tool or JTAG needed while debugging.
