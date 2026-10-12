@@ -108,10 +108,10 @@ class TestFrontend(unittest.TestCase):
     self.assertGreaterEqual(report["passed"], at_least) # a page that silently ran nothing is not a pass
 
   def test_scope_math(self):
-    self.assertPagePasses(self.run_page("unit.html", 30), at_least=40)
+    self.assertPagePasses(self.run_page("unit.html", 30), at_least=48)
 
   def test_gui_against_the_simulated_device(self):
-    self.assertPagePasses(self.run_page("e2e.html", 90), at_least=19)
+    self.assertPagePasses(self.run_page("e2e.html", 90), at_least=27)
 
 
 if __name__ == "__main__":

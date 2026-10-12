@@ -80,7 +80,9 @@ A new module or page is also added to its section index (`modules/modules.md`, `
 
 A project-agnostic FPGA debug oscilloscope: an RTL core driven over UART, a Python backend (`gui/backend/`) and a plain HTML/JS/CSS frontend with no build step (`gui/frontend/`). It works on real hardware (one board and configuration tested, recorded in `docs/TODO.md`). `fpga_scope.md` is the user-facing page.
 
-GUI layers, bottom up: `protocol.py` (wire protocol, `ScopeClient`) → `session.py` (one connection plus its background capture/stream job, no web dependency) → `app.py` (FastAPI: REST for commands, one WebSocket for pushed state and data) → `gui/frontend/app.js` (page, drawing, interaction) on top of `gui/frontend/scope_math.js` (everything that needs no page: configuration, scaling, combining channels, axes, zoom, file formats). `scope_cli.py` is the command-line bring-up tool. `sim_device.py` is a simulated core that takes the place of the serial port (port name `sim`); it is a stand-in for GUI work, not a reference model of the RTL, and it hid a real RTL bug once, so a change is only verified by `scope_tb.v` and, for timing or UART matters, by the board.
+Besides reading signals it writes to the design: 8 "controls", 32-bit registers on `scope_top`'s `o_control0`..`o_control7` with a one-clock `o_control_update` pulse per write, shown in the GUI as buttons, switches or values. The core always has all 8 (no parameter, a user decision); how many are used and what they are is GUI configuration only. They are called "control", never "ctrl": `scope_ctrl` and `w_ctrl_*` are the capture state machine.
+
+GUI layers, bottom up: `protocol.py` (wire protocol, `ScopeClient`) → `session.py` (one connection plus its background capture/stream job, no web dependency) → `app.py` (FastAPI: REST for commands, one WebSocket for pushed state and data) → `gui/frontend/app.js` (page, drawing, interaction) on top of `gui/frontend/scope_math.js` (everything that needs no page: configuration, scaling, combining channels, axes, zoom, file formats). `scope_cli.py` is the command-line bring-up tool. `sim_device.py` is a simulated core that takes the place of the serial port (port name `sim`, and the unlisted `sim-v1` for a core built before the controls existed); it is a stand-in for GUI work, not a reference model of the RTL, and it hid a real RTL bug once, so a change is only verified by `scope_tb.v` and, for timing or UART matters, by the board.
 
 ```bash
 cd utils/fpga_scope/gui/backend
@@ -91,7 +93,7 @@ python scope_cli.py --port COM5 --baud 115200 info    # first check against a re
 
 There is no Node on this machine and no build step, so the frontend tests are pages: `gui/frontend/tests/unit.html` (tests `scope_math.js`) and `tests/e2e.html` (drives the real `index.html` in an iframe against the `sim` port). `test_frontend.py` serves them from `app.py`, opens them headless and collects the result they POST back. New display logic goes in `scope_math.js` with a test in `tests/unit.js`; new page behaviour gets a step in `tests/e2e.js`. `app.js` keeps its state in top-level `const`/`let`, which the e2e test reads with the iframe's `eval`.
 
-The GUI configuration (per-channel display settings, trigger, window) is defined only in the frontend (`ScopeMath.defaultConfig` / `normalizeConfig`); the backend stores it as opaque JSON in `gui/configs/` (gitignored). A new setting needs: the default and its validation in `scope_math.js`, a row in `CHANNEL_FIELDS` in `app.js`, and the key table in `docs/gui.md`.
+The GUI configuration (per-channel display settings, trigger, window) is defined only in the frontend (`ScopeMath.defaultConfig` / `normalizeConfig`); the backend stores it as opaque JSON in `gui/configs/` (gitignored). A new setting needs: the default and its validation in `scope_math.js`, a row in `CHANNEL_FIELDS` (or `CONTROL_FIELDS`) in `app.js`, and the key table in `docs/gui.md`.
 
 Read these before touching it:
 
@@ -112,5 +114,6 @@ Things that are easy to get wrong:
 - `(pre_trigger_count + post_trigger_count) * frame_bytes` must fit the 16-bit `LEN` field.
 - Sample registers that are byte-indexed (`[8*idx +: 8]`) must be declared `frame_bytes*8` wide, not `frame_width` wide, or the padding bits read back as X.
 - Both `MODE_SCOPE` and `MODE_STREAM` are always built in; there are no build-time mode enables.
-- While a dump or stream burst is in flight the core only processes `CMD_ABORT`.
+- While a dump or stream burst is in flight the core only processes `CMD_ABORT`. A control write sent then is dropped, so `session.py` slots it between two exchanges of the running job (`_call` / `_job_call`); anything else that talks to the device while a job runs must go through the same pair.
+- A core built before the controls reports `protocol_version` 1 and ignores their opcodes without answering: check `ScopeInfo.num_controls` before sending one.
 - `.gitignore` ignores `*.html` and `*.css` repo-wide (generated site pages); `gui/frontend/` is explicitly un-ignored there. A new frontend file type or folder needs the same treatment or it will silently stay out of commits.

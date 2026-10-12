@@ -33,7 +33,20 @@ module scope_top # (
   input [7:0] i_ch7,
 
   input i_uart_rx,
-  output o_uart_tx
+  output o_uart_tx,
+
+  /* controls: 8 registers the host writes (docs/protocol.md), 0 after reset.
+     Always all 8 and always 32 bits: use the bits you need and leave the rest
+     unconnected. Separate ports, like the channels */
+  output [31:0] o_control0,
+  output [31:0] o_control1,
+  output [31:0] o_control2,
+  output [31:0] o_control3,
+  output [31:0] o_control4,
+  output [31:0] o_control5,
+  output [31:0] o_control6,
+  output [31:0] o_control7,
+  output [7:0] o_control_update /* bit N: 1-cycle pulse whenever the host writes control N */
 );
 
 `include "scope_defs.vh"
@@ -218,6 +231,17 @@ scope_streamer # (
 /* Command / UART interface, always present                            */
 /* ------------------------------------------------------------------ */
 
+wire [255:0] w_control_values;
+
+assign o_control0 = w_control_values[31:0];
+assign o_control1 = w_control_values[63:32];
+assign o_control2 = w_control_values[95:64];
+assign o_control3 = w_control_values[127:96];
+assign o_control4 = w_control_values[159:128];
+assign o_control5 = w_control_values[191:160];
+assign o_control6 = w_control_values[223:192];
+assign o_control7 = w_control_values[255:224];
+
 scope_cmd_if # (
   .p_uart_preescaler(p_uart_preescaler),
   .p_num_channels(p_num_channels),
@@ -260,7 +284,10 @@ scope_cmd_if # (
   .i_stream_sample_valid(w_stream_sample_valid),
   .i_stream_sample_data(w_stream_sample_data),
 
-  .o_active_mode()
+  .o_active_mode(),
+
+  .o_control_values(w_control_values),
+  .o_control_update(o_control_update)
 );
 
 endmodule

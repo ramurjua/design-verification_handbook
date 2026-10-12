@@ -3,6 +3,8 @@
   python scope_cli.py --port COM5 --baud 115200 info
   python scope_cli.py --port COM5 --baud 115200 capture --trig 0:rise --pre 100 --post 100
   python scope_cli.py --port COM5 --baud 115200 stream 200 --decim 1000
+  python scope_cli.py --port COM5 --baud 115200 control 0 1        write control 0
+  python scope_cli.py --port COM5 --baud 115200 controls           read all 8
 
 `capture` and `stream` are complete sequences that start by aborting whatever
 the core was doing; the remaining commands each send exactly one frame.
@@ -52,6 +54,7 @@ def print_info(info):
   print(f"buffer depth     : {info.buffer_depth} samples (largest capture window {info.max_capture_samples})")
   print(f"frame bytes      : {info.frame_bytes}")
   print(f"clock            : {info.clk_freq_hz} Hz")
+  print(f"controls         : {info.num_controls or 'none (core built before they existed)'}")
 
 
 def print_samples(info, samples, csv_path):
@@ -119,6 +122,15 @@ def run(scope, args):
     scope.abort()
   elif args.command == "mode":
     scope.set_mode(Mode[args.mode.upper()])
+  elif args.command == "control":
+    scope.write_control(args.index, args.value)
+    print(f"control {args.index} = {scope.read_control(args.index)}")
+  elif args.command == "controls":
+    values = scope.read_controls()
+    if not values:
+      print("this core has no controls")
+    for i, value in enumerate(values):
+      print(f"control {i} = {value} (0x{value:08X})")
   elif args.command == "capture":
     return run_capture(scope, args)
   elif args.command == "stream":
@@ -150,6 +162,11 @@ def build_parser():
   sub.add_parser("dump", help="CMD_DUMP").add_argument("--csv", help="also save the samples to this file")
   sub.add_parser("abort", help="CMD_ABORT")
   sub.add_parser("mode", help="CMD_SET_MODE").add_argument("mode", choices=["scope", "stream"])
+
+  control = sub.add_parser("control", help="CMD_CONTROL_WRITE, then read it back")
+  control.add_argument("index", type=int, help="control number, 0-7")
+  control.add_argument("value", type=lambda text: int(text, 0), help="raw 32-bit value, decimal or 0x...")
+  sub.add_parser("controls", help="CMD_CONTROL_READ of every control")
 
   capture = sub.add_parser("capture", help="abort, set trigger, arm, wait for the trigger, dump, abort")
   add_trigger_args(capture)

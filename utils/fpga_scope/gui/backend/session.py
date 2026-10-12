@@ -12,11 +12,13 @@ changes, a finished capture, stream batches, errors - is reported through the
 """
 
 import threading
+import time
 
 from protocol import ChannelTrigger, Mode, ScopeClient, ScopeError, ScopeState, TriggerConfig, TriggerType
 from sim_device import SimDevice
 
 SIM_PORT = "sim"
+SIM_OLD_PORT = "sim-v1" # the simulated device as a core built before the controls existed; not listed, for tests
 POLL_SECONDS = 0.1
 
 TRIGGER_TYPES = {
@@ -46,6 +48,8 @@ class ScopeSession:
     self._client = None
     self._job = None
     self._stop = threading.Event()
+    self._io = threading.Lock() # held for one exchange with the device, by the job or by a request handler
+    self._urgent = threading.Event() # a request handler is waiting for _io: the job lets it in first
     self._last_state = None
     self.port = None
     self.state = "disconnected"
@@ -55,8 +59,8 @@ class ScopeSession:
   def connect(self, port, baudrate, timeout=1.0):
     with self._lock:
       self._close()
-      if port == SIM_PORT:
-        client = ScopeClient(SimDevice(), timeout)
+      if port in (SIM_PORT, SIM_OLD_PORT):
+        client = ScopeClient(SimDevice(protocol_version=1 if port == SIM_OLD_PORT else 2), timeout)
       else:
         client = ScopeClient.open(port, baudrate, timeout)
       try:
@@ -86,6 +90,8 @@ class ScopeSession:
       "frame_bytes": info.frame_bytes,
       "clk_freq_hz": info.clk_freq_hz,
       "modes": [m.name.lower() for m in Mode if info.supports(m)],
+      "protocol_version": info.protocol_version,
+      "num_controls": info.num_controls, # 0 for a core built before the controls existed
     }
 
   def start_capture(self, channels, combine_or, pre, post, decimation):
@@ -134,14 +140,39 @@ class ScopeSession:
       client.abort()
       self._set_state("idle")
 
+  def read_controls(self):
+    """The value of every control, read from the core. Empty if it has none."""
+    with self._lock:
+      client = self._require_client()
+      return self._call(client.read_controls)
+
+  def write_control(self, index, value):
+    """Write one control and return the value the core then reports for it.
+    Also works while a capture is armed or a stream is running: it then goes
+    in between two of the job's own exchanges, so during a stream it waits
+    for the burst in flight to finish."""
+    with self._lock:
+      client = self._require_client()
+      count = client.info.num_controls
+      if not count:
+        raise ValueError(f"this core has no controls (protocol version {client.info.protocol_version}): "
+                         "rebuild it with the current fpga_scope RTL")
+      if not 0 <= index < count:
+        raise ValueError(f"control {index} out of range 0-{count - 1}")
+
+      def write_and_read_back():
+        client.write_control(index, value)
+        return client.read_control(index)
+      return self._call(write_and_read_back)
+
   # Jobs (worker thread)
 
   def _capture_job(self, client, pre, decimation):
     while not self._stop.is_set():
-      status = client.get_status()
+      status = self._job_call(client.get_status)
       if status.state == ScopeState.DONE:
-        channels = client.info.split_channels(client.dump())
-        client.abort() # a finished capture stays in DONE until aborted
+        channels = client.info.split_channels(self._job_call(client.dump))
+        self._job_call(client.abort) # a finished capture stays in DONE until aborted
         self._publish({"type": "capture", "channels": channels, "pre": pre, "decimation": decimation})
         self._set_state("idle")
         return
@@ -150,7 +181,7 @@ class ScopeSession:
 
   def _stream_job(self, client, batch, decimation):
     while not self._stop.is_set():
-      channels = client.info.split_channels(client.stream(batch))
+      channels = client.info.split_channels(self._job_call(client.stream, batch))
       self._publish({"type": "stream", "channels": channels, "decimation": decimation})
 
   def _run_job(self, job, *args):
@@ -161,6 +192,22 @@ class ScopeSession:
       self._set_state("idle")
 
   # Internals
+
+  def _job_call(self, fn, *args):
+    """One exchange with the device on behalf of the running job."""
+    while self._urgent.is_set(): # a lock alone would let a stream take it again at once, every time
+      time.sleep(0.001)
+    with self._io:
+      return fn(*args)
+
+  def _call(self, fn, *args):
+    """One exchange from a request handler, in between two of the job's if one is running."""
+    self._urgent.set()
+    try:
+      with self._io:
+        return fn(*args)
+    finally:
+      self._urgent.clear()
 
   def _require_client(self):
     if not self._client:

@@ -10,6 +10,9 @@ const ScopeMath = (() => {
   const FORMATS = ["dec", "hex", "bin"];
   const HEIGHTS = { auto: null, small: 1, medium: 2.4, large: 4, xlarge: 6 };
   const TRIGGER_TYPES = ["off", "rise", "fall", "high", "low"];
+  const MAX_CONTROLS = 8; // 32-bit registers the host writes; a core has all of them or (older builds) none
+  const CONTROL_KINDS = ["off", "button", "toggle", "value"];
+  const MAX_CONTROL_RAW = 0xFFFFFFFF;
 
   /* ---- configuration ---- */
 
@@ -26,10 +29,24 @@ const ScopeMath = (() => {
     };
   }
 
+  /* A control is not used until it is given a kind:
+       button  every press writes `value`
+       toggle  a switch that writes 1 and 0
+       value   a number typed in real units, written as its raw value */
+  function defaultControl(i) {
+    return {
+      name: `control${i}`, kind: "off",
+      value: 1, // button: the raw value a press writes
+      unit: "", signed: false, frac: 0, gain: 1, offset: 0, // value: typed = signed(raw) * 2^-frac * gain + offset, as for a channel
+      min: null, max: null, // value: limits on what may be typed, null for none
+    };
+  }
+
   function defaultConfig() {
     return {
       version: 1,
       channels: Array.from({ length: MAX_CHANNELS }, (_, c) => defaultChannel(c)),
+      controls: Array.from({ length: MAX_CONTROLS }, (_, i) => defaultControl(i)),
       trigger: { channels: Array.from({ length: MAX_CHANNELS }, (_, c) => ({ type: c === 0 ? "rise" : "off", bit: 0 })), combine: "and" },
       window: { pre: 100, post: 300, decimation: 1 },
       stream: { decimation: 1, batch: 200, window: 2000 },
@@ -44,6 +61,7 @@ const ScopeMath = (() => {
     return Number.isInteger(v) && v >= min && v <= max ? v : fallback;
   }
   const channelRef = (v, self) => (Number.isInteger(v) && v >= 0 && v < MAX_CHANNELS && v !== self ? v : null);
+  const limit = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
 
   /* a per-channel list in a file: an array in channel order, or an object keyed by channel number */
   const perChannel = (v) => (v && typeof v === "object" ? v : []);
@@ -74,6 +92,22 @@ const ScopeMath = (() => {
       d.bits = flag(r.bits, d.bits);
       d.high = channelRef(r.high, c);
       d.lane = channelRef(r.lane, c);
+    });
+
+    const controls = perChannel(raw.controls);
+    config.controls.forEach((d, i) => {
+      const r = controls[i];
+      if (!r || typeof r !== "object") return;
+      d.name = text(r.name, d.name, 24).trim() || d.name;
+      d.kind = oneOf(r.kind, CONTROL_KINDS, d.kind);
+      d.value = integer(r.value, d.value, 0, MAX_CONTROL_RAW);
+      d.unit = text(r.unit, d.unit, 12).trim();
+      d.signed = flag(r.signed, d.signed);
+      d.frac = integer(r.frac, d.frac, 0, MAX_SIGNAL_BITS);
+      d.gain = number(r.gain, d.gain) || d.gain; // a gain of 0 could not be undone to find the raw value
+      d.offset = number(r.offset, d.offset);
+      d.min = limit(r.min);
+      d.max = limit(r.max);
     });
 
     const trigger = raw.trigger && typeof raw.trigger === "object" ? raw.trigger : {};
@@ -174,6 +208,25 @@ const ScopeMath = (() => {
   }
 
   const isIdentity = (width, cfg) => !isSigned(width, cfg) && cfg.frac === 0 && cfg.gain === 1 && cfg.offset === 0;
+
+  /* ---- controls: the same scaling, the other way round ---- */
+
+  /* The raw 32 bits to write for a number typed into a "value" control: { raw },
+     or { error } saying why it cannot be sent. A negative value goes out in
+     two's complement, which the FPGA reads right whatever width it uses. */
+  function controlRaw(cfg, shown) {
+    if (typeof shown !== "number" || !Number.isFinite(shown)) return { error: "not a number" };
+    if (cfg.min !== null && shown < cfg.min) return { error: `below the smallest allowed, ${cfg.min}` };
+    if (cfg.max !== null && shown > cfg.max) return { error: `above the largest allowed, ${cfg.max}` };
+    const raw = Math.round(((shown - cfg.offset) / cfg.gain) * 2 ** cfg.frac);
+    if (!Number.isFinite(raw)) return { error: "not a number" };
+    if (raw < 0 && !cfg.signed) return { error: "negative, and this control is not signed" };
+    if (raw < -(2 ** 31) || raw > (cfg.signed ? 2 ** 31 - 1 : MAX_CONTROL_RAW)) return { error: "does not fit 32 bits" };
+    return { raw: raw >>> 0 };
+  }
+
+  /* what a raw value read back from the core means in the control's units */
+  const controlShown = (cfg, raw) => scaleValue(raw, 32, cfg);
 
   /* ---- Y axis ---- */
 
@@ -427,7 +480,9 @@ const ScopeMath = (() => {
 
   return {
     MAX_CHANNELS, MAX_SIGNAL_BITS, RANGES, STYLES, FORMATS, HEIGHTS, TRIGGER_TYPES,
-    defaultChannel, defaultConfig, normalizeConfig, configProblems,
+    MAX_CONTROLS, CONTROL_KINDS, MAX_CONTROL_RAW,
+    defaultChannel, defaultControl, defaultConfig, normalizeConfig, configProblems,
+    controlRaw, controlShown,
     buildSignals, rawValues, toSigned, isSigned, scaleValue, scaleValues, isIdentity,
     fullRange, autoRange, laneRange, niceStep, ticks,
     trim, formatTick, formatValue, formatRaw, formatHz, timeUnit, formatSeconds, label,

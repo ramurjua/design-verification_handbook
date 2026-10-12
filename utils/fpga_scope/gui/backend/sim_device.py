@@ -7,14 +7,18 @@ waves on 1-bit channels, a ramp or a sine on wider ones).
 
 This is a behavioural stand-in for GUI development, NOT a reference model of
 the RTL: a capture resolves in one go at CMD_ARM time and a stream burst cannot
-be interrupted half-way. Passing against it says nothing about real hardware.
+be interrupted half-way, so a control write is never dropped the way the RTL
+drops one during a burst. The controls are stored and read back, nothing more:
+they do not act on the synthetic signals. Passing against it says nothing
+about real hardware.
 """
 
 import math
 import time
 
 from protocol import (
-  SYNC_HOST, SYNC_DEV, STATUS_OK, Mode, Opcode, ScopeState, TriggerType, checksum, encode_frame,
+  CONTROLS_SINCE_VERSION, NUM_CONTROLS, SYNC_HOST, SYNC_DEV, STATUS_OK, Mode, Opcode, ScopeState, TriggerType,
+  checksum, encode_frame,
 )
 
 STATUS_ERROR = 0x01
@@ -25,7 +29,9 @@ CAPTURE_SECONDS = 0.4 # how long a capture stays ARMED before reporting DONE, so
 class SimDevice:
 
   def __init__(self, channel_widths=(1, 1, 4, 8), buffer_depth_log2=10, clk_freq_hz=1_000_000,
-               baudrate=115200, realtime=True):
+               baudrate=115200, realtime=True, protocol_version=2):
+    self.protocol_version = protocol_version # 1: a core from before the controls, which ignores their opcodes
+    self.controls = [0] * NUM_CONTROLS
     self.channel_widths = tuple(channel_widths)
     self.buffer_depth_log2 = buffer_depth_log2
     self.clk_freq_hz = clk_freq_hz
@@ -153,7 +159,7 @@ class SimDevice:
 
     if cmd == Opcode.GET_INFO:
       widths = self.channel_widths + (0,) * (8 - len(self.channel_widths))
-      self._reply(cmd, bytes([0x01, 0x03, len(self.channel_widths), *widths, self.buffer_depth_log2, self.frame_bytes])
+      self._reply(cmd, bytes([self.protocol_version, 0x03, len(self.channel_widths), *widths, self.buffer_depth_log2, self.frame_bytes])
                   + self.clk_freq_hz.to_bytes(4, "big"))
 
     elif cmd == Opcode.SET_TRIGGER and len(payload) == 15:
@@ -201,6 +207,16 @@ class SimDevice:
         self._send(b"".join(self._sample(self._t + i * self.decimation).to_bytes(self.frame_bytes, "big")
                             for i in range(count)))
         self._t += count * self.decimation
+
+    elif cmd == Opcode.CONTROL_WRITE and self.protocol_version >= CONTROLS_SINCE_VERSION:
+      accepted = len(payload) == 5 and payload[0] < NUM_CONTROLS
+      if accepted: self.controls[payload[0]] = int.from_bytes(payload[1:], "big")
+      status(accepted)
+
+    elif cmd == Opcode.CONTROL_READ and self.protocol_version >= CONTROLS_SINCE_VERSION:
+      if len(payload) == 1 and payload[0] < NUM_CONTROLS:
+        self._reply(cmd, payload + self.controls[payload[0]].to_bytes(4, "big"))
+      # else: ignored without a response, like the RTL
 
   def _arm(self):
     depth = 1 << self.buffer_depth_log2

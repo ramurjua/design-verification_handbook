@@ -32,6 +32,10 @@ MAX_PAYLOAD_LEN = 0xFFFF # LEN is a 16-bit field
 
 GET_INFO_LEN = 17
 GET_STATUS_LEN = 3
+CONTROL_READ_LEN = 5
+
+NUM_CONTROLS = 8 # 32-bit registers the host writes; every core has all of them...
+CONTROLS_SINCE_VERSION = 2 # ...from this protocol_version on
 
 
 class Opcode(IntEnum):
@@ -43,6 +47,8 @@ class Opcode(IntEnum):
   ABORT = 0x06
   SET_MODE = 0x07
   STREAM_START = 0x08
+  CONTROL_WRITE = 0x09
+  CONTROL_READ = 0x0A
 
 
 class Mode(IntEnum):
@@ -144,6 +150,11 @@ class ScopeInfo:
 
   def supports(self, mode):
     return bool(self.modes_supported & (1 << mode))
+
+  @property
+  def num_controls(self):
+    """Controls this core has: all 8, or none if it was built before they existed."""
+    return NUM_CONTROLS if self.protocol_version >= CONTROLS_SINCE_VERSION else 0
 
   def unpack_samples(self, data):
     """Raw CMD_DUMP / stream bytes -> one integer per sample (MSB of the sample first)."""
@@ -285,10 +296,40 @@ class ScopeClient:
     del self._rx[:nbytes]
     return info.unpack_samples(data)
 
+  def write_control(self, index, value):
+    """Set control `index` (0-7) to a 32-bit value. The core's o_controlN
+    output takes it in one clock and o_control_update[N] pulses, also when the
+    value is the one it already had. Accepted in any mode and capture state,
+    but not while a dump or stream burst is in flight: then it is dropped and
+    this raises ScopeTimeout."""
+    self._check_control(index)
+    if not 0 <= value <= 0xFFFFFFFF:
+      raise ValueError(f"control value {value} does not fit 32 bits")
+    self._status_command(Opcode.CONTROL_WRITE, bytes([index]) + value.to_bytes(4, "big"))
+
+  def read_control(self, index):
+    """The value control `index` holds now."""
+    self._check_control(index)
+    payload = self._command(Opcode.CONTROL_READ, bytes([index]), length=CONTROL_READ_LEN)
+    if payload[0] != index:
+      raise ScopeError(f"asked for control {index}, the device answered for control {payload[0]}")
+    return int.from_bytes(payload[1:], "big")
+
+  def read_controls(self):
+    """Every control's value, in order. Empty for a core without controls."""
+    return [self.read_control(i) for i in range(self._info().num_controls)]
+
   # Transport
 
   def _info(self):
     return self.info or self.get_info()
+
+  def _check_control(self, index):
+    if not 0 <= index < NUM_CONTROLS:
+      raise ValueError(f"control {index} out of range 0-{NUM_CONTROLS - 1}")
+    if not self._info().num_controls:
+      raise ScopeError(f"this core has no controls (protocol version {self.info.protocol_version}): "
+                       "it was built from RTL older than the controls")
 
   def _status_command(self, opcode, payload=b""):
     status = self._command(opcode, payload, length=1)[0]

@@ -9,11 +9,13 @@ It has two modes, selected from the GUI:
 - **Scope**: waits for a trigger, captures a window of samples around it at full clock speed into block RAM, then uploads it. For fast signals.
 - **Stream**: sends samples continuously as fast as the UART allows. For slow signals you want to watch live.
 
+It can also write to the design: eight **controls**, shown in the GUI as buttons, switches or numbers with a name of your choice, appear in the FPGA as eight 32-bit outputs. Use them to start something, enable a test mode or set a value such as a speed without rebuilding.
+
 ![Stream tab showing live samples](img/gui_stream.png)
 
 ✔️ Verified via testbenches: the RTL core with a simulated host ([testbench](test/scope_tb.v)) and the Python side with unit tests ([backend tests](gui/backend/)).
 
-🧪 Status: Tested on real hardware with the [example design](example/scope_example_top.v) on a Spartan-7 (xc7s50) board with a 25 MHz clock, at 115200 baud through a CP210x USB-UART adapter: 3000 commands without a lost reply, captures and streams matching the generated signals, and the GUI working end to end. Other devices, clocks and baud rates have not been tried.
+🧪 Status: Tested on real hardware with the [example design](example/scope_example_top.v) on a Spartan-7 (xc7s50) board with a 25 MHz clock, at 115200 baud through a CP210x USB-UART adapter: 3000 commands without a lost reply, captures and streams matching the generated signals, and the GUI working end to end. Other devices, clocks and baud rates have not been tried. The controls were added after that run: they are verified in simulation, and the user tried the buttons from the GUI on the board (2026-10-12) and they worked; what exactly was checked was not written down.
 
 📁 [Source Code](source/)
 
@@ -28,7 +30,7 @@ It has two modes, selected from the GUI:
 | Document | What it is for |
 |----------|----------------|
 | [Integration guide](docs/integration.md) | Step by step: add the scope to a design, pick the parameters, assign the pins, first contact |
-| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names), zoom, cursors, saving the setup to a file, recording a stream |
+| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names), zoom, cursors, controls, saving the setup to a file, recording a stream |
 | [Protocol](docs/protocol.md) | The UART wire protocol between the computer and the FPGA |
 | [Status and roadmap](docs/TODO.md) | What is done, what is tested, design decisions, what is left |
 
@@ -75,7 +77,16 @@ scope_top # (
     .i_ch6(),
     .i_ch7(),
     .i_uart_rx(),  /* From the USB-UART adapter's TXD */
-    .o_uart_tx()   /* To the USB-UART adapter's RXD */
+    .o_uart_tx(),  /* To the USB-UART adapter's RXD */
+    .o_control0(), /* Controls: 32-bit values written from the GUI, 0 after reset. Leave unused ones open */
+    .o_control1(),
+    .o_control2(),
+    .o_control3(),
+    .o_control4(),
+    .o_control5(),
+    .o_control6(),
+    .o_control7(),
+    .o_control_update() /* 8 bits: bit N pulses for one clock on every write to control N */
 );
 ```
 
@@ -111,3 +122,5 @@ python -m unittest test_frontend    # the web page, in a headless Chrome or Edge
 - A capture holds at most `2^p_buffer_depth_log2` samples, and at most 65535 bytes in total.
 - The baud rate is fixed at build time by `p_uart_preescaler`; there is no autobaud.
 - In Stream mode the sample rate is limited by the UART and is not guaranteed, so that view has no time axis.
+- A control keeps its last value until the FPGA is reset, also when the computer is disconnected. There is no timeout, so limits that matter belong in the design.
+- A write to a control arrives milliseconds after the click, and waits for a stream burst or capture upload in flight.

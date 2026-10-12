@@ -13,6 +13,8 @@ localparam [7:0] SCOPE_CMD_DUMP         = 8'h05;
 localparam [7:0] SCOPE_CMD_ABORT        = 8'h06;
 localparam [7:0] SCOPE_CMD_SET_MODE     = 8'h07;
 localparam [7:0] SCOPE_CMD_STREAM_START = 8'h08; /* payload: 4 B sample_count; CMD_ABORT (0x06) cancels an in-flight burst */
+localparam [7:0] SCOPE_CMD_CONTROL_WRITE = 8'h09; /* payload: 1 B control index, 4 B value */
+localparam [7:0] SCOPE_CMD_CONTROL_READ  = 8'h0A; /* payload: 1 B control index; reply: index, 4 B value */
 
 /* Status codes */
 localparam [7:0] SCOPE_STATUS_OK       = 8'h00;
@@ -45,4 +47,7 @@ localparam [1:0] SCOPE_TRIG_TYPE_LEVEL_HIGH = 2'b01;
 localparam [1:0] SCOPE_TRIG_TYPE_EDGE_RISE  = 2'b10;
 localparam [1:0] SCOPE_TRIG_TYPE_EDGE_FALL  = 2'b11;
 
-localparam SCOPE_PROTOCOL_VERSION = 8'h01;
+/* Controls: 32-bit registers the host writes, always all of them (no parameter) */
+localparam SCOPE_NUM_CONTROLS = 8;
+
+localparam SCOPE_PROTOCOL_VERSION = 8'h02; /* 0x01: no controls */

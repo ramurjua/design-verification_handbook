@@ -2,7 +2,7 @@
 
 How to add the scope to an FPGA design, connect the signals you want to look at, and see them in the GUI.
 
-🧪 Status: the example below has run on one board (Spartan-7, 25 MHz clock, 115200 baud, CP210x adapter): info, capture and stream all worked. 3000 commands without a lost reply, captures and streams matching the example's signals, and the GUI working against the real port. Other boards, clocks and baud rates are untested.
+🧪 Status: the example below has run on one board (Spartan-7, 25 MHz clock, 115200 baud, CP210x adapter): info, capture and stream all worked. 3000 commands without a lost reply, captures and streams matching the example's signals, and the GUI working against the real port. Other boards, clocks and baud rates are untested. The controls (step 5) came after that run: they are verified in simulation, and the user tried the buttons from the GUI on the board (2026-10-12) and they worked; what exactly was checked was not written down. The two channels the example gained to show them have only been simulated.
 
 ## What you need
 
@@ -73,7 +73,16 @@ scope_top # (
   .i_ch6(8'd0),
   .i_ch7(8'd0),
   .i_uart_rx(uart_rx_pin),          /* straight from the pin, synchronised inside the scope */
-  .o_uart_tx(uart_tx_pin)
+  .o_uart_tx(uart_tx_pin),
+  .o_control0(),                    /* controls: values written from the GUI, see step 5. */
+  .o_control1(),                    /* Leave them open if you do not use them */
+  .o_control2(),
+  .o_control3(),
+  .o_control4(),
+  .o_control5(),
+  .o_control6(),
+  .o_control7(),
+  .o_control_update()
 );
 ```
 
@@ -89,7 +98,41 @@ Three rules:
 
 The trigger can use any single bit of any channel (rising edge, falling edge, high or low), so put the signal you want to trigger on in a channel too.
 
-## Step 5 — Assign the pins
+## Step 5 — Controls (optional)
+
+The scope can also write to your design. It has eight 32-bit outputs, `o_control0` to `o_control7`, which hold whatever was last written to them from the GUI (or `scope_cli.py control`), and are 0 after reset. There is nothing to configure in the FPGA: all eight are always there, you connect the ones you want and leave the rest open. In the GUI you then say what each one is (a button, a switch or a number) and give it a name; a design that uses none simply leaves them all as *Not used*.
+
+```verilog
+wire [31:0] w32_speed;
+wire [31:0] w32_enable;
+wire [7:0]  w8_control_update;
+
+scope_top # ( ... ) scope (
+  ...
+  .o_control0(w32_enable),          /* a switch in the GUI: 1 or 0 */
+  .o_control1(w32_speed),           /* a value in the GUI */
+  .o_control2(),                    /* a button in the GUI: only its pulse is used, below */
+  ...
+  .o_control_update(w8_control_update)
+);
+
+assign motor_enable = w32_enable[0];
+assign speed_setpoint = w32_speed[15:0];        /* use the bits you need */
+assign start_pulse = w8_control_update[2];      /* one clock, every time the button is pressed */
+```
+
+- **A level**: `o_controlN` keeps the value until the next write. All its bits change in the same clock, so a multi-bit value is never seen half written.
+- **A pulse**: `o_control_update[N]` is high for one clock on every write to control N, also when the value does not change. Use it for anything that should happen once per press.
+- They are synchronous to the scope's `clk`, like the channels.
+- To see a control next to what it causes, also connect it to a channel: `.i_ch5(w32_speed[7:0])`.
+
+Three things to know:
+
+1. **A write is not instant.** It travels over the UART, so it arrives milliseconds after the click, and not at a predictable clock cycle.
+2. **Not during a transfer.** While a capture is being uploaded or a stream burst is being sent, the core does not listen. The GUI holds the write until the burst in flight has finished, so on the Stream tab with large bursts a button reacts with a delay.
+3. **The value stays.** There is no timeout: if the GUI is closed or the cable is pulled, every control keeps its last value until the FPGA is reset. Do not let a control be the only thing that keeps a motor, a heater or anything else that can do damage within safe limits. Put the limit in the design.
+
+## Step 6 — Assign the pins
 
 The names are from the FPGA's point of view, so they cross over at the adapter:
 
@@ -105,7 +148,7 @@ set_property -dict { PACKAGE_PIN A9  IOSTANDARD LVCMOS33 } [get_ports i_uart_rx]
 set_property -dict { PACKAGE_PIN D10 IOSTANDARD LVCMOS33 } [get_ports o_uart_tx]
 ```
 
-## Step 6 — Build, program and connect
+## Step 7 — Build, program and connect
 
 1. Build the bitstream and program the FPGA.
 2. First check the link from the command line, from `utils/fpga_scope/gui/backend/`:
@@ -136,29 +179,34 @@ You can try the GUI before the hardware is ready: the port list always contains 
 | ch2 | 4 bits | ramp 0 to 15, one step every 8 clocks |
 | ch3 | 8 bits | triangle 0 to 255 and back, one step every clock |
 | ch4 | 8 bits | slow ramp, one step every 65536 clocks |
+| ch5 | 8 bits | the low byte of control 0 |
+| ch6 | 1 bit | toggles on every write to control 0 |
 
 To use it:
 
 1. Add `scope_example_top.v` plus the ten files from step 1, and set `scope_example_top` as the top module.
 2. Set its two parameters for your board: `p_clk_freq_hz` and `p_uart_preescaler` (defaults: 100 MHz and 868, which is 115200 baud).
 3. Constrain the four ports: `clk`, `i_rst` (active high), `i_uart_rx`, `o_uart_tx`.
-4. Follow step 6.
+4. Follow step 7.
 
 What you should see:
 
 - **Scope tab**, trigger `ch0` on *Rising edge*, 100 samples before and 300 after, sampling every clock: ten periods of the fast square with a rising edge exactly on the trigger line, five periods of the slow square, the ramp as a staircase and the triangle as a straight slope (with one turn if a peak falls inside the window). `ch4` stays flat, it is too slow for this window.
-- **Stream tab**, sampling every 65535 clocks: `ch4` climbs as a clean ramp. The other four channels look random, because they change far faster than the stream can sample them. That is expected: the live stream is for slow signals, and the Scope tab is for fast ones.
+- **Stream tab**, sampling every 65535 clocks: `ch4` climbs as a clean ramp. `ch0` to `ch3` look random, because they change far faster than the stream can sample them. That is expected: the live stream is for slow signals, and the Scope tab is for fast ones.
+- **Controls**: in the GUI's **Controls** panel (right of the plot, under **Set up**) set control 0 to *Value*, start the stream, type a number from 0 to 255 and click **Send**: `ch5` steps to that number and `ch6` changes level. Send the same number again: `ch5` stays and `ch6` changes level again. From the command line, `python scope_cli.py --port COM5 --baud 115200 control 0 42` followed by `controls` does the same check without the GUI.
 
 ## Troubleshooting
 
 | Symptom | Check |
 |---------|-------|
-| `info` reports "no response to GET_INFO" | TXD/RXD swapped (step 5); wrong COM port; baud rate does not match `p_uart_preescaler`; the scope is held in reset; `scope_defs.vh` was not found during the build |
+| `info` reports "no response to GET_INFO" | TXD/RXD swapped (step 6); wrong COM port; baud rate does not match `p_uart_preescaler`; the scope is held in reset; `scope_defs.vh` was not found during the build |
 | Garbage or only occasional replies | Baud rate mismatch (recompute step 2 with the real clock frequency) |
 | "ARM rejected" or "SET_TRIGGER rejected" from the command line | A finished capture stays loaded until it is aborted: run `python scope_cli.py ... abort`. The GUI and the `capture` command do this for you |
 | Stays "Armed, waiting for trigger" | The trigger condition never happens. Try a level trigger on a signal you know is active, and check which bit is selected on multi-bit channels |
 | The time axis is wrong | `p_clk_freq_hz` does not match the real clock |
 | The capture shows glitches that are not in the design | The signal is not synchronous to the scope's `clk` (step 4, rule 1) |
+| The controls are greyed out with "The connected core has no controls" | The bitstream was built from scope RTL older than the controls: `info` reports protocol version 1. Copy the current `source/` files into the project and rebuild |
+| A button reacts late on the Stream tab | The write waits for the burst in flight (step 5). Use fewer samples per burst |
 
 ## Known limitations
 

@@ -11,7 +11,8 @@ from fastapi.testclient import TestClient
 
 import app as app_module
 from protocol import (
-  ChannelTrigger, Mode, ScopeClient, ScopeRejected, ScopeState, ScopeTimeout, TriggerConfig, TriggerType,
+  ChannelTrigger, Mode, Opcode, ScopeClient, ScopeError, ScopeRejected, ScopeState, ScopeTimeout, TriggerConfig,
+  TriggerType,
 )
 from sim_device import SimDevice
 
@@ -19,8 +20,8 @@ RISE_CH0 = {"enable": True, "type": "rise", "bit_select": 0}
 OFF = {"enable": False, "type": "rise", "bit_select": 0}
 
 
-def sim_client():
-  return ScopeClient(SimDevice(realtime=False), timeout=0.02)
+def sim_client(**kwargs):
+  return ScopeClient(SimDevice(realtime=False, **kwargs), timeout=0.02)
 
 
 class TestSimDevice(unittest.TestCase):
@@ -70,6 +71,43 @@ class TestSimDevice(unittest.TestCase):
     self.assertEqual(info.split_channels(scope.stream(8))[2], [4] * 8) # carries on where the last burst ended
 
 
+  def test_controls_start_at_zero_and_keep_what_is_written(self):
+    scope = sim_client()
+    self.assertEqual(scope.get_info().num_controls, 8)
+    self.assertEqual(scope.read_controls(), [0] * 8)
+    scope.write_control(3, 0xDEADBEEF)
+    scope.write_control(7, 1)
+    self.assertEqual(scope.read_controls(), [0, 0, 0, 0xDEADBEEF, 0, 0, 0, 1])
+
+  def test_controls_do_not_depend_on_the_capture_state(self):
+    scope = sim_client()
+    scope.set_trigger(TriggerConfig(post_trigger_count=4)) # no trigger enabled: stays armed
+    scope.arm()
+    scope.write_control(0, 5)
+    self.assertEqual(scope.get_status().state, ScopeState.ARMED)
+    scope.abort() # an abort is not a reset
+    self.assertEqual(scope.read_control(0), 5)
+
+  def test_malformed_control_frames(self):
+    scope = sim_client()
+    scope.get_info()
+    with self.assertRaises(ScopeRejected):
+      scope._status_command(Opcode.CONTROL_WRITE, bytes([8, 0, 0, 0, 1])) # no control 8
+    with self.assertRaises(ScopeRejected):
+      scope._status_command(Opcode.CONTROL_WRITE, bytes([1, 0, 0, 1])) # a byte short
+    with self.assertRaises(ScopeTimeout):
+      scope._command(Opcode.CONTROL_READ, bytes([8]))
+    self.assertEqual(scope.read_controls(), [0] * 8)
+
+  def test_a_core_from_before_the_controls_ignores_their_commands(self):
+    scope = sim_client(protocol_version=1)
+    self.assertEqual(scope.get_info().num_controls, 0)
+    with self.assertRaises(ScopeError):
+      scope.write_control(0, 1)
+    with self.assertRaises(ScopeTimeout):
+      scope._command(Opcode.CONTROL_WRITE, bytes([0, 0, 0, 0, 1])) # what it does if asked anyway
+
+
 class TestApp(unittest.TestCase):
 
   def setUp(self):
@@ -89,16 +127,21 @@ class TestApp(unittest.TestCase):
     self.assertEqual(self.http.get("/").status_code, 200)
 
   def test_ports_include_sim(self):
-    self.assertEqual(self.http.get("/api/ports").json()[0]["device"], "sim")
+    ports = [p["device"] for p in self.http.get("/api/ports").json()]
+    self.assertEqual(ports[0], "sim")
+    self.assertNotIn("sim-v1", ports) # the old-core stand-in is for tests, not for the list
 
   def test_commands_need_a_connection(self):
     self.assertEqual(self.http.post("/api/stop").status_code, 409)
     self.assertEqual(self.http.post("/api/stream", json={}).status_code, 409)
+    self.assertEqual(self.http.get("/api/controls").status_code, 409)
+    self.assertEqual(self.http.post("/api/controls/0", json={"value": 1}).status_code, 409)
 
   def test_connect_reports_info(self):
     info = self.http.post("/api/connect", json={"port": "sim"}).json()
     self.assertEqual(info["channel_widths"], [1, 1, 4, 8])
     self.assertEqual(info["clk_freq_hz"], 1_000_000)
+    self.assertEqual((info["protocol_version"], info["num_controls"]), (2, 8))
     self.assertEqual(self.http.get("/api/state").json()["state"], "idle")
 
   def test_bad_port_is_a_502(self):
@@ -149,6 +192,68 @@ class TestApp(unittest.TestCase):
       self.assertEqual(len(second["channels"][0]), 50)
       self.http.post("/api/stop")
     self.assertEqual(self.http.get("/api/state").json()["state"], "idle")
+
+
+  def test_controls_are_written_and_read_back(self):
+    self.http.post("/api/connect", json={"port": "sim"})
+    self.assertEqual(self.http.get("/api/controls").json(), {"values": [0] * 8})
+    r = self.http.post("/api/controls/2", json={"value": 1234})
+    self.assertEqual((r.status_code, r.json()), (200, {"value": 1234}))
+    r = self.http.post("/api/controls/7", json={"value": 0xFFFFFFFF})
+    self.assertEqual(r.json(), {"value": 0xFFFFFFFF})
+    self.assertEqual(self.http.get("/api/controls").json(), {"values": [0, 0, 1234, 0, 0, 0, 0, 0xFFFFFFFF]})
+
+  def test_control_validation(self):
+    self.http.post("/api/connect", json={"port": "sim"})
+    self.assertEqual(self.http.post("/api/controls/8", json={"value": 1}).status_code, 400)
+    self.assertEqual(self.http.post("/api/controls/-1", json={"value": 1}).status_code, 400)
+    self.assertEqual(self.http.post("/api/controls/0", json={"value": -1}).status_code, 422)
+    self.assertEqual(self.http.post("/api/controls/0", json={"value": 0x1_0000_0000}).status_code, 422)
+    self.assertEqual(self.http.post("/api/controls/0", json={"value": 1.5}).status_code, 422)
+    self.assertEqual(self.http.post("/api/controls/0", json={}).status_code, 422)
+    self.assertEqual(self.http.post("/api/controls/zero", json={"value": 1}).status_code, 422)
+    self.assertEqual(self.http.get("/api/controls").json(), {"values": [0] * 8})
+
+  def test_a_core_without_controls(self):
+    info = self.http.post("/api/connect", json={"port": "sim-v1"}).json()
+    self.assertEqual((info["protocol_version"], info["num_controls"]), (1, 0))
+    self.assertEqual(self.http.get("/api/controls").json(), {"values": []})
+    r = self.http.post("/api/controls/0", json={"value": 1})
+    self.assertEqual(r.status_code, 400)
+    self.assertIn("no controls", r.json()["detail"])
+    # and the rest of it still works
+    self.assertEqual(self.http.post("/api/stream", json={"batch": 20}).status_code, 200)
+    self.assertEqual(self.http.post("/api/stop").status_code, 200)
+
+  def test_control_write_while_a_capture_is_armed(self):
+    self.http.post("/api/connect", json={"port": "sim"})
+    never = {"enable": True, "type": "high", "bit_select": 7}
+    self.http.post("/api/capture", json={"channels": [OFF, OFF, never, OFF], "pre": 10, "post": 10})
+    for value in range(1, 6): # several, so that some land while the job is polling the status
+      self.assertEqual(self.http.post("/api/controls/1", json={"value": value}).json(), {"value": value})
+    self.assertEqual(self.http.get("/api/state").json()["state"], "armed")
+    self.http.post("/api/stop")
+    self.assertEqual(self.http.get("/api/controls").json()["values"][1], 5)
+
+  def test_control_write_while_streaming(self):
+    self.http.post("/api/connect", json={"port": "sim"})
+    with self.http.websocket_connect("/ws") as ws:
+      ws.receive_json()
+      self.http.post("/api/stream", json={"decimation": 8, "batch": 50})
+      self.receive_until(ws, "stream")
+      for value in (7, 8, 9):
+        r = self.http.post("/api/controls/4", json={"value": value})
+        self.assertEqual((r.status_code, r.json()), (200, {"value": value}))
+      # the stream is still alive and its samples are still in step: nothing of the control exchange leaked into a burst
+      _, seen = self.receive_until(ws, "stream")
+      self.assertNotIn("error", [m["type"] for m in seen])
+      later, _ = self.receive_until(ws, "stream")
+      ramp = later["channels"][2]
+      self.assertEqual(len(ramp), 50)
+      self.assertTrue(all((b - a) % 16 == 1 for a, b in zip(ramp, ramp[1:])), ramp)
+      self.assertEqual(self.http.get("/api/state").json()["state"], "streaming")
+      self.http.post("/api/stop")
+    self.assertEqual(self.http.get("/api/controls").json()["values"][4], 9)
 
 
 class TestConfigs(unittest.TestCase):

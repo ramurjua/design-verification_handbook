@@ -6,18 +6,21 @@ backend and browser GUI. User-facing documentation is in
 [`integration.md`](integration.md); this file tracks status, decisions and
 remaining work.
 
-## Current status (2026-10-10): working on hardware
+## Current status (2026-10-12): working on hardware
 
 The whole chain (RTL core, UART, `protocol.py`, backend, GUI) has run on a
-real board. See "Verification record" for exactly what was tested.
+real board, including the controls (host-writable outputs, added
+2026-10-12), which the user tried there by hand. See "Verification record"
+for exactly what was tested.
 
 ## What exists
 
 - `source/` — RTL core (`scope_top` and its sub-modules). Depends on
   `modules/uart/source/uart_tx.v` and `uart_rx.v`.
-- `test/scope_tb.v` — RTL testbench, 6 tests, run with `python run.py`.
+- `test/scope_tb.v` — RTL testbench, 11 tests, run with `python run.py`.
 - `example/scope_example_top.v` — top level with self-generated signals
-  (two squares, ramp, triangle, slow ramp) on 5 channels.
+  (two squares, ramp, triangle, slow ramp) on 5 channels, plus control 0
+  looped back on 2 more.
 - `gui/backend/protocol.py` — host side of `docs/protocol.md` (`ScopeClient`).
 - `gui/backend/scope_cli.py` — command-line tool, used for bring-up.
 - `gui/backend/session.py`, `app.py` — connection/job handling and the
@@ -27,18 +30,45 @@ real board. See "Verification record" for exactly what was tested.
 - `gui/frontend/` — the web page: Scope and Stream tabs, per-channel
   trigger, hover readout, CSV download; Y axes, per-channel display
   settings, zoom, cursors, measurements, saved configurations, recording
-  of a whole stream to a CSV
+  of a whole stream; controls shown as buttons, switches and values
   (`scope_math.js` holds the maths, `tests/` its tests).
 - `docs/protocol.md`, `docs/integration.md`, `docs/gui.md`.
 
 ## Verification record
 
 - **Simulation**: `test/scope_tb.v` passes (GET_INFO, SET_TRIGGER, ARM +
-  capture, DUMP, SET_MODE + STREAM_START, pre-trigger holdoff). Backend: 41
-  unit tests (`test_protocol`, `test_scope_cli`, `test_app`) against scripted
-  bytes and the simulated device. The example design was simulated once with
-  an ad hoc testbench (not committed) and its replies decoded by
-  `protocol.py`.
+  capture, DUMP, SET_MODE + STREAM_START, pre-trigger holdoff, and the
+  controls, below). Backend: 73 unit tests (`test_protocol`,
+  `test_scope_cli`, `test_app`) against scripted bytes and the simulated
+  device. The example design was simulated once with an ad hoc testbench
+  (not committed) and its replies decoded by `protocol.py`.
+- **Controls on the board (2026-10-12)**: the user tried the buttons from
+  the GUI against the rebuilt bitstream and reports they work. Not written
+  down: which control kinds, and whether a design reacting to `o_controlN`
+  was observed or only the write and read-back. The Drone FPGA_SOM `top.v`
+  of that day has the current RTL (protocol version 2) with all eight
+  control outputs left open, so against that design a working button shows
+  the command path and the register over the real UART, not an output
+  driving logic. The example's loop-back (ch5/ch6) has not been run on a
+  board.
+- **Controls (2026-10-12), simulation**:
+  - RTL, `scope_tb.v` tests 7 to 11: write and read back; one update pulse
+    per accepted write and only on that control, also for a repeated value;
+    bad index, short payload and bad checksum change nothing; a write while
+    armed does not disturb the capture; a write during a stream burst is
+    dropped and the next one is taken; reset clears. A monitor checks on
+    every clock that a control only ever holds its old or its new value.
+    Each of these was seen to fail with the RTL broken on purpose (length
+    check, index check, update pulse, reset, read byte order).
+  - `protocol.py` against the same byte vectors; `sim_device.py`,
+    `session.py` and `app.py` including writes while a capture is armed and
+    while a stream runs (seen to fail with the exchange lock removed);
+    `scope_cli.py control` / `controls`.
+  - GUI: `unit.html` for the scaling and limits of a typed value, `e2e.html`
+    for buttons, switches, values, the configuration, writes during a
+    stream, and a core without controls (`sim-v1`).
+  - The example's loop-back of control 0 on ch5/ch6 was simulated once with
+    an ad hoc testbench (not committed).
 - **GUI display features (2026-10-12), simulated device only**:
   `test_frontend.py` runs `gui/frontend/tests/` in a headless browser: the
   display maths (`unit.html`) and the real page driven against the `sim`
@@ -109,6 +139,18 @@ real board. See "Verification record" for exactly what was tested.
   the GUI, and website pages for fpga_scope (`publish/`). Do not add them
   back to the list.
 
+- Controls (user, 2026-10-12): the core always has all 8, each 32 bits
+  wide, with no parameter for their number or width, so there is nothing to
+  keep in step between the RTL and the GUI. The GUI decides what each one is
+  (button, switch, value) and how many are in use, from none to 8; a project
+  with none configured must work exactly as before. One mechanism for
+  buttons and values: a register per control plus a one-clock update pulse
+  on every write. Separate `o_controlN` ports, like the channels. The only
+  thing to keep in step is an old bitstream, which reports
+  `protocol_version` 1 and gets its controls greyed out.
+- Controls are named "control", not "ctrl", in the RTL: `scope_ctrl` and
+  the `w_ctrl_*` wires are the capture state machine, an unrelated thing.
+
 ## GUI display improvements (brainstormed and implemented 2026-10-12)
 
 Asked for after using the scope on a real project: analog values could only
@@ -163,6 +205,38 @@ Added afterwards (2026-10-12):
       stop, with a `burst` column because bursts are not contiguous in time.
       Simulated device only so far.
 
+## Controls (implemented 2026-10-12)
+
+Asked for by the user: buttons with configurable names that the FPGA sees as
+outputs, then extended to buttons and fields that send values (a speed
+command). A protocol change, so it touched the whole chain; described in
+`docs/protocol.md` ("Controls"), `docs/integration.md` (step 5) and
+`docs/gui.md`.
+
+- [x] RTL: `CMD_CONTROL_WRITE` / `CMD_CONTROL_READ` in `scope_cmd_if`,
+      `o_control0`..`o_control7` and `o_control_update` on `scope_top`,
+      `protocol_version` 2.
+- [x] `protocol.py`, `sim_device.py` (and `sim-v1`, an unlisted port that
+      behaves as a version 1 core), `session.py` (a write goes in between
+      two exchanges of a running capture or stream job), `app.py`
+      (`/api/controls`), `scope_cli.py`.
+- [x] GUI: per-control settings in the configuration, widgets above the
+      plot, read-back after every write and on connect.
+- [x] Example design: control 0 looped back on ch5 (low byte) and ch6
+      (toggles on every write), so the first board test needs no extra
+      hardware.
+- [x] Try it on the board: buttons tried by the user from the GUI, working
+      (see "Verification record" for what that does and does not cover).
+- [ ] On the board, see a design react to a control: the example's
+      loop-back on ch5/ch6, or a control wired into the Drone design.
+- [ ] No timeout: a control keeps its value when the host goes away. An
+      optional watchdog in the core (controls back to 0 after N ms without
+      a frame, with a keep-alive from the backend) was discussed and not
+      built. Until then the docs tell the user to keep limits in the design.
+- [ ] A write during a stream waits for the burst in flight (the core only
+      takes `CMD_ABORT` then). Fine for small bursts; with 10000-sample
+      bursts a button is slow.
+
 Not GUI only, so not part of this batch:
 
 - [ ] Trigger on a level (value above/below a threshold). The core only
@@ -175,6 +249,8 @@ Not GUI only, so not part of this batch:
 
 - [ ] Use it on real signals: replace the example in the Drone FPGA_SOM
       design with a `scope_top` fed by the IMU SPI lines and valid flag.
+- [x] The copy of the RTL in the Drone project has the controls (checked
+      2026-10-12: `scope_top.v` there has the `o_controlN` ports).
 - [ ] GUI stream view: consecutive bursts are not contiguous in time (the
       host needs a moment between `CMD_STREAM_START`s), so slow signals show
       a small jump at every burst boundary. Larger bursts make it rarer.

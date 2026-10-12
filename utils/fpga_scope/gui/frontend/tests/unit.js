@@ -360,6 +360,89 @@
        ["channels.0.gain", "channels.0.range", "channels.0.colour", "window.pre", "extra", "trigger.channels.9"]);
   });
 
+  /* ---- controls ---- */
+
+  const control = (fields = {}) => ({ ...M.defaultControl(0), ...fields });
+
+  test("no control is in use by default", () => {
+    const config = M.defaultConfig();
+    eq(config.controls.length, 8);
+    ok(config.controls.every((c, i) => c.kind === "off" && c.name === `control${i}`), "all eight not used");
+  });
+
+  test("control settings survive, invalid ones fall back one by one", () => {
+    const config = M.normalizeConfig({ controls: [
+      { name: " run ", kind: "button", value: 0xFFFFFFFF },
+      { name: "speed", kind: "value", unit: "rpm", signed: true, frac: 2, gain: 0.5, offset: 10, min: -100, max: 100 },
+      { name: "", kind: "slider", value: -1, unit: 5, signed: "yes", frac: 99, gain: 0, offset: "1", min: "low", max: NaN },
+      { kind: "button", value: 0x100000000 },
+      { kind: "toggle", value: 1.5 },
+    ] });
+    eq(config.controls[0], { ...M.defaultControl(0), name: "run", kind: "button", value: 0xFFFFFFFF });
+    eq(config.controls[1], { name: "speed", kind: "value", value: 1, unit: "rpm", signed: true, frac: 2, gain: 0.5, offset: 10, min: -100, max: 100 });
+    eq(config.controls[2], M.defaultControl(2), "all of it was junk");
+    eq(config.controls[3], { ...M.defaultControl(3), kind: "button" }, "a value over 32 bits");
+    eq(config.controls[4], { ...M.defaultControl(4), kind: "toggle" }, "a value that is not whole");
+    eq(config.controls[5], M.defaultControl(5));
+  });
+
+  test("controls can be given by number, and a configuration without them has none in use", () => {
+    const config = M.normalizeConfig({ controls: { 6: { name: "mode", kind: "toggle" } } });
+    eq(config.controls[6], { ...M.defaultControl(6), name: "mode", kind: "toggle" });
+    eq(config.controls.filter((c) => c.kind !== "off").length, 1);
+    eq(M.normalizeConfig({ channels: [{ name: "a" }] }).controls, M.defaultConfig().controls, "a file from before the controls");
+    eq(M.normalizeConfig({ controls: "none" }).controls, M.defaultConfig().controls);
+  });
+
+  test("configProblems covers the controls", () => {
+    eq(M.configProblems({ controls: { 1: { name: "speed", kind: "value", min: null, max: 50 } } }), []);
+    eq(M.configProblems({ controls: { 1: { kind: "slider", gain: 0, min: "0" }, 8: { kind: "button" } } }),
+       ["controls.1.kind", "controls.1.gain", "controls.1.min", "controls.8"]);
+  });
+
+  test("a typed value is written as its raw value", () => {
+    eq(M.controlRaw(control(), 0), { raw: 0 });
+    eq(M.controlRaw(control(), 1234), { raw: 1234 });
+    eq(M.controlRaw(control(), 0xFFFFFFFF), { raw: 0xFFFFFFFF });
+    eq(M.controlRaw(control({ gain: 0.5 }), 50), { raw: 100 });
+    eq(M.controlRaw(control({ gain: 0.5, offset: 10 }), 60), { raw: 100 });
+    eq(M.controlRaw(control({ frac: 4 }), 2.5), { raw: 40 });
+    eq(M.controlRaw(control({ gain: 3 }), 10), { raw: 3 }, "rounded to the nearest raw value");
+  });
+
+  test("a negative value goes out in two's complement", () => {
+    eq(M.controlRaw(control({ signed: true }), -1), { raw: 0xFFFFFFFF });
+    eq(M.controlRaw(control({ signed: true, gain: 0.5 }), -10), { raw: 0xFFFFFFEC }); // -20
+    eq(M.controlRaw(control({ signed: true }), -(2 ** 31)), { raw: 0x80000000 });
+    eq(M.controlRaw(control({ signed: true }), 2 ** 31 - 1), { raw: 0x7FFFFFFF });
+  });
+
+  test("a value that cannot be written is refused with the reason", () => {
+    const error = (cfg, v) => M.controlRaw(cfg, v).error;
+    ok(/not a number/.test(error(control(), NaN)), "NaN");
+    ok(/not a number/.test(error(control(), Infinity)), "Infinity");
+    ok(/not a number/.test(error(control(), "5")), "text");
+    ok(/not signed/.test(error(control(), -1)), "negative on an unsigned control");
+    ok(/32 bits/.test(error(control(), 2 ** 32)), "too large");
+    ok(/32 bits/.test(error(control({ signed: true }), 2 ** 31)), "too large for signed");
+    ok(/32 bits/.test(error(control({ signed: true }), -(2 ** 31) - 1)), "too negative");
+    ok(/32 bits/.test(error(control({ gain: 1e-6 }), 1e6)), "too large once scaled");
+    ok(/smallest allowed, 0/.test(error(control({ signed: true, min: 0, max: 100 }), -1)), "below min");
+    ok(/largest allowed, 100/.test(error(control({ min: 0, max: 100 }), 100.5)), "above max");
+    eq(M.controlRaw(control({ min: 0, max: 100 }), 100), { raw: 100 }, "the limits themselves are allowed");
+    eq(M.controlRaw(control({ min: 0, max: 100 }), 0), { raw: 0 });
+  });
+
+  test("what is read back is shown in the control's units, and matches what was typed", () => {
+    eq(M.controlShown(control(), 1234), 1234);
+    eq(M.controlShown(control(), 0xFFFFFFFF), 0xFFFFFFFF);
+    eq(M.controlShown(control({ signed: true }), 0xFFFFFFFF), -1);
+    eq(M.controlShown(control({ gain: 0.5, offset: 10 }), 100), 60);
+    for (const [cfg, v] of [[control({ signed: true, gain: 0.5 }), -10], [control({ frac: 4 }), 2.5], [control({ signed: true, frac: 8, gain: 2, offset: -3 }), 41.5]]) {
+      eq(M.controlShown(cfg, M.controlRaw(cfg, v).raw), v);
+    }
+  });
+
   /* ---- files ---- */
 
   test("the CSV of a capture has the time relative to the trigger", () => {

@@ -43,7 +43,11 @@ module scope_cmd_if # (
   input i_stream_sample_valid,
   input [p_frame_width-1:0] i_stream_sample_data,
 
-  output reg o_active_mode /* 0 = SCOPE_MODE_SCOPE, 1 = SCOPE_MODE_STREAM */
+  output reg o_active_mode, /* 0 = SCOPE_MODE_SCOPE, 1 = SCOPE_MODE_STREAM */
+
+  /* controls: 8 registers of 32 bits written by the host, control 0 at the LSB end */
+  output reg [255:0] o_control_values,
+  output reg [7:0] o_control_update /* 1-cycle pulse on bit N whenever control N is written, also with the value it already had */
 );
 
 `include "scope_defs.vh"
@@ -196,6 +200,11 @@ assign o_stream_tx_ready = (r4_state == CST_STREAM_BYTE) && !r_stream_have_sampl
 
 wire w_sys_idle = (o_active_mode == SCOPE_MODE_SCOPE) ? (i_ctrl_state == SCOPE_ST_IDLE) : (!i_stream_running);
 
+/* the control a CMD_CONTROL_WRITE / CMD_CONTROL_READ frame names in its first payload byte */
+wire [7:0] w8_control_idx = r8_rx_payload[0];
+wire w_control_idx_ok = (w8_control_idx < SCOPE_NUM_CONTROLS);
+wire [31:0] w32_control_value = o_control_values[{w8_control_idx[2:0], 5'd0} +: 32];
+
 /* w_tx_ready only drops the cycle *after* r_tx_dv is asserted (u_uart_tx's
    own idle->st_start transition takes a cycle to land), so every send state
    below re-checks "&& !r_tx_dv" too - otherwise the still-stale w_tx_ready
@@ -207,6 +216,7 @@ always @(posedge clk) begin
   o_ctrl_cmd_abort    <= 1'b0;
   o_stream_cmd_start  <= 1'b0;
   o_stream_cmd_abort  <= 1'b0;
+  o_control_update    <= 8'd0;
   r_tx_dv <= 1'b0; /* re-driven below where needed */
 
   if (rst) begin
@@ -218,6 +228,7 @@ always @(posedge clk) begin
     o_trig_channel_cfg    <= 64'd0;
     o_trig_combine_mode   <= 1'b0;
     o_buf_rd_en <= 1'b0;
+    o_control_values <= 256'd0;
   end
   else if (r_rx_frame_valid && r8_rx_cmd == SCOPE_CMD_ABORT) begin
     /* highest priority: interrupt whatever is in flight, from any state */
@@ -363,6 +374,42 @@ always @(posedge clk) begin
                 r4_state <= CST_DUMP_HDR;
               end
               /* else: invalid request, silently ignored per protocol.md */
+            end
+
+            /* accepted in any mode and capture state: nothing here touches
+               the capture. All 32 bits change in this one cycle, and only
+               after the frame's checksum has passed (r_rx_frame_valid). The
+               length is checked too, so a short frame cannot load payload
+               bytes left over from an earlier command. */
+            SCOPE_CMD_CONTROL_WRITE: begin
+              if (r16_rx_len == 16'd5 && w_control_idx_ok) begin
+                o_control_values[{w8_control_idx[2:0], 5'd0} +: 32] <= {r8_rx_payload[1], r8_rx_payload[2], r8_rx_payload[3], r8_rx_payload[4]};
+                o_control_update[w8_control_idx[2:0]] <= 1'b1;
+                r8_resp_payload[0] <= SCOPE_STATUS_OK;
+              end
+              else r8_resp_payload[0] <= SCOPE_STATUS_ERROR;
+
+              r16_resp_len <= 16'd1;
+              r8_resp_cmd  <= SCOPE_CMD_CONTROL_WRITE;
+              r_post_action <= POST_NONE;
+              r2_hdr_idx <= 2'd0;
+              r4_state <= CST_SEND_HDR;
+            end
+
+            SCOPE_CMD_CONTROL_READ: begin
+              if (r16_rx_len == 16'd1 && w_control_idx_ok) begin
+                r8_resp_payload[0] <= w8_control_idx;
+                r8_resp_payload[1] <= w32_control_value[31:24];
+                r8_resp_payload[2] <= w32_control_value[23:16];
+                r8_resp_payload[3] <= w32_control_value[15:8];
+                r8_resp_payload[4] <= w32_control_value[7:0];
+                r16_resp_len <= 16'd5;
+                r8_resp_cmd  <= SCOPE_CMD_CONTROL_READ;
+                r_post_action <= POST_NONE;
+                r2_hdr_idx <= 2'd0;
+                r4_state <= CST_SEND_HDR;
+              end
+              /* else: no such control, silently ignored per protocol.md */
             end
 
             default: ; /* unknown opcode, ignored */

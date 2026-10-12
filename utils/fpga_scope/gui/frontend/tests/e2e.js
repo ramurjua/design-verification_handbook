@@ -95,6 +95,30 @@
     ok(q("ch0-signed").disabled && !q("ch3-signed").disabled, "only multi-bit channels can be signed");
   });
 
+  await step("a long channel name does not push the trigger settings out of the panel", async () => {
+    const inside = () => [0, 1, 2, 3].every((c) => q(`trig-bit-${c}`).getBoundingClientRect().right <= q("triggers").getBoundingClientRect().right + 0.5
+                                                 && q(`trig-type-${c}`).getBoundingClientRect().right <= q("triggers").getBoundingClientRect().right + 0.5);
+    ok(inside(), "with the default names");
+    set("ch3-name", "spi miso,mosi,sck,cs_n");
+    eq(q("trig-name-3").textContent, "spi miso,mosi,sck,cs_n");
+    ok(inside(), "with a name of 22 characters");
+    set("ch3-name", "W".repeat(24));
+    ok(inside(), "with the longest name there can be, and no space to wrap at");
+    ok(q("trig-type-3").getBoundingClientRect().width > 60, "and the selects keep their size");
+    set("ch3-name", "ch3");
+  });
+
+  await step("no control is shown until one is configured", async () => {
+    eq(d.querySelectorAll(".ctl").length, 8, "eight controls to set up");
+    ok(q("controls").hidden && !q("controls-none").hidden, "none in use, and the panel says so");
+    ok(q("panel-controls").getBoundingClientRect().left > q("plot").getBoundingClientRect().right, "the controls have their own panel, right of the plot");
+    ok(q("panel-controls").contains(q("control-rows")) && q("panel-controls").contains(q("controls")), "with both their settings and the controls themselves");
+    eq(q("ctl-note-0").textContent, "control 0, not used");
+    ok(q("ctl0-value").hidden && q("ctl0-gain").hidden && !q("ctl0-kind").hidden, "only the fields of the chosen kind");
+    await until(() => js("app.controls"), "the controls read from the core");
+    eq(js("app.controls"), [0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
   await step("a capture is drawn with a Y axis on the multi-bit lanes", async () => {
     await capture();
     eq(q("plot-title").textContent, "Captured window");
@@ -442,6 +466,154 @@
     set("s-window", "2000");
     q("tab-scope").click();
     await until(() => !q("panel-scope").hidden, "the scope tab");
+  });
+
+  const coreControls = async () => (await (await fetch("/api/controls")).json()).values;
+
+  await step("a button writes its value to the FPGA", async () => {
+    set("ctl0-kind", "button");
+    set("ctl0-name", "run");
+    ok(!q("controls").hidden && q("controls-none").hidden, "the control appears in the panel");
+    ok(!q("ctl0-value").hidden && q("ctl0-gain").hidden, "a button only has the value it writes");
+    eq(q("ctl-note-0").textContent, "control 0, button");
+    eq(q("ctl-btn-0").textContent, "run");
+    ok(!q("ctl-btn-0").disabled, "usable while connected");
+    q("ctl-btn-0").click();
+    await until(() => q("controls-status").textContent.startsWith("run: wrote 1 to control 0"), "the write");
+    eq(await coreControls(), [1, 0, 0, 0, 0, 0, 0, 0]);
+    set("ctl0-value", "0x2A");
+    q("ctl-btn-0").click();
+    await until(() => js("app.controls[0]") === 42, "the new value");
+    eq((await coreControls())[0], 42);
+    set("ctl0-value", "-3");
+    set("ctl0-value", "4294967296");
+    set("ctl0-value", "1.5");
+    eq(js("app.config.controls[0].value"), 42, "a value that is not 32 unsigned bits is not taken");
+  });
+
+  await step("a switch turns a control on and off", async () => {
+    set("ctl5-kind", "toggle");
+    set("ctl5-name", "enable");
+    eq(q("ctl-btn-5").textContent, "enable: off");
+    eq(q("ctl-btn-5").getAttribute("aria-pressed"), "false");
+    q("ctl-btn-5").click();
+    await until(() => q("ctl-btn-5").getAttribute("aria-pressed") === "true", "on");
+    eq(q("ctl-btn-5").textContent, "enable: on");
+    eq((await coreControls())[5], 1);
+    q("ctl-btn-5").click();
+    await until(() => q("ctl-btn-5").getAttribute("aria-pressed") === "false", "off");
+    eq((await coreControls())[5], 0);
+  });
+
+  await step("a value is typed in its units, within its limits", async () => {
+    set("ctl2-kind", "value");
+    set("ctl2-name", "speed");
+    set("ctl2-unit", "rpm");
+    set("ctl2-gain", "0.5");
+    set("ctl2-min", "0");
+    set("ctl2-max", "100");
+    ok(q("ctl2-value").hidden && !q("ctl2-gain").hidden, "a value has scaling, not a fixed value");
+    eq(q("ctl-now-2").textContent, "now 0 rpm");
+
+    set("ctl-in-2", "50");
+    q("ctl-send-2").click();
+    await until(() => js("app.controls[2]") === 100, "50 rpm written as 100");
+    eq((await coreControls())[2], 100);
+    eq(q("ctl-now-2").textContent, "now 50 rpm");
+    eq(q("ctl-in-2").value, "50", "what was typed stays");
+
+    set("ctl-in-2", "150");
+    q("ctl-send-2").click();
+    ok(/speed: above the largest allowed, 100\. Nothing was sent/.test(q("controls-status").textContent), q("controls-status").textContent);
+    set("ctl-in-2", "-1");
+    q("ctl-send-2").click();
+    ok(/below the smallest allowed, 0/.test(q("controls-status").textContent), q("controls-status").textContent);
+    set("ctl-in-2", "");
+    q("ctl-send-2").click();
+    ok(/type a number first/.test(q("controls-status").textContent), q("controls-status").textContent);
+    eq((await coreControls())[2], 100, "none of those reached the core");
+
+    set("ctl2-min", "");
+    eq(js("app.config.controls[2].min"), null, "an empty limit is no limit");
+    set("ctl-in-2", "-10");
+    q("ctl-send-2").click();
+    ok(/not signed/.test(q("controls-status").textContent), q("controls-status").textContent);
+    set("ctl2-signed", true);
+    q("ctl-in-2").dispatchEvent(new w.KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+    await until(() => js("app.controls[2]") === 0xFFFFFFEC, "-10 rpm written as -20 in two's complement");
+    eq((await coreControls())[2], 0xFFFFFFEC);
+    eq(q("ctl-now-2").textContent, "now -10 rpm");
+    set("ctl2-gain", "0");
+    eq(js("app.config.controls[2].gain"), 0.5, "a gain of zero is not taken");
+  });
+
+  await step("controls work while the stream is running", async () => {
+    q("tab-stream").click();
+    await until(() => !q("panel-stream").hidden, "the stream tab");
+    q("s-start").click();
+    await until(() => q("state-label").textContent === "Streaming" && js("app.stream"), "the stream");
+    const before = js("dataRev");
+    q("ctl-btn-0").click();
+    await until(() => q("controls-status").textContent.startsWith("run: wrote 42"), "the write during the stream");
+    q("ctl-btn-5").click();
+    await until(() => q("ctl-btn-5").getAttribute("aria-pressed") === "true", "the switch during the stream");
+    await until(() => js("dataRev") > before + 2, "the stream to carry on");
+    eq(q("state-label").textContent, "Streaming");
+    ok(q("error").hidden, `error banner: ${q("error-text").textContent}`);
+    q("s-stop").click();
+    await until(() => q("state-label").textContent === "Idle", "the stream to stop");
+    eq((await coreControls())[5], 1);
+    q("tab-scope").click();
+    await until(() => !q("panel-scope").hidden, "the scope tab");
+  });
+
+  await step("the controls are part of the configuration", async () => {
+    const stored = JSON.parse(w.localStorage.getItem(STORAGE_KEY));
+    eq([stored.controls[0].name, stored.controls[0].kind, stored.controls[0].value], ["run", "button", 42]);
+    eq([stored.controls[2].kind, stored.controls[2].unit, stored.controls[2].gain, stored.controls[2].max], ["value", "rpm", 0.5, 100]);
+    eq(stored.controls[7].kind, "off");
+    const kept = JSON.stringify(js("collectConfig()"));
+
+    js("loadConfigText")('{"controls": {"3": {"name": "mode", "kind": "button", "value": 7}, "4": {"kind": "knob"}}}', "controls.json");
+    eq(q("cfg-status").textContent, "Loaded controls.json. Not used, left at the default: controls.4.kind.");
+    eq([...q("controls").querySelectorAll("button")].map((b) => b.textContent), ["mode"], "only the control the file sets up");
+    eq(q("ctl3-value").value, "7");
+    eq(q("ctl-note-0").textContent, "control 0, not used");
+
+    js("loadConfigText")('{"channels": {"0": {"name": "clk"}}}', "none.json");
+    ok(q("controls").hidden, "a configuration without controls shows none");
+
+    js("loadConfigText")(kept, "kept.json");
+    eq([...q("controls").querySelectorAll("button")].map((b) => b.textContent), ["run", "Send", "enable: on"]);
+    eq(q("ctl-now-2").textContent, "now -10 rpm", "the core's values were not touched by loading files");
+  });
+
+  await step("a core built before the controls shows them disabled", async () => {
+    q("connect").click();
+    await until(() => q("state-label").textContent === "Disconnected", "the disconnect");
+    ok(q("ctl-btn-0").disabled && q("ctl-send-2").disabled && q("ctl-in-2").disabled, "nothing to write to while disconnected");
+    eq(q("ctl-btn-5").textContent, "enable: ?", "and nothing known about their state");
+
+    q("port").add(new w.Option("sim-v1", "sim-v1"));
+    q("port").value = "sim-v1";
+    q("connect").click();
+    await until(() => q("state-label").textContent === "Idle", "the connection to the old core");
+    eq(js("app.info.num_controls"), 0);
+    ok(q("ctl-btn-0").disabled && q("ctl-send-2").disabled, "still disabled");
+    ok(q("controls-status").textContent.startsWith("The connected core has no controls"), q("controls-status").textContent);
+    await capture();
+    ok(painted(), "the rest of the GUI works against it");
+
+    q("connect").click();
+    await until(() => q("state-label").textContent === "Disconnected", "the disconnect");
+    eq(q("controls-status").textContent, "", "the note goes with the core");
+    q("port").value = "sim";
+    q("connect").click();
+    await until(() => q("state-label").textContent === "Idle" && js("app.controls"), "the connection to a current core");
+    ok(!q("ctl-btn-0").disabled, "usable again");
+    eq(q("ctl-btn-5").textContent, "enable: off", "the state shown is what this core holds");
+    for (const i of [0, 2, 5]) set(`ctl${i}-kind`, "off");
+    ok(q("controls").hidden, "all back to not used");
   });
 
   await step("nothing went wrong along the way", async () => {

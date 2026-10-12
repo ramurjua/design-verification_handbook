@@ -1,8 +1,8 @@
 # fpga_scope — Using the GUI
 
-How to read values off the plot, set up each channel (signed, gain, offset, name), zoom, measure, and keep the setup in a file.
+How to read values off the plot, set up each channel (signed, gain, offset, name), zoom, measure, write values to the FPGA with buttons, and keep the setup in a file.
 
-🧪 Status: everything on this page is checked by tests that drive the real page in a headless browser against the simulated device (`gui/backend/test_frontend.py`). The display features were also used on a board, by hand (2026-10-12); recording a stream has only run against the simulated device. Nothing here changes what is sent to the FPGA.
+🧪 Status: everything on this page is checked by tests that drive the real page in a headless browser against the simulated device (`gui/backend/test_frontend.py`). The display features were also used on a board, by hand (2026-10-12); recording a stream has only run against the simulated device. For the controls, the user tried the buttons from the GUI on the board (2026-10-12) and they worked; what exactly was checked was not written down. Apart from the controls, nothing here changes what is sent to the FPGA.
 
 ## The plot
 
@@ -46,9 +46,29 @@ The shown value is computed in this order: combine the channels, apply the sign,
 
 The trigger is not affected by any of this: it still acts on one bit of one channel.
 
+## Controls: writing to the FPGA
+
+The scope core has eight outputs the design can read, `o_control0` to `o_control7` (see the [integration guide](integration.md), step 5). They have their own panel, to the right of the plot, apart from everything that has to do with capturing and displaying: the controls in use at the top, and under **Set up** what each of the eight is in this project. A control that is *Not used* only appears in that list, and a project with no controls leaves all eight that way.
+
+| Shown as | In the panel | What it writes |
+|----------|----------------|----------------|
+| Not used | nothing | nothing |
+| Button | a button with the control's name | *Value a press writes* (1 unless changed), on every press. The FPGA gets a one-clock pulse each time |
+| Switch (on / off) | a button that stays pressed while on | 1 when switched on, 0 when switched off |
+| Value | a number field, a **Send** button and the value the FPGA holds now | the number typed, converted to its raw value |
+
+A *Value* is typed in real units, with the same settings as a channel, applied the other way round: raw value = (typed − offset) ÷ gain × 2^fraction bits, rounded. With gain 0.5 and unit `rpm`, typing 1200 writes 2400. *Signed* allows negative numbers, sent in two's complement. *Smallest allowed* and *Largest allowed* refuse anything outside them before it is sent: use them for anything that should not get a typing mistake.
+
+Good to know:
+
+- After every write the GUI reads the control back and shows what the FPGA holds, so the switch position and the "now" value come from the board, not from what was clicked. They are read again on every connect: the FPGA keeps its values when the GUI is closed.
+- Controls work on both tabs and while a capture is waiting for its trigger. During a stream a write waits for the burst in flight, so with many samples per burst it is not immediate.
+- With a bitstream built before the controls existed, they are shown greyed out with a note, and everything else works as before.
+- Loading a configuration never writes anything to the FPGA. It only changes names, kinds and scaling.
+
 ## Saving the setup
 
-The channel settings, the trigger and the window are one configuration. The browser remembers the current one by itself, so it is still there the next time the page is opened. To keep several, or move them between computers, use the **Configuration** block:
+The channel settings, the controls, the trigger and the window are one configuration. The browser remembers the current one by itself, so it is still there the next time the page is opened. To keep several, or move them between computers, use the **Configuration** block:
 
 - **Save / Load / Delete** work on a name. The backend keeps each one as `<name>.json` in `gui/configs/` (another folder: `python app.py --config-dir <folder>`). A name is letters, digits, `-` and `_`.
 - **Open file...** opens the file dialog and loads any JSON file from the computer.
@@ -65,6 +85,11 @@ A file only needs the settings it changes; everything else takes its default. Ch
     "1": { "name": "spi_cs_n" },
     "2": { "name": "gyro_x", "unit": "dps", "signed": true, "gain": 0.0625, "high": 3, "range": "auto" },
     "4": { "name": "state", "style": "bus", "format": "bin" }
+  },
+  "controls": {
+    "0": { "name": "run", "kind": "button" },
+    "1": { "name": "enable", "kind": "toggle" },
+    "2": { "name": "speed", "kind": "value", "unit": "rpm", "gain": 0.5, "min": 0, "max": 3000 }
   },
   "trigger": { "channels": { "1": { "type": "fall" }, "0": { "type": "off" } }, "combine": "and" },
   "window": { "pre": 100, "post": 900, "decimation": 4 }
@@ -89,6 +114,14 @@ After loading, the GUI lists any setting it could not use (a misspelt name, a te
 | `channels.N.bits` | `true` for one lane per bit | `false` |
 | `channels.N.high` | number of the channel with the upper bits, or `null` | `null` |
 | `channels.N.lane` | number of the channel whose lane to share, or `null` | `null` |
+| `controls.N.name` | text, up to 24 characters | `"controlN"` |
+| `controls.N.kind` | `"off"`, `"button"`, `"toggle"`, `"value"` | `"off"` |
+| `controls.N.value` | button: the raw value a press writes, 0 to 4294967295 | `1` |
+| `controls.N.unit` | value: text, up to 12 characters | `""` |
+| `controls.N.signed` | value: `true` to allow negative numbers | `false` |
+| `controls.N.frac` | value: fraction bits, 0 to 32 | `0` |
+| `controls.N.gain`, `offset` | value: numbers, gain not 0 | `1`, `0` |
+| `controls.N.min`, `max` | value: limits on what can be sent, or `null` for none | `null` |
 | `trigger.channels.N.type` | `"off"`, `"rise"`, `"fall"`, `"high"`, `"low"` | `"rise"` on channel 0, `"off"` on the rest |
 | `trigger.channels.N.bit` | bit of the channel to trigger on, 0 to 7 | `0` |
 | `trigger.combine` | `"and"`, `"or"` | `"and"` |
@@ -96,7 +129,7 @@ After loading, the GUI lists any setting it could not use (a misspelt name, a te
 | `window.decimation` | sample every N clocks, 1 to 65535 | `1` |
 | `stream.decimation`, `batch`, `window` | the three Stream settings | `1`, `200`, `2000` |
 
-`N` is the channel number, 0 to 7. `"channels"` can also be a list in channel order, which is what the GUI writes.
+`N` is the channel or control number, 0 to 7. `"channels"` and `"controls"` can also be lists in order, which is what the GUI writes.
 
 ## Captures
 

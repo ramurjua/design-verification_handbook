@@ -7,12 +7,14 @@ the RTL (2 channels x 1 bit, buffer_depth_log2 = 4, 100 MHz).
 import unittest
 
 from protocol import (
-  ChannelTrigger, Mode, Opcode, ScopeClient, ScopeInfo, ScopeRejected, ScopeState,
+  ChannelTrigger, Mode, Opcode, ScopeClient, ScopeError, ScopeInfo, ScopeRejected, ScopeState,
   ScopeTimeout, TriggerConfig, TriggerType, encode_frame, SYNC_DEV,
 )
 
-INFO_PAYLOAD = bytes.fromhex("01 03 02 0101000000000000 04 01 05F5E100")
+INFO_PAYLOAD = bytes.fromhex("02 03 02 0101000000000000 04 01 05F5E100")
 INFO_FRAME = encode_frame(Opcode.GET_INFO, INFO_PAYLOAD, sync=SYNC_DEV)
+# the same core built from the RTL as it was before the controls: protocol version 1
+OLD_INFO_FRAME = encode_frame(Opcode.GET_INFO, b"\x01" + INFO_PAYLOAD[1:], sync=SYNC_DEV)
 
 
 def reply(opcode, payload):
@@ -67,6 +69,14 @@ class TestFrames(unittest.TestCase):
     self.assertEqual(encode_frame(Opcode.SET_TRIGGER, cfg.pack()),
                      bytes.fromhex("AA 02 00 0F A0 00000000000000 00 0004 0004 0001 AC"))
 
+  def test_encode_control_write(self):
+    # control 3 = 0xDEADBEEF, as in scope_tb.v's Test 7
+    self.assertEqual(encode_frame(Opcode.CONTROL_WRITE, bytes([3]) + (0xDEADBEEF).to_bytes(4, "big")),
+                     bytes.fromhex("AA 09 00 05 03 DEADBEEF 2D"))
+
+  def test_encode_control_read(self):
+    self.assertEqual(encode_frame(Opcode.CONTROL_READ, bytes([3])), bytes.fromhex("AA 0A 00 01 03 08"))
+
   def test_channel_cfg_bits(self):
     self.assertEqual(ChannelTrigger(True, TriggerType.EDGE_FALL, 5).pack(), 0b1011_0101)
     self.assertEqual(ChannelTrigger(False, TriggerType.LEVEL_HIGH, 0).pack(), 0b0001_0000)
@@ -84,7 +94,8 @@ class TestInfo(unittest.TestCase):
 
   def test_unpack(self):
     info = ScopeInfo.unpack(INFO_PAYLOAD)
-    self.assertEqual(info.protocol_version, 1)
+    self.assertEqual(info.protocol_version, 2)
+    self.assertEqual(info.num_controls, 8)
     self.assertTrue(info.supports(Mode.SCOPE) and info.supports(Mode.STREAM))
     self.assertEqual(info.num_channels, 2)
     self.assertEqual(info.channel_widths, (1, 1, 0, 0, 0, 0, 0, 0))
@@ -92,6 +103,9 @@ class TestInfo(unittest.TestCase):
     self.assertEqual(info.frame_bytes, 1)
     self.assertEqual(info.clk_freq_hz, 100_000_000)
     self.assertEqual(info.max_capture_samples, 16)
+
+  def test_a_core_from_before_the_controls_has_none(self):
+    self.assertEqual(ScopeInfo.unpack(b"\x01" + INFO_PAYLOAD[1:]).num_controls, 0)
 
   def test_max_capture_capped_by_len_field(self):
     info = ScopeInfo(1, 3, 8, (8,) * 8, 15, 8, 100_000_000)
@@ -190,6 +204,68 @@ class TestClient(unittest.TestCase):
     scope, port = client([ok(Opcode.ARM)])
     port.pending += reply(Opcode.ARM, b"\x01") # left over from an earlier exchange
     scope.arm()
+
+
+class TestControls(unittest.TestCase):
+
+  def test_write(self):
+    scope, port = client([INFO_FRAME, ok(Opcode.CONTROL_WRITE)])
+    scope.write_control(3, 0xDEADBEEF)
+    self.assertEqual(port.written[1], bytes.fromhex("AA 09 00 05 03 DEADBEEF 2D"))
+
+  def test_write_largest_and_smallest(self):
+    scope, port = client([INFO_FRAME, ok(Opcode.CONTROL_WRITE), ok(Opcode.CONTROL_WRITE)])
+    scope.write_control(7, 0xFFFFFFFF)
+    scope.write_control(0, 0)
+    self.assertEqual(port.written[1][4:9], bytes.fromhex("07 FFFFFFFF"))
+    self.assertEqual(port.written[2][4:9], bytes.fromhex("00 00000000"))
+
+  def test_read(self):
+    # the reply scope_tb.v checks byte by byte
+    scope, port = client([INFO_FRAME, bytes.fromhex("55 0A 00 05 03 DEADBEEF 2E")])
+    self.assertEqual(scope.read_control(3), 0xDEADBEEF)
+    self.assertEqual(port.written[1], bytes.fromhex("AA 0A 00 01 03 08"))
+
+  def test_read_all(self):
+    replies = [reply(Opcode.CONTROL_READ, bytes([i]) + (i * 1000).to_bytes(4, "big")) for i in range(8)]
+    scope, port = client([INFO_FRAME] + replies)
+    self.assertEqual(scope.read_controls(), [0, 1000, 2000, 3000, 4000, 5000, 6000, 7000])
+    self.assertEqual(len(port.written), 9)
+
+  def test_answer_for_another_control_is_an_error(self):
+    scope, _ = client([INFO_FRAME, reply(Opcode.CONTROL_READ, bytes([4]) + bytes(4))])
+    with self.assertRaises(ScopeError):
+      scope.read_control(3)
+
+  def test_rejected_write(self):
+    scope, _ = client([INFO_FRAME, reply(Opcode.CONTROL_WRITE, b"\x01")])
+    with self.assertRaises(ScopeRejected):
+      scope.write_control(0, 1)
+
+  def test_write_dropped_during_a_burst_times_out(self):
+    scope, _ = client([INFO_FRAME, b"\x01\x01\x01"]) # only sample bytes come back
+    with self.assertRaises(ScopeTimeout):
+      scope.write_control(0, 1)
+
+  def test_out_of_range_is_refused_before_anything_is_sent(self):
+    scope, port = client([INFO_FRAME])
+    scope.get_info()
+    for index, value in [(8, 0), (-1, 0), (0, 0x1_0000_0000), (0, -1)]:
+      with self.assertRaises(ValueError):
+        scope.write_control(index, value)
+    with self.assertRaises(ValueError):
+      scope.read_control(8)
+    self.assertEqual(len(port.written), 1) # only GET_INFO
+
+  def test_a_core_without_controls_is_not_sent_their_commands(self):
+    scope, port = client([OLD_INFO_FRAME])
+    self.assertEqual(scope.get_info().num_controls, 0)
+    with self.assertRaises(ScopeError):
+      scope.write_control(0, 1)
+    with self.assertRaises(ScopeError):
+      scope.read_control(0)
+    self.assertEqual(scope.read_controls(), [])
+    self.assertEqual(len(port.written), 1) # only GET_INFO
 
 
 if __name__ == "__main__":

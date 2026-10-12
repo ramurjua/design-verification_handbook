@@ -9,6 +9,8 @@
   POST /api/capture        trigger config; arms and reports over the WebSocket
   POST /api/stream         {"decimation", "batch"}; streams batches over the WebSocket
   POST /api/stop           abort the capture / stop the stream
+  GET  /api/controls       {"values"}: the 8 control registers, read from the core ([] if it has none)
+  POST /api/controls/{n}   {"value"}: write control n; answers with the value read back
   GET  /api/configs        names of the saved GUI configurations
   GET/PUT/DELETE /api/configs/{name}   one configuration, a JSON file in CONFIG_DIR
   WS   /ws                 messages listed in session.py, preceded by one "hello"
@@ -91,6 +93,10 @@ class StreamBody(BaseModel):
   batch: int = Field(200, ge=1, le=10000)
 
 
+class ControlBody(BaseModel):
+  value: int = Field(ge=0, le=0xFFFFFFFF) # the raw 32 bits; scaling and limits are the frontend's business
+
+
 def call(fn, *args):
   """Run a session method, mapping its failures to HTTP errors."""
   try:
@@ -143,6 +149,16 @@ def stream(body: StreamBody):
 def stop():
   call(session.stop)
   return {}
+
+
+@app.get("/api/controls")
+def get_controls():
+  return {"values": call(session.read_controls)}
+
+
+@app.post("/api/controls/{index}")
+def set_control(index: int, body: ControlBody):
+  return {"value": call(session.write_control, index, body.value)}
 
 
 def config_path(name):

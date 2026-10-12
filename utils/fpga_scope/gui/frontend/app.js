@@ -29,8 +29,24 @@ const CHANNEL_FIELDS = [
   ["lane", "Draw in the lane of", "channel", "Its own"],
 ];
 
+/* settings of a control: [key, label, kind, options, the kinds of control it applies to (all if not given)] */
+const CONTROL_FIELDS = [
+  ["name", "Name", "text"],
+  ["kind", "Shown as", "select", [["off", "Not used"], ["button", "Button"], ["toggle", "Switch (on / off)"], ["value", "Value"]]],
+  ["value", "Value a press writes", "raw", null, ["button"]],
+  ["unit", "Unit", "text", null, ["value"]],
+  ["signed", "Signed (two's complement)", "check", null, ["value"]],
+  ["frac", "Fraction bits", "int", null, ["value"]],
+  ["gain", "Gain", "number", null, ["value"]],
+  ["offset", "Offset", "number", null, ["value"]],
+  ["min", "Smallest allowed", "limit", null, ["value"]],
+  ["max", "Largest allowed", "limit", null, ["value"]],
+];
+const CONTROL_KIND_NOTES = { off: "not used", button: "button", toggle: "switch", value: "value" };
+
 const app = {
   info: null, // what CMD_GET_INFO reported, null while disconnected
+  controls: null, // the raw value of every control as last read from the core, null while unknown
   state: "disconnected",
   fillCount: 0,
   tab: "scope",
@@ -144,13 +160,19 @@ function setInfo(info) {
     $("pre").max = $("post").max = info.max_capture_samples;
   }
   buildChannelRows();
+  app.controls = null;
+  if (info && info.num_controls) fetchControls();
+  renderControls();
   updateControls();
 }
 
 function setState(state, fillCount = 0) {
   app.state = state;
   app.fillCount = fillCount;
-  if (state === "disconnected") app.info = null;
+  if (state === "disconnected") {
+    app.info = null;
+    if (app.controls) { app.controls = null; renderControls(); } // what the core held says nothing about the next one
+  }
   updateControls();
 }
 
@@ -174,6 +196,7 @@ function updateControls() {
   $("rec-start").disabled = !connected || !!app.recording;
   $("rec-stop").disabled = !app.recording;
   $("cfg-save").disabled = $("cfg-load").disabled = $("cfg-delete").disabled = !app.online;
+  for (const input of $("controls").querySelectorAll("button, input")) input.disabled = !controlsUsable();
   updateScopeHint();
 }
 
@@ -344,6 +367,176 @@ function refreshChannelRows() {
   });
 }
 
+/* ---- controls: values written to the FPGA ---- */
+
+const controlsUsable = () => !!app.info && app.info.num_controls > 0;
+
+/* the settings of the 8 controls, in the side panel */
+function buildControlRows() {
+  const box = $("control-rows");
+  box.replaceChildren();
+  app.config.controls.forEach((cfg, i) => {
+    const details = document.createElement("details");
+    details.className = "ctl";
+    details.id = `ctl-${i}`;
+    const summary = document.createElement("summary");
+    const name = document.createElement("span");
+    name.id = `ctl-name-${i}`;
+    const note = document.createElement("small");
+    note.id = `ctl-note-${i}`;
+    summary.append(name, note);
+
+    const fields = document.createElement("div");
+    fields.className = "fields";
+    for (const [key, label, kind, options] of CONTROL_FIELDS) {
+      const id = `ctl${i}-${key}`;
+      const caption = document.createElement("label");
+      caption.htmlFor = id;
+      caption.textContent = label;
+      let input;
+      if (kind === "select") {
+        input = document.createElement("select");
+        for (const [value, text] of options) input.add(new Option(text, value));
+        input.value = cfg[key];
+      } else {
+        input = document.createElement("input");
+        input.type = kind === "check" ? "checkbox" : kind === "text" || kind === "raw" ? "text" : "number";
+        if (kind === "check") input.checked = cfg[key];
+        else input.value = cfg[key] === null ? "" : cfg[key];
+        if (kind === "number" || kind === "limit") input.step = "any";
+        if (kind === "int") { input.min = 0; input.max = M.MAX_SIGNAL_BITS; }
+        if (kind === "text") input.maxLength = key === "name" ? 24 : 12;
+        if (kind === "raw") input.title = "A whole number from 0 to 4294967295, decimal or 0x...";
+        if (kind === "limit") input.placeholder = "none";
+      }
+      input.id = id;
+      input.addEventListener("input", () => {
+        const typed = input.value.trim();
+        if (kind === "check") setControl(i, key, input.checked);
+        else if (kind === "text") setControl(i, key, typed || (key === "name" ? `control${i}` : ""));
+        else if (kind === "select") setControl(i, key, input.value);
+        else if (kind === "int") setControl(i, key, Math.min(M.MAX_SIGNAL_BITS, Math.max(0, parseInt(typed, 10) || 0)));
+        else if (kind === "limit") { if (typed === "" || Number.isFinite(Number(typed))) setControl(i, key, typed === "" ? null : Number(typed)); }
+        else if (kind === "raw") { if (typed !== "" && Number.isInteger(Number(typed)) && Number(typed) >= 0 && Number(typed) <= M.MAX_CONTROL_RAW) setControl(i, key, Number(typed)); }
+        else if (Number.isFinite(parseFloat(typed)) && !(key === "gain" && parseFloat(typed) === 0)) setControl(i, key, parseFloat(typed)); // a half-typed number changes nothing
+      });
+      fields.append(caption, input);
+    }
+    details.append(summary, fields);
+    box.append(details);
+  });
+  refreshControlRows();
+}
+
+function setControl(i, key, value) {
+  app.config.controls[i][key] = value;
+  refreshControlRows();
+  saveLocalConfig();
+  renderControls();
+}
+
+/* names, notes, and which fields apply to the kind of control chosen */
+function refreshControlRows() {
+  app.config.controls.forEach((cfg, i) => {
+    $(`ctl-name-${i}`).textContent = cfg.name;
+    $(`ctl-note-${i}`).textContent = `control ${i}, ${CONTROL_KIND_NOTES[cfg.kind]}`;
+    $(`ctl-${i}`).classList.toggle("unused", cfg.kind === "off");
+    for (const [key, , , , kinds] of CONTROL_FIELDS) {
+      const input = $(`ctl${i}-${key}`);
+      input.hidden = input.labels[0].hidden = !!kinds && !kinds.includes(cfg.kind);
+    }
+  });
+}
+
+/* a control's value in its own units, as text */
+function controlText(cfg, raw) {
+  return M.formatValue(Number(M.controlShown(cfg, raw).toPrecision(9))) + (cfg.unit ? ` ${cfg.unit}` : "");
+}
+
+/* the controls in use, at the top of the right-hand panel: a button, a switch, or a number with a Send button */
+function renderControls() {
+  const bar = $("controls");
+  const typed = {}; // what was being typed survives the rebuild
+  for (const input of bar.querySelectorAll("input")) typed[input.id] = input.value;
+  bar.replaceChildren();
+  const used = app.config.controls.map((cfg, i) => [cfg, i]).filter(([cfg]) => cfg.kind !== "off");
+  bar.hidden = !used.length;
+  $("controls-none").hidden = used.length > 0;
+
+  for (const [cfg, i] of used) {
+    const raw = app.controls ? app.controls[i] : null;
+    const item = document.createElement("span");
+    item.className = "control";
+    if (cfg.kind === "value") {
+      const label = document.createElement("label");
+      label.htmlFor = `ctl-in-${i}`;
+      label.textContent = cfg.name;
+      const input = document.createElement("input");
+      input.type = "number";
+      input.step = "any";
+      input.id = `ctl-in-${i}`;
+      input.value = typed[input.id] || "";
+      input.addEventListener("keydown", (event) => { if (event.key === "Enter") sendControlValue(i); });
+      const send = document.createElement("button");
+      send.type = "button";
+      send.id = `ctl-send-${i}`;
+      send.textContent = "Send";
+      send.addEventListener("click", () => sendControlValue(i));
+      const now = document.createElement("small");
+      now.id = `ctl-now-${i}`;
+      now.textContent = raw === null ? "" : `now ${controlText(cfg, raw)}`;
+      item.append(label, input);
+      if (cfg.unit) item.append(cfg.unit);
+      item.append(send, now);
+    } else {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.id = `ctl-btn-${i}`;
+      if (cfg.kind === "toggle") {
+        const on = raw !== null && raw !== 0;
+        button.textContent = `${cfg.name}: ${raw === null ? "?" : on ? "on" : "off"}`;
+        button.setAttribute("aria-pressed", String(on));
+        button.addEventListener("click", () => writeControl(i, on ? 0 : 1));
+      } else {
+        button.textContent = cfg.name;
+        button.title = `Writes ${cfg.value} to control ${i}`;
+        button.addEventListener("click", () => writeControl(i, cfg.value));
+      }
+      item.append(button);
+    }
+    for (const input of item.querySelectorAll("button, input")) input.disabled = !controlsUsable();
+    bar.append(item);
+  }
+  if (app.info && !app.info.num_controls && used.length) {
+    $("controls-status").textContent = "The connected core has no controls: it was built from RTL older than them.";
+  } else if ($("controls-status").textContent.startsWith("The connected core")) $("controls-status").textContent = "";
+}
+
+async function fetchControls() {
+  const reply = await command(() => api("GET", "/api/controls"));
+  app.controls = reply && reply.values.length ? reply.values : null;
+  renderControls();
+}
+
+/* write a raw value, then show what the core says it holds */
+async function writeControl(i, raw) {
+  const reply = await command(() => api("POST", `/api/controls/${i}`, { value: raw }));
+  if (!reply) return;
+  if (!app.controls) app.controls = new Array(M.MAX_CONTROLS).fill(0);
+  app.controls[i] = reply.value;
+  const cfg = app.config.controls[i];
+  $("controls-status").textContent = `${cfg.name}: wrote ${cfg.kind === "value" ? controlText(cfg, reply.value) : reply.value} to control ${i}.`;
+  renderControls();
+}
+
+function sendControlValue(i) {
+  const cfg = app.config.controls[i];
+  const typed = $(`ctl-in-${i}`).value.trim();
+  const result = typed === "" ? { error: "type a number first" } : M.controlRaw(cfg, Number(typed));
+  if (result.error) $("controls-status").textContent = `${cfg.name}: ${result.error}. Nothing was sent.`;
+  else return writeControl(i, result.raw);
+}
+
 /* ---- configuration: this browser's storage, and named files kept by the backend ---- */
 
 function loadLocalConfig() {
@@ -393,6 +586,8 @@ function applyConfig(config) {
   writeSettings();
   if (app.info) buildTriggerRows(app.info, true);
   buildChannelRows(true);
+  buildControlRows();
+  renderControls();
   saveLocalConfig();
   updateScopeHint();
   draw();
@@ -1231,6 +1426,8 @@ new ResizeObserver(draw).observe($("plot-wrap"));
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
 
 writeSettings();
+buildControlRows();
+renderControls();
 refreshPorts();
 refreshConfigList();
 openSocket();

@@ -64,6 +64,8 @@ corrupted byte can't permanently wedge the link.
 | 0x06   | `CMD_ABORT`         | any            | none                                              | 1 B status; aborts a capture or stops a stream        |
 | 0x07   | `CMD_SET_MODE`      | idle           | 1 B mode id (`0`=scope, `1`=stream)               | 1 B status                                            |
 | 0x08   | `CMD_STREAM_START`  | stream (idle)  | 4 B sample_count, big-endian                      | 1 B status, then raw sample burst, see [streaming](#stream-mode) |
+| 0x09   | `CMD_CONTROL_WRITE` | any            | 1 B control index, 4 B value, see [controls](#controls) | 1 B status                                       |
+| 0x0A   | `CMD_CONTROL_READ`  | any            | 1 B control index                                 | 1 B control index, 4 B value                          |
 
 ### GET_INFO response
 
@@ -71,7 +73,7 @@ Lets the GUI auto-adapt to whatever project the core was built into.
 
 | Field             | Size | Meaning                                                        |
 |-------------------|------|-----------------------------------------------------------------|
-| protocol_version  | 1 B  | currently `0x01`                                                 |
+| protocol_version  | 1 B  | currently `0x02`. `0x01`: a core without [controls](#controls), otherwise identical |
 | modes_supported   | 1 B  | bitmask: bit0 = `MODE_SCOPE`, bit1 = `MODE_STREAM` (currently always `0x03`) |
 | num_channels      | 1 B  | number of configured channels (1-8)                              |
 | channel_widths[8] | 8 B  | width in bits (1-8) of each channel lane; `0` = lane unused       |
@@ -177,12 +179,52 @@ the generic resync behaviour from the [Framing](#framing) section (scan for
 frame — rare in practice, since the normal path is simply requesting small
 enough batches that you let them finish.
 
+### Controls
+
+Eight 32-bit registers that the host writes and the FPGA design reads, on
+`scope_top`'s `o_control0` ... `o_control7` outputs. They have nothing to do
+with capturing: they let the host press a button, flip a switch or set a value
+in the design under test. Every core has all eight (there is no parameter), and
+all are `0` after reset. What each one means is up to the design; the core only
+stores them.
+
+`CMD_CONTROL_WRITE` payload (5 bytes):
+
+| Field | Size | Meaning                                  |
+|-------|------|-------------------------------------------|
+| index | 1 B  | which control, `0`-`7`                     |
+| value | 4 B  | the new value, big-endian                  |
+
+The core answers `0x00`, or `0x01` and changes nothing if `index` is above 7 or
+the payload is not exactly 5 bytes. On an accepted write:
+
+- all 32 bits of `o_controlN` change in the same clock cycle, and only after the
+  frame's checksum has been verified, so the design never sees part of a value;
+- `o_control_update[N]` is high for that one cycle. It pulses on **every**
+  accepted write, also when the value written is the one the control already
+  held: that is what makes a control usable as a push button.
+
+`CMD_CONTROL_READ` (payload: 1 B index) returns the index and the value the
+control holds, 5 bytes. An index above 7 gets no response.
+
+Both commands are accepted in either mode and in any capture state (idle,
+armed, capturing, done): a control can be written while a capture waits for its
+trigger. `CMD_ABORT` does not change the controls; only reset clears them.
+
+A core with `protocol_version` `0x01` has no controls and ignores both opcodes
+(no response), so a host must check the version in `CMD_GET_INFO` before using
+them.
+
+The controls keep their value for as long as the FPGA is not reset, whatever
+happens to the host: there is no timeout. A design that drives something real
+from a control must not rely on the host to bring it back to a safe value.
+
 ## Status codes
 
 | Code | Meaning                                              |
 |------|--------------------------------------------------------|
 | 0x00 | OK                                                      |
-| 0x01 | rejected (e.g. `CMD_SET_TRIGGER`/`CMD_SET_MODE`/`CMD_ARM` while not idle) |
+| 0x01 | rejected (e.g. `CMD_SET_TRIGGER`/`CMD_SET_MODE`/`CMD_ARM` while not idle, or a `CMD_CONTROL_WRITE` with a bad index or length) |
 
 A command that is structurally invalid for the current state — most notably
 `CMD_DUMP` sent while not in `done`, or `CMD_STREAM_START` while not idle — gets
@@ -191,4 +233,5 @@ poll `CMD_GET_STATUS` before `CMD_DUMP`/`CMD_STREAM_START` rather than racing th
 
 While a `CMD_DUMP` transfer or a stream burst is in flight the core processes
 only `CMD_ABORT`; any other command sent in that window is dropped without a
-response.
+response. That includes `CMD_CONTROL_WRITE`: the host must send it between two
+bursts, not during one.

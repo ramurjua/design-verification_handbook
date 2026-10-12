@@ -86,7 +86,7 @@
           <input type="file" id="cfg-file" accept=".json,application/json" hidden>
         </div>
         <p id="cfg-status" class="hint" role="status"></p>
-        <p id="cfg-hint" class="hint">Channel, trigger and window settings. Save, Load and Delete work on the named JSON files the backend keeps; Open file takes any JSON file, also one written by hand. This browser remembers the current settings by itself.</p>
+        <p id="cfg-hint" class="hint">Channel, control, trigger and window settings. Save, Load and Delete work on the named JSON files the backend keeps; Open file takes any JSON file, also one written by hand. This browser remembers the current settings by itself.</p>
       </section>
     </aside>
 
@@ -119,6 +119,16 @@
         <tbody></tbody>
       </table>
     </section>
+
+    <aside id="panel-controls">
+      <h2>Controls</h2>
+      <div id="controls" class="controls" hidden></div>
+      <p id="controls-status" class="hint" role="status"></p>
+      <p id="controls-none" class="hint">None in use. Set one up below to get a button, a switch or a number field here.</p>
+      <h2>Set up</h2>
+      <div id="control-rows"></div>
+      <p class="hint">Up to 8 values the FPGA design reads on <code>o_control0</code> to <code>o_control7</code>. Leave them all as Not used if the design has none.</p>
+    </aside>
   </main>
 
   <script src="scope_math.js"></script>

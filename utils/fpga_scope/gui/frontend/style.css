@@ -80,7 +80,12 @@ header { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
 }
 #error[hidden] { display: none; }
 
-main { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 16px; align-items: start; }
+/* left: what is captured and how it is shown. Middle: the plot. Right: what is written to the FPGA */
+main { display: grid; grid-template-columns: 330px minmax(0, 1fr) 290px; gap: 16px; align-items: start; }
+@media (max-width: 1250px) {
+  main { grid-template-columns: 330px minmax(0, 1fr); }
+  #panel-controls { grid-column: 1 / -1; }
+}
 @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
 
 aside, .plot {
@@ -114,17 +119,32 @@ button.primary:disabled { opacity: 0.45; color: var(--on-accent); }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 6px 0; color: var(--text-secondary); }
 .row input { width: 100px; }
 
-.triggers { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 10px; align-items: center; }
-.ch-name { display: flex; align-items: center; gap: 6px; }
-.ch-name small { color: var(--text-muted); }
-.swatch { width: 14px; height: 3px; border-radius: 2px; }
+/* the name takes what the two selects leave and wraps: a long one must not push them out of the panel */
+.triggers { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 6px 10px; align-items: center; }
+.ch-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ch-name span:not(.swatch) { min-width: 0; overflow-wrap: anywhere; }
+.ch-name small { color: var(--text-muted); white-space: nowrap; }
+.swatch { width: 14px; height: 3px; border-radius: 2px; flex: none; }
 
-/* one collapsible block of display settings per channel */
-.chan { border-top: 1px solid var(--border); padding: 5px 0; }
-.chan:last-child { border-bottom: 1px solid var(--border); }
-.chan summary { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-.chan summary small { color: var(--text-muted); margin-left: auto; text-align: right; }
-.chan.part summary { color: var(--text-muted); }
+/* one collapsible block of settings per channel, and per control */
+.chan, .ctl { border-top: 1px solid var(--border); padding: 5px 0; }
+.chan:last-child, .ctl:last-child { border-bottom: 1px solid var(--border); }
+.chan summary, .ctl summary { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.chan summary small, .ctl summary small { color: var(--text-muted); margin-left: auto; text-align: right; }
+.chan.part summary, .ctl.unused summary { color: var(--text-muted); }
+
+/* the controls in use, in the right-hand panel */
+#panel-controls h2:first-child { margin-top: 2px; }
+.controls { display: flex; flex-direction: column; gap: 10px; }
+.controls[hidden] { display: none; }
+.controls .control { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; color: var(--text-secondary); }
+.controls .control > button:only-child { flex: 1; padding: 6px 8px; }
+.controls label { flex-basis: 100%; }
+.controls input { width: 90px; }
+.controls small { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.controls button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.controls button[aria-pressed="true"]:disabled { opacity: 0.45; }
+#controls-status:empty { display: none; }
 .fields { display: grid; grid-template-columns: 1fr 130px; gap: 5px 10px; align-items: center; margin: 8px 0 4px; color: var(--text-secondary); }
 .fields input:not([type="checkbox"]), .fields select { width: 100%; }
 .fields input[type="checkbox"] { justify-self: start; }

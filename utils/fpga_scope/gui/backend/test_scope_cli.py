@@ -6,7 +6,7 @@ import unittest
 
 import scope_cli
 from protocol import Opcode, ScopeClient
-from test_protocol import INFO_FRAME, FakePort, ok, reply
+from test_protocol import INFO_FRAME, OLD_INFO_FRAME, FakePort, ok, reply
 
 PORT_ARGS = ["--port", "FAKE", "--baud", "115200", "--timeout", "0.02"]
 
@@ -26,6 +26,38 @@ class TestCli(unittest.TestCase):
     self.assertEqual(code, 0)
     self.assertIn("2 (ch0=1b, ch1=1b)", out)
     self.assertIn("100000000 Hz", out)
+    self.assertIn("controls         : 8", out)
+
+  def test_info_of_a_core_without_controls(self):
+    code, out, _, _ = run_cli([OLD_INFO_FRAME], "info")
+    self.assertEqual(code, 0)
+    self.assertIn("controls         : none", out)
+
+  def test_control_write(self):
+    code, out, _, port = run_cli([
+      INFO_FRAME, ok(Opcode.CONTROL_WRITE), reply(Opcode.CONTROL_READ, bytes.fromhex("02 000004D2")),
+    ], "control", "2", "0x4D2")
+    self.assertEqual(code, 0)
+    self.assertIn("control 2 = 1234", out)
+    self.assertEqual(port.written[1][4:9], bytes.fromhex("02 000004D2"))
+
+  def test_control_write_out_of_range(self):
+    code, _, err, port = run_cli([INFO_FRAME], "control", "8", "1")
+    self.assertEqual(code, 1)
+    self.assertIn("control 8 out of range", err)
+    self.assertEqual(port.written, [])
+
+  def test_controls_read(self):
+    replies = [reply(Opcode.CONTROL_READ, bytes([i]) + (255 if i == 5 else 0).to_bytes(4, "big")) for i in range(8)]
+    code, out, _, _ = run_cli([INFO_FRAME] + replies, "controls")
+    self.assertEqual(code, 0)
+    self.assertIn("control 5 = 255 (0x000000FF)", out)
+    self.assertIn("control 7 = 0 (0x00000000)", out)
+
+  def test_controls_on_a_core_without_them(self):
+    code, out, _, _ = run_cli([OLD_INFO_FRAME], "controls")
+    self.assertEqual(code, 0)
+    self.assertIn("no controls", out)
 
   def test_capture(self):
     code, out, _, port = run_cli([
