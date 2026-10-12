@@ -84,7 +84,7 @@ All eight `i_chN` ports are always present and always 8 bits wide. The scope onl
 Three rules:
 
 1. **Same clock.** Every signal on an `i_chN` port must be synchronous to the `clk` you give the scope. A signal from another clock domain needs a synchroniser first, or you will capture glitches.
-2. **Eight bits per channel at most.** Split a wider bus over several channels, for example `i_ch2(counter[7:0])` and `i_ch3(counter[15:8])`. The GUI shows them as two separate traces.
+2. **Eight bits per channel at most.** Split a wider bus over several channels, for example `i_ch2(counter[7:0])` and `i_ch3(counter[15:8])`. The GUI shows them as two separate traces until you join them: see [Using the GUI](gui.md).
 3. **Reset is synchronous and active high.** If your board's reset button is active low, invert it, and pass it through two flip-flops clocked by `clk` first.
 
 The trigger can use any single bit of any channel (rising edge, falling edge, high or low), so put the signal you want to trigger on in a channel too.

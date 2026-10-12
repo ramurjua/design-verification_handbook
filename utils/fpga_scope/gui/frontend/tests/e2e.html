@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>fpga_scope: GUI end-to-end test</title>
+  <style>
+    body { font: 14px/1.5 system-ui, sans-serif; margin: 20px; }
+    .pass { color: #0a7a0a; }
+    .fail { color: #c22; font-weight: 600; }
+    iframe { width: 1360px; height: 900px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <h1>GUI end-to-end test</h1>
+  <p>Drives the real page below against the backend's simulated device. Meant to be run by <code>backend/test_frontend.py</code>:
+     it connects, captures and streams on whatever backend serves it.</p>
+  <p id="summary">Running...</p>
+  <ul id="results"></ul>
+  <iframe id="app" title="fpga_scope"></iframe>
+  <script src="harness.js"></script>
+  <script src="e2e.js"></script>
+</body>
+</html>

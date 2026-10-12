@@ -28,6 +28,7 @@ It has two modes, selected from the GUI:
 | Document | What it is for |
 |----------|----------------|
 | [Integration guide](docs/integration.md) | Step by step: add the scope to a design, pick the parameters, assign the pins, first contact |
+| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names), zoom, cursors, saving the setup to a file |
 | [Protocol](docs/protocol.md) | The UART wire protocol between the computer and the FPGA |
 | [Status and roadmap](docs/TODO.md) | What is done, what is tested, design decisions, what is left |
 
@@ -88,7 +89,8 @@ The scope also needs `uart_tx.v` and `uart_rx.v` from the [UART module](../../mo
 | `example/` | A complete top level with built-in test signals |
 | `test/` | RTL testbench. Run it with `python run.py` from that folder (needs Icarus Verilog) |
 | `gui/backend/` | Python: the protocol client, a command-line tool, the web server and a simulated device |
-| `gui/frontend/` | The web page (plain HTML, JavaScript and CSS, nothing to build) |
+| `gui/frontend/` | The web page (plain HTML, JavaScript and CSS, nothing to build), and its tests in `tests/` |
+| `gui/configs/` | GUI configurations saved by name (created on the first save, not in git) |
 | `docs/` | Integration guide, protocol and roadmap |
 
 ## Running the tests
@@ -99,11 +101,12 @@ python run.py                 # RTL: ends with "[PASS] All checks passed."
 
 cd ../gui/backend
 python -m unittest test_protocol test_scope_cli test_app
+python -m unittest test_frontend    # the web page, in a headless Chrome or Edge (skipped if neither is installed)
 ```
 
 ## Limits worth knowing
 
-- Up to 8 channels of up to 8 bits each. A wider bus is split over several channels.
+- Up to 8 channels of up to 8 bits each. A wider bus is split over several channels, which the GUI can show as one value again.
 - All signals must be synchronous to the clock given to the scope.
 - A capture holds at most `2^p_buffer_depth_log2` samples, and at most 65535 bytes in total.
 - The baud rate is fixed at build time by `p_uart_preescaler`; there is no autobaud.

@@ -25,8 +25,10 @@ real board. See "Verification record" for exactly what was tested.
 - `gui/backend/sim_device.py` — simulated core selectable as port `sim`.
   A stand-in for GUI work, NOT a reference model of the RTL.
 - `gui/frontend/` — the web page: Scope and Stream tabs, per-channel
-  trigger, hover readout, CSV download.
-- `docs/protocol.md`, `docs/integration.md`.
+  trigger, hover readout, CSV download; Y axes, per-channel display
+  settings, zoom, cursors, measurements, saved configurations
+  (`scope_math.js` holds the maths, `tests/` its tests).
+- `docs/protocol.md`, `docs/integration.md`, `docs/gui.md`.
 
 ## Verification record
 
@@ -36,6 +38,11 @@ real board. See "Verification record" for exactly what was tested.
   bytes and the simulated device. The example design was simulated once with
   an ad hoc testbench (not committed) and its replies decoded by
   `protocol.py`.
+- **GUI display features (2026-10-12), simulated device only**:
+  `test_frontend.py` runs `gui/frontend/tests/` in a headless browser: the
+  display maths (`unit.html`) and the real page driven against the `sim`
+  port (`e2e.html`); `test_app.py` covers the configuration store. Not yet
+  used against a board.
 - **Hardware, 2026-10-10**: `example/scope_example_top.v` on the Drone
   FPGA_SOM board (Spartan-7 xc7s50, 25 MHz clock, `p_uart_preescaler` 217,
   CP210x adapter, 115200 baud).
@@ -91,13 +98,70 @@ real board. See "Verification record" for exactly what was tested.
   HTML/JS/CSS, no Qt, no build step (explicit user requirement).
 - After `CMD_ARM` the core ignores triggers until the pre-trigger window is
   full, so a dump never contains samples from before the arm.
+- GUI configuration (2026-10-12): selecting signed/unsigned per channel is
+  one of the most important settings for the user. Configurations are JSON
+  on disk, must be loadable through a file dialog, and must be writable by
+  hand, so `normalizeConfig` accepts partial files and reports what it
+  could not use instead of rejecting the file.
+
+## GUI display improvements (brainstormed and implemented 2026-10-12)
+
+Asked for after using the scope on a real project: analog values could only
+be read with the cursor. Everything here is GUI only (frontend, plus a small
+config store in the backend); no RTL or protocol change. Described for the
+user in `docs/gui.md`. Verified against the simulated device only.
+
+First group:
+
+- [x] Y axis per lane: ticks, gridlines and labels, with a range per signal
+      (full scale, auto-fit to the visible samples, or manual min/max).
+- [x] Per-channel signed (two's complement), fraction bits (Q format), gain
+      and offset; axis, tooltip and CSV show the scaled value.
+- [x] Per-channel name and unit.
+- [x] X zoom and pan on a finished capture or a stopped stream.
+- [x] Save and reload the configuration: automatically in the browser, as
+      named JSON files on disk through the backend (`gui/configs/`), and
+      from/to any JSON file through the browser's file dialog. A
+      hand-written file only needs the settings it changes.
+
+Second group:
+
+- [x] Measurement cursors (dt, 1/dt, dY per signal).
+- [x] Show/hide a channel and choose its lane height.
+- [x] Linear interpolation as an alternative to the stepped trace, and
+      sample markers when zoomed in.
+- [x] Combine channels into one wider signal (a 16-bit value split over two
+      8-bit channels), up to 32 bits.
+
+Later group:
+
+- [x] Statistics over the visible window (min, max, mean, peak-to-peak).
+- [x] Overlay: several signals in one lane on a shared Y axis.
+- [x] Save a capture to a file, load it back, keep one as a reference trace.
+- [x] Bus display for multi-bit signals that are not analog (value written
+      inside a band).
+- [x] Raw value format per channel in the readout (decimal, hex, binary).
+- [x] One lane per bit of a multi-bit signal (asked for during the work).
+
+Left over from this batch:
+
+- [ ] Try it against the board, on real signals.
+- [ ] `img/gui_scope.png` and `img/gui_stream.png` in `fpga_scope.md` still
+      show the GUI as it was before.
+
+Not GUI only, so not part of this batch:
+
+- [ ] Trigger on a level (value above/below a threshold). The core only
+      triggers on one selected bit of a channel (level or edge), so this
+      needs a comparator in `scope_trigger` and a `CMD_SET_TRIGGER` payload
+      change (doc, `scope_defs.vh`, `scope_cmd_if.v`, `protocol.py`,
+      `sim_device.py`, `scope_tb.v`, then the board).
 
 ## Still to do
 
 - [ ] Use it on real signals: replace the example in the Drone FPGA_SOM
       design with a `scope_top` fed by the IMU SPI lines and valid flag.
-- [ ] GUI: zoom/pan on the plot, re-arm ("normal"/auto) capture mode,
-      remembering settings between sessions.
+- [ ] GUI: re-arm ("normal"/auto) capture mode.
 - [ ] GUI stream view: consecutive bursts are not contiguous in time (the
       host needs a moment between `CMD_STREAM_START`s), so slow signals show
       a small jump at every burst boundary. Larger bursts make it rarer.
@@ -105,6 +169,7 @@ real board. See "Verification record" for exactly what was tested.
       frames (8 channels x 8 bits), another USB-UART adapter.
 - [ ] A committed testbench that drives the RTL with frames produced by
       `protocol.py` (today that cross-check was done once by hand).
-- [ ] Website: generate the HTML for `fpga_scope.md` and the docs with
+- [ ] Website: generate the HTML for `fpga_scope.md` and the docs (now also
+      `docs/gui.md`) with
       `web/generate_srcs.py`, publish, and add the page to `publish/index.html`
       and `publish/nav.html` by hand (needs `pandoc`).

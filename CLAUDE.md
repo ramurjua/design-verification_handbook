@@ -34,6 +34,7 @@ It compiles with `iverilog -g2005-sv -gstd-include -grelative-include -s <tb_top
 cd utils/fpga_scope/test && python run.py        # RTL; success is the final line "[PASS] All checks passed."
 cd utils/fpga_scope/gui/backend
 python -m unittest test_protocol test_scope_cli test_app    # one module: python -m unittest test_protocol
+python -m unittest test_frontend    # the web page in a headless Chrome/Edge, ~5 s; skipped if no browser is found
 ```
 
 `run.py` leaves `sim_log` and `scope_tb.vcd` behind; both are gitignored (the VCD is ~500 KB and was deliberately removed from history once).
@@ -79,7 +80,7 @@ A new module or page is also added to its section index (`modules/modules.md`, `
 
 A project-agnostic FPGA debug oscilloscope: an RTL core driven over UART, a Python backend (`gui/backend/`) and a plain HTML/JS/CSS frontend with no build step (`gui/frontend/`). It works on real hardware (one board and configuration tested, recorded in `docs/TODO.md`). `fpga_scope.md` is the user-facing page.
 
-GUI layers, bottom up: `protocol.py` (wire protocol, `ScopeClient`) → `session.py` (one connection plus its background capture/stream job, no web dependency) → `app.py` (FastAPI: REST for commands, one WebSocket for pushed state and data) → `gui/frontend/app.js`. `scope_cli.py` is the command-line bring-up tool. `sim_device.py` is a simulated core that takes the place of the serial port (port name `sim`); it is a stand-in for GUI work, not a reference model of the RTL, and it hid a real RTL bug once, so a change is only verified by `scope_tb.v` and, for timing or UART matters, by the board.
+GUI layers, bottom up: `protocol.py` (wire protocol, `ScopeClient`) → `session.py` (one connection plus its background capture/stream job, no web dependency) → `app.py` (FastAPI: REST for commands, one WebSocket for pushed state and data) → `gui/frontend/app.js` (page, drawing, interaction) on top of `gui/frontend/scope_math.js` (everything that needs no page: configuration, scaling, combining channels, axes, zoom, file formats). `scope_cli.py` is the command-line bring-up tool. `sim_device.py` is a simulated core that takes the place of the serial port (port name `sim`); it is a stand-in for GUI work, not a reference model of the RTL, and it hid a real RTL bug once, so a change is only verified by `scope_tb.v` and, for timing or UART matters, by the board.
 
 ```bash
 cd utils/fpga_scope/gui/backend
@@ -88,11 +89,16 @@ python app.py                                         # then open http://127.0.0
 python scope_cli.py --port COM5 --baud 115200 info    # first check against a real board
 ```
 
+There is no Node on this machine and no build step, so the frontend tests are pages: `gui/frontend/tests/unit.html` (tests `scope_math.js`) and `tests/e2e.html` (drives the real `index.html` in an iframe against the `sim` port). `test_frontend.py` serves them from `app.py`, opens them headless and collects the result they POST back. New display logic goes in `scope_math.js` with a test in `tests/unit.js`; new page behaviour gets a step in `tests/e2e.js`. `app.js` keeps its state in top-level `const`/`let`, which the e2e test reads with the iframe's `eval`.
+
+The GUI configuration (per-channel display settings, trigger, window) is defined only in the frontend (`ScopeMath.defaultConfig` / `normalizeConfig`); the backend stores it as opaque JSON in `gui/configs/` (gitignored). A new setting needs: the default and its validation in `scope_math.js`, a row in `CHANNEL_FIELDS` in `app.js`, and the key table in `docs/gui.md`.
+
 Read these before touching it:
 
 - `docs/protocol.md` — the host↔FPGA wire protocol, implemented independently by the RTL and by `protocol.py`. A protocol change means updating the doc, `source/scope_defs.vh`, `source/scope_cmd_if.v`, `protocol.py` and `sim_device.py` together.
 - `docs/TODO.md` — status, verification record, remaining work, and a "Design decisions already made" section recording choices the user made explicitly (separate `p_chN_width` parameters and `i_chN` ports rather than packed buses, count-bounded stream bursts, no Qt and no build step for the GUI, etc.). Respect those; keep the file updated as work progresses.
 - `docs/integration.md` — the user's step-by-step guide; keep it in step with parameter or port changes.
+- `docs/gui.md` — how to use the GUI, and the configuration file format (users write these by hand).
 
 Structure: `scope_top` packs the 8 byte-wide channel inputs down to the configured widths (channel 0 at the LSB) and wires together `scope_decimator` (sample-rate divider), `scope_trigger`, `scope_ctrl` (capture FSM: idle → armed → capturing → done), `scope_capture_buffer` (ring buffer), `scope_streamer` (stream mode) and `scope_cmd_if` (frame parser/responder, by far the largest block). `scope_cmd_if` instantiates `uart_tx`/`uart_rx` from `modules/uart/source/` with `p_data_buffer(1)`, so **fpga_scope depends on the shared UART modules** — a change to those needs `modules/uart/test/run.py`, `run_async.py` and `scope_tb.v` re-run.
 

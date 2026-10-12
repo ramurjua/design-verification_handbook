@@ -119,6 +119,19 @@ button.primary:disabled { opacity: 0.45; color: var(--on-accent); }
 .ch-name small { color: var(--text-muted); }
 .swatch { width: 14px; height: 3px; border-radius: 2px; }
 
+/* one collapsible block of display settings per channel */
+.chan { border-top: 1px solid var(--border); padding: 5px 0; }
+.chan:last-child { border-bottom: 1px solid var(--border); }
+.chan summary { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.chan summary small { color: var(--text-muted); margin-left: auto; text-align: right; }
+.chan.part summary { color: var(--text-muted); }
+.fields { display: grid; grid-template-columns: 1fr 130px; gap: 5px 10px; align-items: center; margin: 8px 0 4px; color: var(--text-secondary); }
+.fields input:not([type="checkbox"]), .fields select { width: 100%; }
+.fields input[type="checkbox"] { justify-self: start; }
+.fields [hidden] { display: none; }
+#cfg-name { width: 180px; }
+#cfg-status:empty { display: none; }
+
 .hint { color: var(--text-muted); font-size: 12px; margin: 8px 0; }
 .buttons { display: flex; gap: 8px; margin-top: 14px; }
 .buttons button { flex: 1; padding: 6px 8px; }
@@ -127,8 +140,19 @@ button.primary:disabled { opacity: 0.45; color: var(--on-accent); }
 .plot-head h2 { margin: 0; font-size: 14px; color: var(--text-primary); }
 #plot-sub { color: var(--text-secondary); flex: 1; }
 
-#plot-wrap { position: relative; height: calc(100vh - 190px); min-height: 380px; }
-#plot { width: 100%; height: 100%; display: block; border-radius: 4px; }
+.toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.toolbar .spacer { flex: 1; }
+
+#plot-wrap { position: relative; height: calc(100vh - 300px); min-height: 380px; }
+#plot { width: 100%; height: 100%; display: block; border-radius: 4px; cursor: crosshair; touch-action: none; }
+
+#measure-head { margin: 4px 0 6px; color: var(--text-secondary); font-size: 12px; }
+#measure-head:empty { display: none; }
+#measure { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+#measure th, #measure td { text-align: right; padding: 3px 8px; border-top: 1px solid var(--border); white-space: nowrap; }
+#measure th { color: var(--text-secondary); font-weight: 600; border-top: none; }
+#measure th:first-child, #measure td:first-child { text-align: left; }
+#measure .swatch { display: inline-block; vertical-align: middle; margin-right: 6px; }
 
 #tooltip {
   position: absolute; pointer-events: none; z-index: 1;

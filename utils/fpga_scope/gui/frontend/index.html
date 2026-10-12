@@ -59,21 +59,62 @@
           <button type="button" id="s-stop">Stop</button>
         </div>
       </section>
+
+      <section id="panel-channels">
+        <h2>Channels</h2>
+        <div id="channels"></div>
+        <p id="channels-hint" class="hint">Connect, or load a capture, to set up its channels.</p>
+
+        <h2>Configuration</h2>
+        <label class="row">Name <input id="cfg-name" list="cfg-names" autocomplete="off" placeholder="my_project"></label>
+        <datalist id="cfg-names"></datalist>
+        <div class="buttons">
+          <button type="button" id="cfg-save">Save</button>
+          <button type="button" id="cfg-load">Load</button>
+          <button type="button" id="cfg-delete">Delete</button>
+        </div>
+        <div class="buttons">
+          <button type="button" id="cfg-open" title="Load a configuration from any JSON file on this computer">Open file...</button>
+          <button type="button" id="cfg-export" title="Download the configuration as a JSON file">Save as file...</button>
+          <input type="file" id="cfg-file" accept=".json,application/json" hidden>
+        </div>
+        <p id="cfg-status" class="hint" role="status"></p>
+        <p id="cfg-hint" class="hint">Channel, trigger and window settings. Save, Load and Delete work on the named JSON files the backend keeps; Open file takes any JSON file, also one written by hand. This browser remembers the current settings by itself.</p>
+      </section>
     </aside>
 
     <section class="plot">
       <div class="plot-head">
         <h2 id="plot-title">No data yet</h2>
         <span id="plot-sub"></span>
+      </div>
+      <div class="toolbar">
+        <button type="button" id="zoom-in" title="Zoom in (+)">Zoom in</button>
+        <button type="button" id="zoom-out" title="Zoom out (-)">Zoom out</button>
+        <button type="button" id="zoom-reset" title="Show everything (0, or double click)">Reset zoom</button>
+        <button type="button" id="cursors-clear">Clear cursors</button>
+        <span class="spacer"></span>
+        <button type="button" id="ref-set" title="Keep this capture behind the next ones">Set as reference</button>
+        <button type="button" id="ref-clear">Clear reference</button>
+        <button type="button" id="cap-save">Save capture</button>
+        <button type="button" id="cap-load">Load capture</button>
+        <input type="file" id="cap-file" accept=".json,application/json" hidden>
         <button type="button" id="csv" disabled>Download CSV</button>
       </div>
       <div id="plot-wrap">
-        <canvas id="plot" tabindex="0" aria-label="Waveform plot. Use the left and right arrow keys to read values."></canvas>
+        <canvas id="plot" tabindex="0" aria-label="Waveform plot. Left and right arrow keys read values, plus and minus zoom, A and B place the cursors."></canvas>
         <div id="tooltip" hidden></div>
       </div>
+      <p class="hint">Wheel: zoom. Drag: pan. Click: cursor A. Shift + click: cursor B. Double click: show everything.</p>
+      <p id="measure-head"></p>
+      <table id="measure" hidden>
+        <thead><tr><th>Signal</th><th>Min</th><th>Max</th><th>Mean</th><th>Peak to peak</th><th>At A</th><th>At B</th><th>B - A</th></tr></thead>
+        <tbody></tbody>
+      </table>
     </section>
   </main>
 
+  <script src="scope_math.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

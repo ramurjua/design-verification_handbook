@@ -9,11 +9,16 @@
   POST /api/capture        trigger config; arms and reports over the WebSocket
   POST /api/stream         {"decimation", "batch"}; streams batches over the WebSocket
   POST /api/stop           abort the capture / stop the stream
+  GET  /api/configs        names of the saved GUI configurations
+  GET/PUT/DELETE /api/configs/{name}   one configuration, a JSON file in CONFIG_DIR
   WS   /ws                 messages listed in session.py, preceded by one "hello"
 """
 
 import argparse
 import asyncio
+import json
+import os
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
@@ -26,6 +31,9 @@ from protocol import ScopeError
 from session import NotConnected, ScopeSession, list_ports
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+# the GUI's saved configurations, one <name>.json each; their content is the frontend's business
+CONFIG_DIR = Path(os.environ.get("FPGA_SCOPE_CONFIG_DIR") or Path(__file__).resolve().parent.parent / "configs")
+CONFIG_NAME = re.compile(r"[A-Za-z0-9_-]{1,64}")
 
 sockets = set()
 loop = None
@@ -137,6 +145,49 @@ def stop():
   return {}
 
 
+def config_path(name):
+  if not CONFIG_NAME.fullmatch(name): # also what keeps the path inside CONFIG_DIR
+    raise HTTPException(400, "A configuration name is 1 to 64 letters, digits, '-' or '_'")
+  return CONFIG_DIR / f"{name}.json"
+
+
+@app.get("/api/configs")
+def list_configs():
+  return sorted(p.stem for p in CONFIG_DIR.glob("*.json") if CONFIG_NAME.fullmatch(p.stem))
+
+
+@app.get("/api/configs/{name}")
+def get_config(name: str):
+  try:
+    return json.loads(config_path(name).read_text(encoding="utf-8"))
+  except FileNotFoundError:
+    raise HTTPException(404, f"No saved configuration named '{name}'")
+  except (OSError, ValueError) as e:
+    raise HTTPException(500, f"Cannot read configuration '{name}': {e}")
+
+
+@app.put("/api/configs/{name}")
+def put_config(name: str, body: dict):
+  path = config_path(name)
+  try:
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(body, indent=2) + "\n", encoding="utf-8")
+  except OSError as e:
+    raise HTTPException(500, f"Cannot write {path}: {e}")
+  return {}
+
+
+@app.delete("/api/configs/{name}")
+def delete_config(name: str):
+  try:
+    config_path(name).unlink()
+  except FileNotFoundError:
+    raise HTTPException(404, f"No saved configuration named '{name}'")
+  except OSError as e:
+    raise HTTPException(500, f"Cannot delete configuration '{name}': {e}")
+  return {}
+
+
 @app.websocket("/ws")
 async def websocket(ws: WebSocket):
   await ws.accept()
@@ -159,5 +210,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="fpga_scope web backend")
   parser.add_argument("--host", default="127.0.0.1")
   parser.add_argument("--port", type=int, default=8000)
+  parser.add_argument("--config-dir", type=Path, default=CONFIG_DIR, help="where the GUI's saved configurations are kept (default: %(default)s)")
   args = parser.parse_args()
+  CONFIG_DIR = args.config_dir
   uvicorn.run(app, host=args.host, port=args.port)

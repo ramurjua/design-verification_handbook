@@ -2,7 +2,10 @@
 python -m unittest test_app
 """
 
+import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
 from fastapi.testclient import TestClient
 
@@ -146,6 +149,48 @@ class TestApp(unittest.TestCase):
       self.assertEqual(len(second["channels"][0]), 50)
       self.http.post("/api/stop")
     self.assertEqual(self.http.get("/api/state").json()["state"], "idle")
+
+
+class TestConfigs(unittest.TestCase):
+
+  def setUp(self):
+    self.dir = Path(self.enterContext(tempfile.TemporaryDirectory())) / "configs" # not created yet, as on a fresh checkout
+    self.enterContext(mock.patch.object(app_module, "CONFIG_DIR", self.dir))
+    self.http = self.enterContext(TestClient(app_module.app))
+
+  def test_empty_before_anything_is_saved(self):
+    self.assertEqual(self.http.get("/api/configs").json(), [])
+    self.assertEqual(self.http.get("/api/configs/nothing").status_code, 404)
+    self.assertEqual(self.http.delete("/api/configs/nothing").status_code, 404)
+
+  def test_save_list_load_delete(self):
+    config = {"version": 1, "channels": [{"name": "gyro_x", "unit": "\u00b0/s", "gain": 0.0625}]}
+    self.assertEqual(self.http.put("/api/configs/drone_imu", json=config).status_code, 200)
+    self.assertEqual(self.http.put("/api/configs/a-2", json={}).status_code, 200)
+    self.assertEqual(self.http.get("/api/configs").json(), ["a-2", "drone_imu"])
+    self.assertEqual(self.http.get("/api/configs/drone_imu").json(), config)
+    self.assertTrue((self.dir / "drone_imu.json").is_file()) # on disk, where the user can keep or copy it
+    self.assertEqual(self.http.delete("/api/configs/a-2").status_code, 200)
+    self.assertEqual(self.http.get("/api/configs").json(), ["drone_imu"])
+
+  def test_saving_again_overwrites(self):
+    self.http.put("/api/configs/one", json={"n": 1})
+    self.http.put("/api/configs/one", json={"n": 2})
+    self.assertEqual(self.http.get("/api/configs/one").json(), {"n": 2})
+
+  def test_names_cannot_leave_the_directory(self):
+    for name in ["..%2Fescaped", "..%5Cescaped", "..", "a.b", "with space", "x" * 65]:
+      r = self.http.put(f"/api/configs/{name}", json={})
+      self.assertNotEqual(r.status_code, 200, name)
+    self.assertEqual(list(self.dir.parent.rglob("*.json")), [])
+
+  def test_body_must_be_an_object(self):
+    self.assertEqual(self.http.put("/api/configs/list", json=[1, 2]).status_code, 422)
+
+  def test_unreadable_file_is_reported(self):
+    self.dir.mkdir()
+    (self.dir / "broken.json").write_text("{not json", encoding="utf-8")
+    self.assertEqual(self.http.get("/api/configs/broken").status_code, 500)
 
 
 if __name__ == "__main__":
