@@ -26,7 +26,8 @@ real board. See "Verification record" for exactly what was tested.
   A stand-in for GUI work, NOT a reference model of the RTL.
 - `gui/frontend/` — the web page: Scope and Stream tabs, per-channel
   trigger, hover readout, CSV download; Y axes, per-channel display
-  settings, zoom, cursors, measurements, saved configurations
+  settings, zoom, cursors, measurements, saved configurations, recording
+  of a whole stream to a CSV
   (`scope_math.js` holds the maths, `tests/` its tests).
 - `docs/protocol.md`, `docs/integration.md`, `docs/gui.md`.
 
@@ -41,8 +42,9 @@ real board. See "Verification record" for exactly what was tested.
 - **GUI display features (2026-10-12), simulated device only**:
   `test_frontend.py` runs `gui/frontend/tests/` in a headless browser: the
   display maths (`unit.html`) and the real page driven against the `sim`
-  port (`e2e.html`); `test_app.py` covers the configuration store. Not yet
-  used against a board.
+  port (`e2e.html`); `test_app.py` covers the configuration store.
+- **GUI display features on the board (2026-10-12)**: tried by hand by the
+  user, they work. No written record of which settings were exercised.
 - **Hardware, 2026-10-10**: `example/scope_example_top.v` on the Drone
   FPGA_SOM board (Spartan-7 xc7s50, 25 MHz clock, `p_uart_preescaler` 217,
   CP210x adapter, 115200 baud).
@@ -103,13 +105,17 @@ real board. See "Verification record" for exactly what was tested.
   on disk, must be loadable through a file dialog, and must be writable by
   hand, so `normalizeConfig` accepts partial files and reports what it
   could not use instead of rejecting the file.
+- Not wanted (user, 2026-10-12): a re-arm ("normal"/auto) capture mode in
+  the GUI, and website pages for fpga_scope (`publish/`). Do not add them
+  back to the list.
 
 ## GUI display improvements (brainstormed and implemented 2026-10-12)
 
 Asked for after using the scope on a real project: analog values could only
 be read with the cursor. Everything here is GUI only (frontend, plus a small
 config store in the backend); no RTL or protocol change. Described for the
-user in `docs/gui.md`. Verified against the simulated device only.
+user in `docs/gui.md`. Verified against the simulated device, then used on
+the board by the user (see "Verification record").
 
 First group:
 
@@ -143,11 +149,19 @@ Later group:
 - [x] Raw value format per channel in the readout (decimal, hex, binary).
 - [x] One lane per bit of a multi-bit signal (asked for during the work).
 
-Left over from this batch:
+Left over from this batch, done later the same day:
 
-- [ ] Try it against the board, on real signals.
-- [ ] `img/gui_scope.png` and `img/gui_stream.png` in `fpga_scope.md` still
-      show the GUI as it was before.
+- [x] Try it against the board (done by the user).
+- [x] `img/gui_scope.png` and `img/gui_stream.png` retaken against the
+      simulated device.
+
+Added afterwards (2026-10-12):
+
+- [x] Stream tab: Start recording / Stop recording. The plot only ever held
+      the last "Samples on screen", so nothing kept a whole stream. A
+      recording keeps every burst in the browser and downloads one CSV on
+      stop, with a `burst` column because bursts are not contiguous in time.
+      Simulated device only so far.
 
 Not GUI only, so not part of this batch:
 
@@ -161,7 +175,6 @@ Not GUI only, so not part of this batch:
 
 - [ ] Use it on real signals: replace the example in the Drone FPGA_SOM
       design with a `scope_top` fed by the IMU SPI lines and valid flag.
-- [ ] GUI: re-arm ("normal"/auto) capture mode.
 - [ ] GUI stream view: consecutive bursts are not contiguous in time (the
       host needs a moment between `CMD_STREAM_START`s), so slow signals show
       a small jump at every burst boundary. Larger bursts make it rarer.
@@ -169,7 +182,3 @@ Not GUI only, so not part of this batch:
       frames (8 channels x 8 bits), another USB-UART adapter.
 - [ ] A committed testbench that drives the RTL with frames produced by
       `protocol.py` (today that cross-check was done once by hand).
-- [ ] Website: generate the HTML for `fpga_scope.md` and the docs (now also
-      `docs/gui.md`) with
-      `web/generate_srcs.py`, publish, and add the page to `publish/index.html`
-      and `publish/nav.html` by hand (needs `pandoc`).

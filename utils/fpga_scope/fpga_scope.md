@@ -28,7 +28,7 @@ It has two modes, selected from the GUI:
 | Document | What it is for |
 |----------|----------------|
 | [Integration guide](docs/integration.md) | Step by step: add the scope to a design, pick the parameters, assign the pins, first contact |
-| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names), zoom, cursors, saving the setup to a file |
+| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names), zoom, cursors, saving the setup to a file, recording a stream |
 | [Protocol](docs/protocol.md) | The UART wire protocol between the computer and the FPGA |
 | [Status and roadmap](docs/TODO.md) | What is done, what is tested, design decisions, what is left |
 

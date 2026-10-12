@@ -407,6 +407,43 @@
     await until(() => !q("panel-scope").hidden, "the scope tab");
   });
 
+  await step("a recording keeps every burst, beyond the samples on screen", async () => {
+    const saved = [];
+    w.download = (text, name) => saved.push({ text, name }); // instead of a file in the downloads folder
+    q("tab-stream").click();
+    await until(() => !q("panel-stream").hidden, "the stream tab");
+    ok(!q("rec-start").disabled && q("rec-stop").disabled, "nothing being recorded yet");
+    set("s-window", "300");
+    q("rec-start").click();
+    ok(q("rec-start").disabled && !q("rec-stop").disabled, "recording");
+    ok(q("rec-status").textContent.includes("waiting"), q("rec-status").textContent);
+    q("s-start").click();
+    await until(() => js("app.recording.bursts") >= 3, "three bursts");
+    q("s-stop").click();
+    await until(() => q("state-label").textContent === "Idle", "the stream to stop");
+    const bursts = js("app.recording.bursts");
+    eq(js("app.stream.channels[0].length"), 300, "the plot holds its window only");
+    q("rec-stop").click();
+    eq(saved.length, 1);
+    eq(saved[0].name, "fpga_scope_recording.csv");
+    const lines = saved[0].text.trimEnd().split("\n");
+    eq(lines[0], "sample,burst,ch0,ch1,ch2,temp [degC]");
+    eq(lines.length - 1, bursts * 200, "every sample of every burst");
+    eq(lines[1].split(",").slice(0, 2), ["0", "0"]);
+    eq(lines[lines.length - 1].split(",").slice(0, 2), [String(bursts * 200 - 1), String(bursts - 1)]);
+    eq(lines[lines.length - 1].split(",").pop(), String(signals()[3].values[299]), "scaled like the plot");
+    ok(q("rec-status").textContent.startsWith(`Saved ${bursts * 200} samples in ${bursts} bursts`), q("rec-status").textContent);
+    ok(!q("rec-start").disabled && q("rec-stop").disabled, "ready for another one");
+
+    q("rec-start").click();
+    q("rec-stop").click();
+    eq(saved.length, 1, "an empty recording is not saved");
+    ok(q("rec-status").textContent.startsWith("Nothing was recorded"), q("rec-status").textContent);
+    set("s-window", "2000");
+    q("tab-scope").click();
+    await until(() => !q("panel-scope").hidden, "the scope tab");
+  });
+
   await step("nothing went wrong along the way", async () => {
     q("connect").click();
     await until(() => q("state-label").textContent === "Disconnected", "the disconnect");

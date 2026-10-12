@@ -36,6 +36,7 @@ const app = {
   tab: "scope",
   capture: null, // { channels, pre, decimation, widths, clk_freq_hz }
   stream: null, // { channels, decimation, widths, clk_freq_hz }
+  recording: null, // every burst since Start recording: { channels, burst, bursts, widths }
   reference: null, // an earlier capture, drawn behind the current one
   hover: null, // sample index under the crosshair
   online: false, // WebSocket to the backend is up
@@ -120,6 +121,7 @@ function appendStream(msg) {
   app.stream.decimation = msg.decimation;
   app.stream.channels = app.stream.channels.map((old, c) => old.concat(msg.channels[c]).slice(-keep));
   app.view.stream = null; // a running stream always shows its whole window
+  record(msg);
   dataRev++;
   scheduleDraw();
 }
@@ -169,6 +171,8 @@ function updateControls() {
   $("abort").disabled = !(app.state === "armed" || app.state === "capturing");
   $("s-start").disabled = !idle;
   $("s-stop").disabled = app.state !== "streaming";
+  $("rec-start").disabled = !connected || !!app.recording;
+  $("rec-stop").disabled = !app.recording;
   $("cfg-save").disabled = $("cfg-load").disabled = $("cfg-delete").disabled = !app.online;
   updateScopeHint();
 }
@@ -507,6 +511,43 @@ function startStream() {
 }
 
 const stop = () => command(() => api("POST", "/api/stop"));
+
+/* ---- recording: the whole stream, not only the samples on screen ---- */
+
+const RECORDING_FILE = "fpga_scope_recording.csv";
+const recordedText = (rec) => `${rec.burst.length} samples in ${rec.bursts} burst${rec.bursts === 1 ? "" : "s"}`;
+
+function startRecording() {
+  const widths = app.info.channel_widths;
+  app.recording = { channels: widths.map(() => []), burst: [], bursts: 0, widths };
+  $("rec-status").textContent = app.state === "streaming" ? "Recording." : "Recording: waiting for the stream to start.";
+  updateControls();
+}
+
+function record(msg) {
+  const rec = app.recording;
+  if (!rec || msg.channels.length !== rec.channels.length) return;
+  msg.channels.forEach((samples, c) => { for (const v of samples) rec.channels[c].push(v); });
+  for (let i = 0; i < msg.channels[0].length; i++) rec.burst.push(rec.bursts);
+  rec.bursts++;
+  $("rec-status").textContent = `Recording: ${recordedText(rec)}.`;
+}
+
+/* every signal as shown, like csvText(), plus the burst each sample came in: bursts are not contiguous in time */
+function recordingCsv() {
+  const rec = app.recording;
+  const columns = M.buildSignals(rec.widths, app.config.channels).map((s) => (
+    { name: M.label(s.cfg), values: M.scaleValues(M.rawValues(s, rec.widths, rec.channels), s.width, s.cfg) }));
+  return M.csvText([{ name: "burst", values: rec.burst }].concat(columns));
+}
+
+function stopRecording() {
+  const rec = app.recording;
+  if (rec.burst.length) download(recordingCsv(), RECORDING_FILE, "text/csv");
+  $("rec-status").textContent = rec.burst.length ? `Saved ${recordedText(rec)} as ${RECORDING_FILE}.` : "Nothing was recorded: no samples arrived.";
+  app.recording = null;
+  updateControls();
+}
 
 async function selectTab(tab) {
   if (tab === app.tab) return;
@@ -1152,6 +1193,8 @@ $("arm").addEventListener("click", arm);
 $("abort").addEventListener("click", stop);
 $("s-start").addEventListener("click", startStream);
 $("s-stop").addEventListener("click", stop);
+$("rec-start").addEventListener("click", startRecording);
+$("rec-stop").addEventListener("click", stopRecording);
 $("csv").addEventListener("click", downloadCsv);
 for (const id of ["pre", "post", "decim"]) $(id).addEventListener("input", updateScopeHint);
 for (const id of ["panel-scope", "panel-stream"]) $(id).addEventListener("change", saveLocalConfig);

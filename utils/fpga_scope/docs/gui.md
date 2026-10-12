@@ -2,7 +2,7 @@
 
 How to read values off the plot, set up each channel (signed, gain, offset, name), zoom, measure, and keep the setup in a file.
 
-🧪 Status: everything on this page is checked by tests that drive the real page in a headless browser against the simulated device (`gui/backend/test_frontend.py`). It has not been tried on a board yet; nothing here changes what is sent to the FPGA.
+🧪 Status: everything on this page is checked by tests that drive the real page in a headless browser against the simulated device (`gui/backend/test_frontend.py`). The display features were also used on a board, by hand (2026-10-12); recording a stream has only run against the simulated device. Nothing here changes what is sent to the FPGA.
 
 ## The plot
 
@@ -100,9 +100,23 @@ After loading, the GUI lists any setting it could not use (a misspelt name, a te
 
 ## Captures
 
-- **Download CSV** writes every signal as shown (scaled, under its name), hidden ones included.
+- **Download CSV** writes every signal as shown (scaled, under its name), hidden ones included. On the Stream tab that is only the samples on screen; for the whole stream, see below.
 - **Save capture** writes a JSON file with the raw samples and the configuration. **Load capture** opens one again, also without a board connected.
 - **Set as reference** keeps the capture on screen, faded, behind the following ones, lined up on the trigger. **Clear reference** removes it.
+
+## Recording a stream
+
+The Stream plot only keeps the last *Samples on screen*; older samples are dropped. To keep all of them, use the **Recording** buttons on the Stream tab:
+
+- **Start recording** keeps every burst that arrives from then on. It can be clicked before **Start**, so that the recording holds the stream from its first sample, and it carries on if the stream is stopped and started again.
+- **Stop recording** ends it and downloads `fpga_scope_recording.csv`. Nothing is written before that, and the recording is lost if the page is closed or reloaded first.
+
+The file has one row per sample: its number, the burst it arrived in, and every signal as shown (scaled, under its name), like **Download CSV**. Every sample the FPGA sent is in the file, in order, but the stream itself is not continuous:
+
+- Inside a burst the samples are evenly spaced, not one per clock. The core takes a new sample only when the UART can send it, so the spacing is the longer of *Sample every N clocks* and the time one sample takes on the UART (about 87 µs per byte of frame at 115200 baud). Anything faster than that goes unseen.
+- Between two bursts the core is not sampling, so there is a longer gap of unknown length wherever the `burst` column changes. More *Samples per burst* makes these rarer.
+
+The recording is held in the browser's memory until it is stopped, so it suits minutes of data rather than days.
 
 ## Tests
 
