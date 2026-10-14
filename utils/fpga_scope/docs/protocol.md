@@ -76,7 +76,7 @@ Lets the GUI auto-adapt to whatever project the core was built into.
 | protocol_version  | 1 B  | currently `0x02`. `0x01`: a core without [controls](#controls), otherwise identical |
 | modes_supported   | 1 B  | bitmask: bit0 = `MODE_SCOPE`, bit1 = `MODE_STREAM` (currently always `0x03`) |
 | num_channels      | 1 B  | number of configured channels (1-8)                              |
-| channel_widths[8] | 8 B  | width in bits (1-8) of each channel lane; `0` = lane unused       |
+| channel_widths[8] | 8 B  | width in bits (1-16) of each channel lane; `0` = lane unused. Above 8 only in a core built with `p_channel_max_width` > 8 |
 | buffer_depth_log2 | 1 B  | ring buffer depth is `2^buffer_depth_log2` samples |
 | frame_bytes       | 1 B  | bytes per sample = `ceil(sum(channel_widths) / 8)`                |
 | clk_freq_hz        | 4 B  | sample clock frequency, big-endian, for the GUI's time axis      |
@@ -100,9 +100,10 @@ bits 5:4 : type           00 = level, trigger source bit == 0
                             01 = level, trigger source bit == 1
                             10 = edge, rising  (0 -> 1)
                             11 = edge, falling (1 -> 0)
-bit 3    : reserved (0)
-bits 2:0 : bit_select      which bit of the channel's own width is used as the
-                            trigger source (0 = LSB); must be < that channel's width
+bits 3:0 : bit_select      which bit of the channel's own width is used as the
+                            trigger source (0 = LSB); must be < that channel's width.
+                            Bit 3 is only ever set for a channel wider than 8 bits;
+                            a value past the core's lane width never triggers
 ```
 
 `pre_trigger_count + post_trigger_count` must be <= `2^buffer_depth_log2`; the core
@@ -140,7 +141,7 @@ capture can be dumped again) until `CMD_ABORT` is sent. `CMD_ARM`,
 Because `LEN` is a 16-bit field, `(pre_trigger_count + post_trigger_count) * frame_bytes`
 must not exceed 65535. For wide frames pick `buffer_depth_log2` accordingly
 (e.g. an 8-channel, 8-bit-each build has `frame_bytes = 8`, capping the usable
-buffer at 8191 samples).
+buffer at 8191 samples; 8 channels of 16 bits have `frame_bytes = 16` and 4095).
 
 ### Stream mode
 

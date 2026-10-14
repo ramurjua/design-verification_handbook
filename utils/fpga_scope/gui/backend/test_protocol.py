@@ -80,10 +80,11 @@ class TestFrames(unittest.TestCase):
   def test_channel_cfg_bits(self):
     self.assertEqual(ChannelTrigger(True, TriggerType.EDGE_FALL, 5).pack(), 0b1011_0101)
     self.assertEqual(ChannelTrigger(False, TriggerType.LEVEL_HIGH, 0).pack(), 0b0001_0000)
+    self.assertEqual(ChannelTrigger(True, TriggerType.EDGE_RISE, 12).pack(), 0b1010_1100) # a 16-bit channel's bit
 
   def test_trigger_range_checks(self):
     with self.assertRaises(ValueError):
-      ChannelTrigger(True, bit_select=8).pack()
+      ChannelTrigger(True, bit_select=16).pack()
     with self.assertRaises(ValueError):
       TriggerConfig(pre_trigger_count=0x10000).pack()
     with self.assertRaises(ValueError):
@@ -117,6 +118,16 @@ class TestInfo(unittest.TestCase):
     samples = info.unpack_samples(bytes.fromhex("02AD 07FF"))
     self.assertEqual(samples, [0x02AD, 0x07FF])
     self.assertEqual(info.split_channels(samples), [[5, 7], [0x55, 0xFF]])
+
+  def test_16_bit_channels(self):
+    # a core built with p_channel_max_width = 16: 16-bit + 12-bit channel = 28 bits = 4 bytes per sample
+    info = ScopeInfo(2, 3, 2, (16, 12, 0, 0, 0, 0, 0, 0), 4, 4, 100_000_000)
+    samples = info.unpack_samples(bytes.fromhex("0ABCF00D"))
+    self.assertEqual(info.split_channels(samples), [[0xF00D], [0xABC]])
+
+  def test_max_capture_with_16_byte_samples(self):
+    info = ScopeInfo(2, 3, 8, (16,) * 8, 12, 16, 100_000_000)
+    self.assertEqual(info.max_capture_samples, 4095)
 
 
 class TestClient(unittest.TestCase):

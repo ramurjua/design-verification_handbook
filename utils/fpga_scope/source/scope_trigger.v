@@ -1,9 +1,10 @@
 module scope_trigger # (
-  parameter p_num_channels = 8 /* number of active channel lanes, 1-8 */
+  parameter p_num_channels      = 8, /* number of active channel lanes, 1-8 */
+  parameter p_channel_max_width = 8  /* bits per lane, 1-16 */
 )(
   input clk,
   input rst, /* synchronous reset */
-  input [63:0] i_signals,      /* 8 lanes x 8 bits, channel i lives in bits [8*i+7 : 8*i] */
+  input [8*p_channel_max_width-1:0] ip_signals, /* 8 lanes, channel i in bits [p_channel_max_width*i +: p_channel_max_width] */
   input [63:0] i_channel_cfg,  /* 8 bytes, one per channel, layout in scope_defs.vh */
   input i_combine_mode,        /* 0 = AND enabled channel conditions, 1 = OR them */
   output o_trigger             /* 1-cycle pulse when the trigger condition is met */
@@ -21,12 +22,16 @@ generate
   for (gi = 0; gi < 8; gi = gi + 1) begin : gen_ch
 
     wire [7:0] w8_ch_cfg = i_channel_cfg[gi*8 +: 8];
-    wire [2:0] w3_bitsel = w8_ch_cfg[SCOPE_TRIG_BITSEL_LSB +: 3];
+    wire [3:0] w4_bitsel = w8_ch_cfg[SCOPE_TRIG_BITSEL_LSB +: 4];
     wire [1:0] w2_type   = w8_ch_cfg[SCOPE_TRIG_TYPE_LSB +: 2];
 
     if (gi < p_num_channels) begin : gen_active
 
-      assign w8_bit_val[gi] = i_signals[gi*8 + w3_bitsel];
+      wire [p_channel_max_width-1:0] wp_lane = ip_signals[gi*p_channel_max_width +: p_channel_max_width];
+
+      /* a bit_select past the lane (only a malformed SET_TRIGGER sends one)
+         reads 0 rather than a bit of the next lane */
+      assign w8_bit_val[gi] = (w4_bitsel < p_channel_max_width) ? wp_lane[w4_bitsel] : 1'b0;
       assign w8_enable[gi]  = w8_ch_cfg[SCOPE_TRIG_EN_BIT];
 
       /* disabled channels contribute the neutral element of the combine op so

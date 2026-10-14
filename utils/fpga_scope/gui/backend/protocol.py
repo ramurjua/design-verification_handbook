@@ -181,8 +181,8 @@ class ChannelTrigger:
   bit_select: int = 0 # which bit of the channel is the trigger source, 0 = LSB
 
   def pack(self):
-    if not 0 <= self.bit_select <= 7:
-      raise ValueError(f"bit_select {self.bit_select} out of range 0-7")
+    if not 0 <= self.bit_select <= 15:
+      raise ValueError(f"bit_select {self.bit_select} out of range 0-15")
     return (int(bool(self.enable)) << 7) | (TriggerType(self.type) << 4) | self.bit_select
 
 

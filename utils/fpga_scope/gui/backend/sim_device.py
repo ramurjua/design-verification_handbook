@@ -107,7 +107,7 @@ class SimDevice:
     for channel in range(len(self.channel_widths)):
       cfg = self.channel_cfg[channel]
       if not cfg & 0x80: continue
-      bit = cfg & 0x07
+      bit = cfg & 0x0F
       now = (self._channel_value(channel, t) >> bit) & 1
       prev = (self._channel_value(channel, t - 1) >> bit) & 1
       kind = (cfg >> 4) & 0x03

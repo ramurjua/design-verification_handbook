@@ -1,8 +1,13 @@
 module scope_top # (
   parameter p_num_channels        = 8,       /* 1-8 active channel lanes */
 
-  /* width in bits (1-8) of each channel; lanes >= p_num_channels are simply
-     unused, whatever they're set to. Kept as 8 separate parameters (instead
+  /* width in bits (1-16) of the i_chN ports, the same for all eight. 8 keeps
+     every existing instantiation as it was; 16 lets a channel carry a 16-bit
+     value without splitting it over two */
+  parameter p_channel_max_width   = 8,
+
+  /* width in bits (1 to p_channel_max_width) of each channel; lanes >=
+     p_num_channels are simply unused, whatever they're set to. Kept as 8 separate parameters (instead
      of one packed bus) so instantiating a project is plain "p_ch2_width(4)"
      with no manual bit-packing to get wrong */
   parameter p_ch0_width = 8,
@@ -21,16 +26,18 @@ module scope_top # (
   input clk,
   input rst, /* synchronous reset */
 
-  /* one full byte per channel so instantiation is a straight wire-up, even
-     for 1-bit channels (tie off the unused upper bits at the call site) */
-  input [7:0] i_ch0,
-  input [7:0] i_ch1,
-  input [7:0] i_ch2,
-  input [7:0] i_ch3,
-  input [7:0] i_ch4,
-  input [7:0] i_ch5,
-  input [7:0] i_ch6,
-  input [7:0] i_ch7,
+  /* p_channel_max_width bits per channel so instantiation is a straight
+     wire-up, even for 1-bit channels (tie off the unused upper bits at the
+     call site). Named i_chN, not ip_chN, so that instantiations written
+     before p_channel_max_width existed keep working unchanged */
+  input [p_channel_max_width-1:0] i_ch0,
+  input [p_channel_max_width-1:0] i_ch1,
+  input [p_channel_max_width-1:0] i_ch2,
+  input [p_channel_max_width-1:0] i_ch3,
+  input [p_channel_max_width-1:0] i_ch4,
+  input [p_channel_max_width-1:0] i_ch5,
+  input [p_channel_max_width-1:0] i_ch6,
+  input [p_channel_max_width-1:0] i_ch7,
 
   input i_uart_rx,
   output o_uart_tx,
@@ -98,7 +105,7 @@ localparam lp_frame_width = f_frame_width(p_num_channels);
 localparam lp_frame_bytes = (lp_frame_width + 7) / 8;
 localparam lp_addr_width  = p_buffer_depth_log2;
 
-wire [7:0] w_ch [0:7];
+wire [p_channel_max_width-1:0] w_ch [0:7];
 assign w_ch[0] = i_ch0;
 assign w_ch[1] = i_ch1;
 assign w_ch[2] = i_ch2;
@@ -108,9 +115,9 @@ assign w_ch[5] = i_ch5;
 assign w_ch[6] = i_ch6;
 assign w_ch[7] = i_ch7;
 
-/* scope_trigger wants a fixed 8-bit lane per channel so any bit can be a
-   trigger source regardless of that channel's configured width */
-wire [63:0] w_signals64 = {i_ch7, i_ch6, i_ch5, i_ch4, i_ch3, i_ch2, i_ch1, i_ch0};
+/* scope_trigger wants a fixed p_channel_max_width lane per channel so any
+   bit can be a trigger source regardless of that channel's configured width */
+wire [8*p_channel_max_width-1:0] w_signals = {i_ch7, i_ch6, i_ch5, i_ch4, i_ch3, i_ch2, i_ch1, i_ch0};
 
 /* the buffer only ever stores the configured width of each channel, packed
    with no gaps, channel 0 at the LSB end (see docs/protocol.md) */
@@ -153,11 +160,12 @@ wire [lp_addr_width-1:0] w_buf_rd_addr;
 wire [lp_frame_width-1:0] w_buf_rd_data;
 
 scope_trigger # (
-  .p_num_channels(p_num_channels)
+  .p_num_channels(p_num_channels),
+  .p_channel_max_width(p_channel_max_width)
 ) u_trigger (
   .clk(clk),
   .rst(rst),
-  .i_signals(w_signals64),
+  .ip_signals(w_signals),
   .i_channel_cfg(w_trig_channel_cfg),
   .i_combine_mode(w_trig_combine_mode),
   .o_trigger(w_trigger_pulse)

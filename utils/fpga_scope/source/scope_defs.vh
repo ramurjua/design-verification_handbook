@@ -40,7 +40,7 @@ localparam [1:0] SCOPE_ST_STREAM_RUNNING = 2'd1;
 /* Trigger channel_cfg[i] bit layout */
 localparam SCOPE_TRIG_EN_BIT     = 7;
 localparam SCOPE_TRIG_TYPE_LSB   = 4; /* 2 bits: 00 level-low, 01 level-high, 10 edge-rising, 11 edge-falling */
-localparam SCOPE_TRIG_BITSEL_LSB = 0; /* 3 bits */
+localparam SCOPE_TRIG_BITSEL_LSB = 0; /* 4 bits, bit 3 only matters with p_channel_max_width > 8 */
 
 localparam [1:0] SCOPE_TRIG_TYPE_LEVEL_LOW  = 2'b00;
 localparam [1:0] SCOPE_TRIG_TYPE_LEVEL_HIGH = 2'b01;

@@ -18,6 +18,8 @@ for exactly what was tested.
 - `source/` — RTL core (`scope_top` and its sub-modules). Depends on
   `modules/uart/source/uart_tx.v` and `uart_rx.v`.
 - `test/scope_tb.v` — RTL testbench, 11 tests, run with `python run.py`.
+- `test/scope_wide_tb.v` — the core built with 16-bit channels, 4 tests, run
+  with `python run_wide.py`.
 - `example/scope_example_top.v` — top level with self-generated signals
   (two squares, ramp, triangle, slow ramp) on 5 channels, plus control 0
   looped back on 2 more.
@@ -100,8 +102,13 @@ for exactly what was tested.
   implement.
 - 8 separate `p_ch0_width`..`p_ch7_width` params (not a packed bus) — explicit
   user ask, for easy/error-free instantiation.
-- 8 separate `i_ch0`..`i_ch7` 8-bit input ports on `scope_top` (not a flat
+- 8 separate `i_ch0`..`i_ch7` input ports on `scope_top` (not a flat
   64-bit bus) — same reasoning, explicit user ask.
+- Port width is the parameter `p_channel_max_width` (1-16, default 8), the
+  same for all eight ports — user's choice (2026-10-14) over fixed 16-bit
+  ports, so existing instantiations keep working unchanged. For the same
+  reason the ports kept the `i_chN` names although the naming convention
+  would make them `ip_chN`.
 - No build-time mode-enable parameters — user explicitly decided against this
   (see conversation): `scope_top` always instantiates both `MODE_SCOPE` and
   `MODE_STREAM` hardware. Runtime switching between them is via `CMD_SET_MODE`
@@ -244,6 +251,33 @@ Not GUI only, so not part of this batch:
       needs a comparator in `scope_trigger` and a `CMD_SET_TRIGGER` payload
       change (doc, `scope_defs.vh`, `scope_cmd_if.v`, `protocol.py`,
       `sim_device.py`, `scope_tb.v`, then the board).
+
+## 16-bit channels (implemented 2026-10-14)
+
+Asked for by the user: channels of 16 bits shown as one value without
+splitting them over two channels. (The other half of the question, controls
+that send 16 bits, needed nothing: controls were already 32 bits.)
+
+- [x] RTL: `p_channel_max_width` on `scope_top`, lanes sized from it in
+      `scope_top` and `scope_trigger`; `bit_select` uses bit 3 of the
+      trigger byte (reserved until now), a value past the lane never
+      triggers; the dump/stream byte counters start from a 4-bit
+      `lp_last_byte_idx` (with 16-byte samples `p_frame_bytes[3:0]` was 0
+      and only came out right by wrapping). No protocol version change:
+      `GET_INFO` already had a byte per channel width, and an older host
+      never sets bit 3.
+- [x] `protocol.py`, `app.py`, `sim_device.py`, `scope_math.js`:
+      `bit_select` / `trigger.channels.N.bit` 0-15.
+- [x] Simulation: `scope_tb.v` unchanged and passing (the default build);
+      `scope_wide_tb.v` (8 channels, seven of 16 bits and one of 12,
+      16-byte samples): GET_INFO, trigger on bit 12, dump and stream byte
+      order and zero padding. The trigger test was seen to fail with
+      `bit_select` cut back to 3 bits. `test_protocol` decodes 16-bit
+      channels.
+- [ ] `sim_device.py` has no 16-bit channel, so the GUI has not been
+      exercised with one (the page has no 8-bit limit of its own: widths
+      come from GET_INFO, and the trigger bit list follows the width).
+- [ ] On the board: a build with `p_channel_max_width(16)`.
 
 ## Still to do
 

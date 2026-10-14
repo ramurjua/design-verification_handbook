@@ -10,5 +10,6 @@ PrepareYourInterview.md
 utils/fpga_scope/gui/configs/
 __pycache__/
 utils/fpga_scope/test/scope_tb.vcd
+utils/fpga_scope/test/scope_wide_tb.vcd
 utils/fpga_scope/test/sim_log
 modules/uart/test/uart_async_tb.vcd

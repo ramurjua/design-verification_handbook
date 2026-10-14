@@ -37,12 +37,12 @@ The **Channels** list has one block per channel. The checkbox shows or hides it;
 | Trace | Steps (as sampled), straight lines between samples, or a bus: a band with the value written inside, for a state or a counter |
 | Lane height | How much of the plot the lane takes |
 | One lane per bit | Adds a lane for every bit of the signal under it |
-| Upper bits from | Joins another channel on top of this one, for a value wider than 8 bits |
+| Upper bits from | Joins another channel on top of this one, for a value wider than one channel |
 | Draw in the lane of | Puts this signal in another signal's lane, on that lane's Y axis |
 
 The shown value is computed in this order: combine the channels, apply the sign, divide by 2^fraction bits, multiply by the gain, add the offset.
 
-**A 16-bit value.** A channel carries 8 bits at most, so a 16-bit value arrives on two channels, for example `i_ch2(gyro[7:0])` and `i_ch3(gyro[15:8])`. In the settings of `ch2`, set **Upper bits from** to `ch3`: the two become one 16-bit signal that takes its settings (including Signed) from `ch2`, and `ch3` no longer has a trace of its own. Channels can be chained up to 32 bits.
+**A value wider than a channel.** A channel carries 8 bits unless the core is built with `p_channel_max_width(16)` (see [the integration guide](integration.md)), so with the default build a 16-bit value arrives on two channels, for example `i_ch2(gyro[7:0])` and `i_ch3(gyro[15:8])`. In the settings of `ch2`, set **Upper bits from** to `ch3`: the two become one 16-bit signal that takes its settings (including Signed) from `ch2`, and `ch3` no longer has a trace of its own. Channels can be chained up to 32 bits.
 
 The trigger is not affected by any of this: it still acts on one bit of one channel.
 
@@ -123,7 +123,7 @@ After loading, the GUI lists any setting it could not use (a misspelt name, a te
 | `controls.N.gain`, `offset` | value: numbers, gain not 0 | `1`, `0` |
 | `controls.N.min`, `max` | value: limits on what can be sent, or `null` for none | `null` |
 | `trigger.channels.N.type` | `"off"`, `"rise"`, `"fall"`, `"high"`, `"low"` | `"rise"` on channel 0, `"off"` on the rest |
-| `trigger.channels.N.bit` | bit of the channel to trigger on, 0 to 7 | `0` |
+| `trigger.channels.N.bit` | bit of the channel to trigger on, 0 to 15 (below that channel's width) | `0` |
 | `trigger.combine` | `"and"`, `"or"` | `"and"` |
 | `window.pre`, `post` | samples before and after the trigger | `100`, `300` |
 | `window.decimation` | sample every N clocks, 1 to 65535 | `1` |

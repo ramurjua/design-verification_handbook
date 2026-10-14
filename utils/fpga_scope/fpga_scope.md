@@ -60,7 +60,8 @@ python app.py
 ```verilog
 scope_top # (
     .p_num_channels(),      /* Number of channels, 1-8 */
-    .p_ch0_width(),         /* Bits of each channel, 1-8 (one parameter per channel, ch0 to ch7) */
+    .p_channel_max_width(), /* Width of the i_chN ports, 1-16, default 8 */
+    .p_ch0_width(),         /* Bits of each channel, 1 to p_channel_max_width (one parameter per channel, ch0 to ch7) */
     .p_ch1_width(),
     .p_buffer_depth_log2(), /* Capture buffer holds 2^N samples */
     .p_uart_preescaler(),   /* Clock frequency / baudrate */
@@ -68,7 +69,7 @@ scope_top # (
 ) scope_top (
     .clk(),
     .rst(),        /* Synchronous reset, active high */
-    .i_ch0(),      /* Channel inputs, always 8 bits wide: pad narrower signals with zeros */
+    .i_ch0(),      /* Channel inputs, p_channel_max_width bits wide: pad narrower signals with zeros */
     .i_ch1(),
     .i_ch2(),
     .i_ch3(),
@@ -109,6 +110,7 @@ The scope also needs `uart_tx.v` and `uart_rx.v` from the [UART module](../../mo
 ```bash
 cd utils/fpga_scope/test
 python run.py                 # RTL: ends with "[PASS] All checks passed."
+python run_wide.py            # RTL built with 16-bit channels, same final line
 
 cd ../gui/backend
 python -m unittest test_protocol test_scope_cli test_app
@@ -117,7 +119,7 @@ python -m unittest test_frontend    # the web page, in a headless Chrome or Edge
 
 ## Limits worth knowing
 
-- Up to 8 channels of up to 8 bits each. A wider bus is split over several channels, which the GUI can show as one value again.
+- Up to 8 channels of up to 8 bits each, or 16 with `p_channel_max_width(16)`. A wider bus is split over several channels, which the GUI can show as one value again.
 - All signals must be synchronous to the clock given to the scope.
 - A capture holds at most `2^p_buffer_depth_log2` samples, and at most 65535 bytes in total.
 - The baud rate is fixed at build time by `p_uart_preescaler`; there is no autobaud.

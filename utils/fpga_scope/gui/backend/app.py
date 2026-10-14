@@ -77,7 +77,7 @@ class ConnectBody(BaseModel):
 class ChannelTriggerBody(BaseModel):
   enable: bool = False
   type: Literal["low", "high", "rise", "fall"] = "rise"
-  bit_select: int = Field(0, ge=0, le=7)
+  bit_select: int = Field(0, ge=0, le=15)
 
 
 class CaptureBody(BaseModel):

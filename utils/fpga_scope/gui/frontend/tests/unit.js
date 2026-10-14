@@ -320,7 +320,7 @@
           style: "line", height: "large", bits: true, high: 1, lane: 2, visible: false },
         { name: "", signed: "yes", frac: 99, gain: "2", offset: NaN, format: "octal", range: "wide", style: "dots", height: 3, high: 1, lane: 8 },
       ],
-      trigger: { channels: [{ type: "fall", bit: 3 }, { type: "sideways", bit: 12 }], combine: "or" },
+      trigger: { channels: [{ type: "fall", bit: 3 }, { type: "sideways", bit: 16 }], combine: "or" },
       window: { pre: 7, post: -1, decimation: 0 },
       stream: { decimation: 5, batch: 20000, window: 500 },
     });

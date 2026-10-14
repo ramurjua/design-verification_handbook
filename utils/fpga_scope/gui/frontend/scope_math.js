@@ -116,7 +116,7 @@ const ScopeMath = (() => {
       const r = triggerChannels[c];
       if (!r || typeof r !== "object") return;
       d.type = oneOf(r.type, TRIGGER_TYPES, d.type);
-      d.bit = integer(r.bit, d.bit, 0, 7);
+      d.bit = integer(r.bit, d.bit, 0, 15);
     });
     config.trigger.combine = oneOf(trigger.combine, ["and", "or"], config.trigger.combine);
 

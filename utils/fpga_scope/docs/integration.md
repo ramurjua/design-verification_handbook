@@ -27,7 +27,8 @@ Ten files, from two places in this repository:
 | Parameter | Meaning | How to choose it |
 |-----------|---------|------------------|
 | `p_num_channels` | Number of channels, 1 to 8 | One channel per signal (or bus) you want to see |
-| `p_ch0_width` ... `p_ch7_width` | Bits of each channel, 1 to 8 | Width of the signal on that channel. Channels at or above `p_num_channels` are ignored |
+| `p_channel_max_width` | Width of the `i_chN` ports, 1 to 16, the same for all eight. Default 8 | Leave it at 8 unless a signal is wider than 8 bits. With 16, a 16-bit signal fits on one channel |
+| `p_ch0_width` ... `p_ch7_width` | Bits of each channel, 1 to `p_channel_max_width` | Width of the signal on that channel. Channels at or above `p_num_channels` are ignored |
 | `p_buffer_depth_log2` | Capture buffer holds `2^N` samples | `10` (1024 samples) is a good start. See the two limits below |
 | `p_uart_preescaler` | Clock cycles per UART bit | `clock frequency / baud rate`, rounded. See the table below |
 | `p_clk_freq_hz` | Frequency of `clk`, in Hz | Only reported to the GUI, which uses it for the time axis |
@@ -47,7 +48,7 @@ Start with 115200. A faster rate only makes dumps and the live stream quicker, a
 **Buffer limits.**
 
 - The buffer uses `2^p_buffer_depth_log2 × (sum of the channel widths)` bits of block RAM. Example: 1024 samples of 22 bits = 22.5 kbit.
-- One capture must fit in a single reply of at most 65535 bytes, so `samples × bytes per sample` cannot exceed that. Bytes per sample is the sum of the channel widths rounded up to whole bytes. With 8 channels of 8 bits (8 bytes per sample) the largest capture is 8191 samples.
+- One capture must fit in a single reply of at most 65535 bytes, so `samples × bytes per sample` cannot exceed that. Bytes per sample is the sum of the channel widths rounded up to whole bytes. With 8 channels of 8 bits (8 bytes per sample) the largest capture is 8191 samples; with 8 channels of 16 bits (16 bytes per sample) it is 4095, so keep `p_buffer_depth_log2` at 11 or below for that build.
 - Keep `p_buffer_depth_log2` at 15 or below.
 
 ## Step 3 — Instantiate `scope_top`
@@ -86,14 +87,16 @@ scope_top # (
 );
 ```
 
-All eight `i_chN` ports are always present and always 8 bits wide. The scope only stores the low `p_chN_width` bits of each.
+All eight `i_chN` ports are always present and always `p_channel_max_width` bits wide (8 unless you set it). The scope only stores the low `p_chN_width` bits of each.
+
+With `p_channel_max_width(16)` the ports are 16 bits wide, so padding and tie-offs change to match: `.i_ch0({15'd0, my_valid})`, `.i_ch3(16'd0)`.
 
 ## Step 4 — Connect your signals
 
 Three rules:
 
 1. **Same clock.** Every signal on an `i_chN` port must be synchronous to the `clk` you give the scope. A signal from another clock domain needs a synchroniser first, or you will capture glitches.
-2. **Eight bits per channel at most.** Split a wider bus over several channels, for example `i_ch2(counter[7:0])` and `i_ch3(counter[15:8])`. The GUI shows them as two separate traces until you join them: see [Using the GUI](gui.md).
+2. **`p_channel_max_width` bits per channel at most** (8 by default, up to 16). Either set `p_channel_max_width(16)`, or split a wider bus over several channels, for example `i_ch2(counter[7:0])` and `i_ch3(counter[15:8])`. Split channels show as two separate traces until you join them in the GUI: see [Using the GUI](gui.md). Splitting also works for values wider than 16 bits.
 3. **Reset is synchronous and active high.** If your board's reset button is active low, invert it, and pass it through two flip-flops clocked by `clk` first.
 
 The trigger can use any single bit of any channel (rising edge, falling edge, high or low), so put the signal you want to trigger on in a channel too.

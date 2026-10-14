@@ -13,7 +13,7 @@ module scope_cmd_if # (
   input i_uart_rx,
   output o_uart_tx,
 
-  input [63:0] i_channel_widths_bytes, /* one byte per channel, value = width 1-8, 0 = unused lane */
+  input [63:0] i_channel_widths_bytes, /* one byte per channel, value = width 1-16, 0 = unused lane */
 
   /* scope_ctrl */
   output reg o_ctrl_cmd_arm,
@@ -166,6 +166,11 @@ localparam CST_IDLE           = 4'd0,
            CST_STREAM_BYTE    = 4'd8;
 
 localparam POST_NONE = 1'd0, POST_STREAM_BURST = 1'd1;
+
+/* index of a sample's most significant byte, where the dump and stream byte
+   counters start. Up to 15 (8 channels x 16 bits): fits the 4-bit counters,
+   which p_frame_bytes itself (16) would not */
+localparam [3:0] lp_last_byte_idx = p_frame_bytes - 1;
 
 reg [3:0] r4_state;
 reg [7:0] r8_resp_cmd;
@@ -507,7 +512,7 @@ always @(posedge clk) begin
 
       CST_DUMP_LATCH: begin
         r_dump_sample_reg  <= i_buf_rd_data;
-        r4_dump_byte_idx   <= p_frame_bytes[3:0] - 4'd1; /* MSB first */
+        r4_dump_byte_idx   <= lp_last_byte_idx; /* MSB first */
         r4_state           <= CST_DUMP_SENDBYTE;
       end
 
@@ -535,7 +540,7 @@ always @(posedge clk) begin
         else if (i_stream_sample_valid && !r_stream_have_sample) begin
           r_stream_sample_reg  <= i_stream_sample_data;
           r_stream_have_sample <= 1'b1;
-          r4_stream_byte_idx   <= p_frame_bytes[3:0] - 4'd1;
+          r4_stream_byte_idx   <= lp_last_byte_idx;
         end
         else if (r_stream_have_sample && w_tx_ready && !r_tx_dv) begin
           r8_tx_byte <= r_stream_sample_reg[8*r4_stream_byte_idx +: 8];

@@ -32,12 +32,13 @@ It compiles with `iverilog -g2005-sv -gstd-include -grelative-include -s <tb_top
 
 ```bash
 cd utils/fpga_scope/test && python run.py        # RTL; success is the final line "[PASS] All checks passed."
+cd utils/fpga_scope/test && python run_wide.py   # the same core built with 16-bit channels (p_channel_max_width = 16)
 cd utils/fpga_scope/gui/backend
 python -m unittest test_protocol test_scope_cli test_app    # one module: python -m unittest test_protocol
 python -m unittest test_frontend    # the web page in a headless Chrome/Edge, ~5 s; skipped if no browser is found
 ```
 
-`run.py` leaves `sim_log` and `scope_tb.vcd` behind; both are gitignored (the VCD is ~500 KB and was deliberately removed from history once).
+`run.py` leaves `sim_log` and `scope_tb.vcd` behind (`run_wide.py`: `scope_wide_tb.vcd`); all gitignored (the VCD is ~500 KB and was deliberately removed from history once).
 
 The UART has a second testbench, `modules/uart/test/run_async.py` (`uart_async_tb.v`): transmitter and receivers on unrelated clocks, 2 % apart. `uart_tb.v` shares one clock and reset between both ends and cannot catch timing bugs that only show on a real link.
 
@@ -102,7 +103,7 @@ Read these before touching it:
 - `docs/integration.md` — the user's step-by-step guide; keep it in step with parameter or port changes.
 - `docs/gui.md` — how to use the GUI, and the configuration file format (users write these by hand).
 
-Structure: `scope_top` packs the 8 byte-wide channel inputs down to the configured widths (channel 0 at the LSB) and wires together `scope_decimator` (sample-rate divider), `scope_trigger`, `scope_ctrl` (capture FSM: idle → armed → capturing → done), `scope_capture_buffer` (ring buffer), `scope_streamer` (stream mode) and `scope_cmd_if` (frame parser/responder, by far the largest block). `scope_cmd_if` instantiates `uart_tx`/`uart_rx` from `modules/uart/source/` with `p_data_buffer(1)`, so **fpga_scope depends on the shared UART modules** — a change to those needs `modules/uart/test/run.py`, `run_async.py` and `scope_tb.v` re-run.
+Structure: `scope_top` packs the 8 channel inputs (`p_channel_max_width` bits each, 8 by default, up to 16) down to the configured widths (channel 0 at the LSB) and wires together `scope_decimator` (sample-rate divider), `scope_trigger`, `scope_ctrl` (capture FSM: idle → armed → capturing → done), `scope_capture_buffer` (ring buffer), `scope_streamer` (stream mode) and `scope_cmd_if` (frame parser/responder, by far the largest block). `scope_cmd_if` instantiates `uart_tx`/`uart_rx` from `modules/uart/source/` with `p_data_buffer(1)`, so **fpga_scope depends on the shared UART modules** — a change to those needs `modules/uart/test/run.py`, `run_async.py` and `scope_tb.v` re-run.
 
 The RTL is copied by hand into the projects that use it (currently `Documents/Drone/Firmware/FPGA_SOM/source/`, with `scope_defs.vh` in its `include/`). After an RTL fix here, those copies are stale until re-copied and rebuilt.
 
