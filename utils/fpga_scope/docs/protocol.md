@@ -107,7 +107,8 @@ bits 3:0 : bit_select      which bit of the channel's own width is used as the
 ```
 
 `pre_trigger_count + post_trigger_count` must be <= `2^buffer_depth_log2`; the core
-clamps rather than rejecting if it isn't (see `scope_ctrl.v`).
+clamps rather than rejecting if it isn't (see `scope_ctrl.v`). Hosts stay one sample
+below that, see [the known issue](#known-issue-a-window-of-the-whole-buffer) under `CMD_DUMP`.
 
 After `CMD_ARM` the core ignores trigger events until `pre_trigger_count` samples
 have been written, so the dumped window never contains samples from before the
@@ -142,6 +143,24 @@ Because `LEN` is a 16-bit field, `(pre_trigger_count + post_trigger_count) * fra
 must not exceed 65535. For wide frames pick `buffer_depth_log2` accordingly
 (e.g. an 8-channel, 8-bit-each build has `frame_bytes = 8`, capping the usable
 buffer at 8191 samples; 8 channels of 16 bits have `frame_bytes = 16` and 4095).
+
+#### Known issue: a window of the whole buffer
+
+Found on the board on 2026-10-15 and deliberately left in the RTL. When the cycle
+that accepts the trigger is also a sample tick (always at decimation 1), the core
+writes that trigger sample (dump index `pre_trigger_count`) and then
+`post_trigger_count` more, so one sample more than the window is written. With
+`post_trigger_count = 0` it is two more. The extra samples lie past the dumped window and do no harm, unless the
+window fills the whole buffer: then the last write wraps onto the oldest slot and
+dump sample 0 is a copy of the newest sample.
+
+Hosts therefore keep `pre_trigger_count + max(post_trigger_count, 1) <=
+2^buffer_depth_log2 - 1`. `protocol.py` implements this as
+`ScopeInfo.max_capture_samples` and `ScopeInfo.capture_window_fits`, and the GUI
+does the same in `ScopeMath.captureWindowFits`. The core itself still accepts a full-buffer window. The cause is
+the `SCOPE_ST_ARMED` trigger branch of `scope_ctrl.v`, which loads
+`r17_post_remaining` with the whole post count even on a cycle where it has just
+written a sample.
 
 ### Stream mode
 

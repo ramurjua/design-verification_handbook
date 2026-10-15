@@ -429,6 +429,17 @@ const ScopeMath = (() => {
     return group.members.every((s) => s.width === 1 || s.cfg.style === "bus") ? HEIGHTS.small : HEIGHTS.medium; // no Y axis to make room for
   }
 
+  /* ---- capture window ---- */
+
+  /* Whether the core captures this window correctly, the same rule as
+     protocol.py's capture_window_fits. maxSamples (from GET_INFO) is one short
+     of the buffer: a window of the whole buffer comes back with its oldest
+     sample overwritten by the newest. The trigger sample is written even with
+     post 0, so that still costs one sample. */
+  function captureWindowFits(pre, post, maxSamples) {
+    return pre + post >= 1 && pre + Math.max(post, 1) <= maxSamples;
+  }
+
   /* ---- files ---- */
 
   const csvCell = (s) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
@@ -488,6 +499,7 @@ const ScopeMath = (() => {
     trim, formatTick, formatValue, formatRaw, formatHz, timeUnit, formatSeconds, label,
     fullView, clampView, zoomView, panView, visibleSamples,
     stats, busRuns, bitSignals, laneGroups, laneWeight,
+    captureWindowFits,
     csvText, captureFile, parseCaptureFile,
   };
 })();

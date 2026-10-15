@@ -169,6 +169,10 @@ class TestApp(unittest.TestCase):
     self.assertEqual(no_trigger.status_code, 400)
     too_long = self.http.post("/api/capture", json={"channels": [RISE_CH0], "pre": 1000, "post": 1000})
     self.assertEqual(too_long.status_code, 400)
+    whole_buffer = self.http.post("/api/capture", json={"channels": [RISE_CH0], "pre": 512, "post": 512})
+    self.assertEqual(whole_buffer.status_code, 400) # 1024-sample buffer: at most 1023
+    no_post = self.http.post("/api/capture", json={"channels": [RISE_CH0], "pre": 1023, "post": 0})
+    self.assertEqual(no_post.status_code, 400)
     bad_type = self.http.post("/api/capture", json={"channels": [{"enable": True, "type": "sideways"}], "pre": 1, "post": 1})
     self.assertEqual(bad_type.status_code, 422)
 

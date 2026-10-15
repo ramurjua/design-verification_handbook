@@ -33,7 +33,7 @@ def parse_trig(text):
     if len(parts) not in (2, 3): raise ValueError
     channel = int(parts[0])
     bit = int(parts[2]) if len(parts) == 3 else 0
-    if not (0 <= channel <= 7 and 0 <= bit <= 7): raise ValueError
+    if not (0 <= channel <= 7 and 0 <= bit <= 15): raise ValueError
     return channel, ChannelTrigger(True, TRIGGER_TYPES[parts[1]], bit)
   except (ValueError, KeyError):
     raise argparse.ArgumentTypeError(f"'{text}' is not CH:TYPE[:BIT] with TYPE one of {', '.join(TRIGGER_TYPES)}")
@@ -72,6 +72,10 @@ def print_samples(info, samples, csv_path):
 
 def run_capture(scope, args):
   info = scope.get_info()
+  if not info.capture_window_fits(args.pre, args.post):
+    print(f"pre + post must be between 1 and {info.max_capture_samples} samples"
+          f" (with post 0, pre at most {info.max_capture_samples - 1})", file=sys.stderr)
+    return 1
   scope.abort()
   scope.set_mode(Mode.SCOPE)
   scope.set_trigger(trigger_config(args))

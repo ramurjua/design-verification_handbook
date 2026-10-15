@@ -95,6 +95,19 @@
     ok(q("ch0-signed").disabled && !q("ch3-signed").disabled, "only multi-bit channels can be signed");
   });
 
+  await step("the window hint says when pre + post is more than the core captures correctly", async () => {
+    const before = [q("pre").value, q("post").value];
+    eq(js("app.info.max_capture_samples"), 1023); // the simulated core has a 1024-sample buffer
+    set("pre", 512); set("post", 511);
+    ok(!q("scope-hint").textContent.includes("too long"), "1023 samples fit");
+    set("post", 512);
+    ok(q("scope-hint").textContent.includes("too long: at most 1023"), "the whole buffer does not");
+    set("pre", 1023); set("post", 0);
+    ok(q("scope-hint").textContent.includes("too long"), "post 0 still needs room for the trigger sample");
+    set("pre", before[0]); set("post", before[1]);
+    ok(!q("scope-hint").textContent.includes("("), "back to a plain hint");
+  });
+
   await step("a long channel name does not push the trigger settings out of the panel", async () => {
     const inside = () => [0, 1, 2, 3].every((c) => q(`trig-bit-${c}`).getBoundingClientRect().right <= q("triggers").getBoundingClientRect().right + 0.5
                                                  && q(`trig-type-${c}`).getBoundingClientRect().right <= q("triggers").getBoundingClientRect().right + 0.5);

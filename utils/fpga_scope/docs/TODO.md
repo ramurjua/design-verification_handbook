@@ -6,12 +6,14 @@ backend and browser GUI. User-facing documentation is in
 [`integration.md`](integration.md); this file tracks status, decisions and
 remaining work.
 
-## Current status (2026-10-12): working on hardware
+## Current status (2026-10-15): working on hardware
 
 The whole chain (RTL core, UART, `protocol.py`, backend, GUI) has run on a
 real board, including the controls (host-writable outputs, added
-2026-10-12), which the user tried there by hand. See "Verification record"
-for exactly what was tested.
+2026-10-12), which the user tried there by hand, and the 16-bit channels
+(2026-10-15), tested on the board with an IMU. One RTL bug is known and
+deliberately left in place, worked around by the host (see "Known issues").
+See "Verification record" for exactly what was tested.
 
 ## What exists
 
@@ -36,6 +38,31 @@ for exactly what was tested.
   (`scope_math.js` holds the maths, `tests/` its tests).
 - `docs/protocol.md`, `docs/integration.md`, `docs/gui.md`.
 
+## Known issues
+
+- **A window of the whole buffer loses its oldest sample** (found on the
+  board 2026-10-15). When the trigger is accepted on a sample tick (always
+  at decimation 1) `scope_ctrl` writes the trigger sample and then all
+  `post` samples, one more than the window (two with `post` 0). The extra
+  write only matters when `pre + post` equals the buffer depth: it wraps
+  onto the oldest slot, and dump sample 0 is a copy of the newest sample.
+  Seen on every full-buffer capture (2048/2048, 10/4086, 4000/96) and never
+  with 4095 samples. It is old, not caused by the 16-bit work: the 512/512
+  board test of 2026-10-10 did not compare sample 0 with its neighbours.
+  - Decision (user, 2026-10-15): not worth an RTL change. The hosts keep
+    `pre + max(post, 1) <= depth - 1`: `ScopeInfo.max_capture_samples` /
+    `capture_window_fits` in `protocol.py` (used by `session.py` and
+    `scope_cli.py capture`) and `ScopeMath.captureWindowFits` (the hint
+    under the GUI's window). Documented in `docs/protocol.md`. A
+    hand-written `CMD_SET_TRIGGER` can still ask for the full buffer.
+  - The fix, if `scope_ctrl.v` is ever touched anyway: when the trigger
+    is taken on a cycle that also writes, count that write as the first
+    post sample (`r17_post_remaining <= post - 1`, straight to `DONE` when
+    nothing is left), skip the write when `post` is 0, and count it in
+    `o_fill_count`. Then add a full-buffer test to `scope_tb.v` (none of
+    its tests fills the buffer today), lift the host limit, and re-run on
+    the board.
+
 ## Verification record
 
 - **Simulation**: `test/scope_tb.v` passes (GET_INFO, SET_TRIGGER, ARM +
@@ -44,6 +71,38 @@ for exactly what was tested.
   `test_scope_cli`, `test_app`) against scripted bytes and the simulated
   device. The example design was simulated once with an ad hoc testbench
   (not committed) and its replies decoded by `protocol.py`.
+- **Hardware, 2026-10-15: 16-bit channels.** Drone FPGA_SOM `top.v`
+  (same board, 25 MHz, 115200 baud, CP210x) with `p_channel_max_width(16)`:
+  LSM6DSM accel X/Y/Z and gyro X/Y/Z on ch0-ch5 (16 bits, signed), the
+  driver FSM state on ch6 (5 bits), the SPI pins on ch7 (4 bits); 105-bit,
+  14-byte samples, 4096-sample buffer. The user first tried it from the GUI
+  by hand; then a script (not committed) through `protocol.py`:
+  - The RTL in the Drone project equals this repo's (only line endings
+    differ, checked file by file).
+  - GET_INFO widths, frame bytes and clock correct.
+  - Byte order and packing across 14-byte samples: on every capture and
+    burst |accel| came out at 1.01 g at rest, ch6 only took valid FSM
+    states, padding bits 105-111 were always 0, and at decimation 1 the
+    six IMU values only changed on the sample after `st_burst_latch`.
+  - 30/30 captures (pre 100, post 300, cs_n falling) with the edge at
+    index 100. A burst read is 832 clocks, 104 SCK cycles.
+  - Trigger on bits 8-13 of a 16-bit channel: the level the data holds
+    triggers with that bit set in the trigger sample, the opposite level
+    never triggers; `scope_cli.py --trig 2:high:12` caught accel_z
+    crossing 4095 -> 4096 at the trigger sample.
+  - Full-buffer dumps of 4096 x 14 = 57344 bytes arrive complete in 5 s,
+    but found the known issue above.
+  - Decimation 1000: the IMU updates at 206 Hz (208 Hz configured).
+  - Stream bursts at decimation 1, 100, 1000 and 65535 decode correctly.
+  - GUI: capture, stream, signed/gain/units on 16-bit channels, a bus
+    lane, one lane per bit, cursors; `img/` screenshots taken from this
+    run, the stream one while the user moved the board.
+  - Not checkable on a 16-wide build: "a bit past the lane never
+    triggers" (bit_select cannot exceed 15). A bit past a channel's own
+    width but inside the lane reads the zero padding of the `i_chN` port,
+    so level-low triggers on it; the GUI does not offer those bits.
+  - Not observed by Claude: LED1, which toggles on each write to
+    control 0 in this design.
 - **Controls on the board (2026-10-12)**: the user tried the buttons from
   the GUI against the rebuilt bitstream and reports they work. Not written
   down: which control kinds, and whether a design reacting to `o_controlN`
@@ -155,6 +214,8 @@ for exactly what was tested.
   on every write. Separate `o_controlN` ports, like the channels. The only
   thing to keep in step is an old bitstream, which reports
   `protocol_version` 1 and gets its controls greyed out.
+- The full-buffer issue (see "Known issues") stays in the RTL; the hosts
+  keep the window one sample short of the buffer (user, 2026-10-15).
 - Controls are named "control", not "ctrl", in the RTL: `scope_ctrl` and
   the `w_ctrl_*` wires are the capture state machine, an unrelated thing.
 
@@ -202,7 +263,7 @@ Left over from this batch, done later the same day:
 
 - [x] Try it against the board (done by the user).
 - [x] `img/gui_scope.png` and `img/gui_stream.png` retaken against the
-      simulated device.
+      simulated device, and again on 2026-10-15 against the board (IMU).
 
 Added afterwards (2026-10-12):
 
@@ -274,21 +335,25 @@ that send 16 bits, needed nothing: controls were already 32 bits.)
       order and zero padding. The trigger test was seen to fail with
       `bit_select` cut back to 3 bits. `test_protocol` decodes 16-bit
       channels.
-- [ ] `sim_device.py` has no 16-bit channel, so the GUI has not been
-      exercised with one (the page has no 8-bit limit of its own: widths
-      come from GET_INFO, and the trigger bit list follows the width).
-- [ ] On the board: a build with `p_channel_max_width(16)`.
+- [ ] `sim_device.py` has no 16-bit channel, so no automated GUI test
+      uses one. The GUI has been used with 16-bit channels on the board
+      (2026-10-15).
+- [x] On the board: a build with `p_channel_max_width(16)` (2026-10-15,
+      see "Verification record").
+- [x] `scope_cli.py --trig` still refused bits 8-15; found on the board
+      2026-10-15, now 0-15 with a test.
 
 ## Still to do
 
-- [ ] Use it on real signals: replace the example in the Drone FPGA_SOM
-      design with a `scope_top` fed by the IMU SPI lines and valid flag.
+- [x] Use it on real signals: the Drone FPGA_SOM design has a `scope_top`
+      on the IMU outputs, its FSM state and SPI lines (2026-10-15).
 - [x] The copy of the RTL in the Drone project has the controls (checked
       2026-10-12: `scope_top.v` there has the `o_controlN` ports).
 - [ ] GUI stream view: consecutive bursts are not contiguous in time (the
       host needs a moment between `CMD_STREAM_START`s), so slow signals show
       a small jump at every burst boundary. Larger bursts make it rarer.
-- [ ] Try other configurations: a faster baud rate, a 100 MHz clock, wide
-      frames (8 channels x 8 bits), another USB-UART adapter.
+- [ ] Try other configurations: a faster baud rate, a 100 MHz clock,
+      another USB-UART adapter. (Wide frames done: 8 channels, 105 bits,
+      14 bytes per sample, 2026-10-15.)
 - [ ] A committed testbench that drives the RTL with frames produced by
       `protocol.py` (today that cross-check was done once by hand).

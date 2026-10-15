@@ -113,6 +113,7 @@ Things that are easy to get wrong:
 - `scope_ctrl` stays in `SCOPE_ST_DONE` after a capture; `CMD_SET_TRIGGER`, `CMD_ARM` and `CMD_SET_MODE` are rejected until a `CMD_ABORT` returns it to idle.
 - `scope_ctrl` ignores triggers until the pre-trigger window is full; a test that arms and triggers immediately must wait for it.
 - `(pre_trigger_count + post_trigger_count) * frame_bytes` must fit the 16-bit `LEN` field.
+- A capture window of the whole buffer comes back with sample 0 overwritten by the newest sample: at decimation 1, `scope_ctrl` writes the trigger sample on top of `post`. It is a known bug, deliberately left in the RTL (user, 2026-10-15). The hosts keep `pre + max(post, 1) <= depth - 1` in two places that must agree: `ScopeInfo.capture_window_fits` in `protocol.py` and `ScopeMath.captureWindowFits` in `scope_math.js`. See "Known issues" in `docs/TODO.md`.
 - Sample registers that are byte-indexed (`[8*idx +: 8]`) must be declared `frame_bytes*8` wide, not `frame_width` wide, or the padding bits read back as X.
 - Both `MODE_SCOPE` and `MODE_STREAM` are always built in; there are no build-time mode enables.
 - While a dump or stream burst is in flight the core only processes `CMD_ABORT`. A control write sent then is dropped, so `session.py` slots it between two exchanges of the running job (`_call` / `_job_call`); anything else that talks to the device while a job runs must go through the same pair.

@@ -445,6 +445,15 @@
 
   /* ---- files ---- */
 
+  test("a capture window stays one sample short of the buffer, also with post 0", () => {
+    ok(M.captureWindowFits(2047, 2048, 4095), "4095 of a 4096-sample buffer");
+    ok(!M.captureWindowFits(2048, 2048, 4095), "the whole buffer");
+    ok(M.captureWindowFits(4094, 0, 4095), "post 0 leaves room for the trigger sample");
+    ok(!M.captureWindowFits(4095, 0, 4095), "post 0 with no room for the trigger sample");
+    ok(M.captureWindowFits(0, 1, 4095), "a single sample");
+    ok(!M.captureWindowFits(0, 0, 4095), "an empty window");
+  });
+
   test("the CSV of a capture has the time relative to the trigger", () => {
     const text = M.csvText([{ name: "a", values: [1, 2, 3] }, { name: "b [V]", values: [0.5, -1, 0] }], { pre: 1, period: 1e-3 });
     eq(text.split("\n"), ["sample,time_s,a,b [V]", "-1,-1.000000e-3,1,0.5", "0,0.000000e+0,2,-1", "1,1.000000e-3,3,0", ""]);

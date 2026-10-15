@@ -103,7 +103,7 @@ class TestInfo(unittest.TestCase):
     self.assertEqual(info.buffer_depth, 16)
     self.assertEqual(info.frame_bytes, 1)
     self.assertEqual(info.clk_freq_hz, 100_000_000)
-    self.assertEqual(info.max_capture_samples, 16)
+    self.assertEqual(info.max_capture_samples, 15)
 
   def test_a_core_from_before_the_controls_has_none(self):
     self.assertEqual(ScopeInfo.unpack(b"\x01" + INFO_PAYLOAD[1:]).num_controls, 0)
@@ -128,6 +128,17 @@ class TestInfo(unittest.TestCase):
   def test_max_capture_with_16_byte_samples(self):
     info = ScopeInfo(2, 3, 8, (16,) * 8, 12, 16, 100_000_000)
     self.assertEqual(info.max_capture_samples, 4095)
+
+  def test_max_capture_one_short_of_the_buffer(self):
+    # the board build of 2026-10-15: 4096 x 14 bytes fits LEN, but a window of
+    # the whole buffer loses its oldest sample (known issue in scope_ctrl)
+    info = ScopeInfo(2, 3, 8, (16,) * 6 + (5, 4), 12, 14, 25_000_000)
+    self.assertEqual(info.max_capture_samples, 4095)
+    self.assertTrue(info.capture_window_fits(2047, 2048))
+    self.assertTrue(info.capture_window_fits(4094, 0))
+    self.assertFalse(info.capture_window_fits(2048, 2048))
+    self.assertFalse(info.capture_window_fits(4095, 0)) # the trigger sample is written too
+    self.assertFalse(info.capture_window_fits(0, 0))
 
 
 class TestClient(unittest.TestCase):

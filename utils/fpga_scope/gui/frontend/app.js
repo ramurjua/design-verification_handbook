@@ -240,9 +240,14 @@ function buildTriggerRows(info, force = false) {
 function updateScopeHint() {
   if (!app.info) { $("scope-hint").textContent = ""; return; }
   const decim = clampInt($("decim"), 1);
-  const total = clampInt($("pre"), 0) + clampInt($("post"), 0);
+  const pre = clampInt($("pre"), 0), post = clampInt($("post"), 0);
+  const total = pre + post;
   const period = decim / app.info.clk_freq_hz;
-  $("scope-hint").textContent = `Sample rate ${M.formatHz(1 / period)}, window ${total} samples = ${M.formatSeconds(total * period)}`;
+  const max = app.info.max_capture_samples;
+  const problem = M.captureWindowFits(pre, post, max) ? ""
+    : total < 1 ? " (empty: no samples to capture)"
+    : ` (too long: at most ${max} samples, pre at most ${max - 1} with post 0)`;
+  $("scope-hint").textContent = `Sample rate ${M.formatHz(1 / period)}, window ${total} samples = ${M.formatSeconds(total * period)}${problem}`;
 }
 
 function clampInt(input, fallback) {

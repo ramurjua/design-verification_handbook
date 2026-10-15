@@ -125,7 +125,7 @@ After loading, the GUI lists any setting it could not use (a misspelt name, a te
 | `trigger.channels.N.type` | `"off"`, `"rise"`, `"fall"`, `"high"`, `"low"` | `"rise"` on channel 0, `"off"` on the rest |
 | `trigger.channels.N.bit` | bit of the channel to trigger on, 0 to 15 (below that channel's width) | `0` |
 | `trigger.combine` | `"and"`, `"or"` | `"and"` |
-| `window.pre`, `post` | samples before and after the trigger | `100`, `300` |
+| `window.pre`, `post` | samples before and after the trigger. Together at most the "captures up to N samples" shown after connecting, which is one less than the buffer; with `post` 0, `pre` at most N - 1. The hint under the window says when it is too long | `100`, `300` |
 | `window.decimation` | sample every N clocks, 1 to 65535 | `1` |
 | `stream.decimation`, `batch`, `window` | the three Stream settings | `1`, `200`, `2000` |
 

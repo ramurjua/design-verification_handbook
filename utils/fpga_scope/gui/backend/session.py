@@ -103,8 +103,9 @@ class ScopeSession:
         raise ValueError(f"{len(channels)} channel triggers for a {info.num_channels}-channel core")
       if not any(c["enable"] for c in channels):
         raise ValueError("no trigger enabled: the capture would never complete")
-      if pre + post < 1 or pre + post > info.max_capture_samples:
-        raise ValueError(f"pre + post must be between 1 and {info.max_capture_samples} samples")
+      if not info.capture_window_fits(pre, post):
+        raise ValueError(f"pre + post must be between 1 and {info.max_capture_samples} samples"
+                         f" (with post 0, pre at most {info.max_capture_samples - 1})")
       config = TriggerConfig(
         [ChannelTrigger(c["enable"], TRIGGER_TYPES[c["type"]], c["bit_select"]) for c in channels],
         combine_or, pre, post, decimation)

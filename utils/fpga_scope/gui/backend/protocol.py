@@ -145,8 +145,16 @@ class ScopeInfo:
 
   @property
   def max_capture_samples(self):
-    """Largest pre+post window: bounded by the buffer and by a dump having to fit LEN."""
-    return min(self.buffer_depth, MAX_PAYLOAD_LEN // self.frame_bytes)
+    """Largest pre+post window: one sample short of the buffer and bounded by a
+    dump having to fit LEN. A window of the whole buffer comes back with its
+    oldest sample overwritten by the newest (known issue, docs/protocol.md),
+    and with post 0 pre must stay one lower still (see capture_window_fits)."""
+    return min(self.buffer_depth - 1, MAX_PAYLOAD_LEN // self.frame_bytes)
+
+  def capture_window_fits(self, pre, post):
+    """Whether the core captures this window correctly: the trigger sample is
+    written on top of pre and post, so post 0 still costs one sample."""
+    return 1 <= pre + post and pre + max(post, 1) <= self.max_capture_samples
 
   def supports(self, mode):
     return bool(self.modes_supported & (1 << mode))

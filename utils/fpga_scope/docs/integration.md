@@ -49,6 +49,7 @@ Start with 115200. A faster rate only makes dumps and the live stream quicker, a
 
 - The buffer uses `2^p_buffer_depth_log2 × (sum of the channel widths)` bits of block RAM. Example: 1024 samples of 22 bits = 22.5 kbit.
 - One capture must fit in a single reply of at most 65535 bytes, so `samples × bytes per sample` cannot exceed that. Bytes per sample is the sum of the channel widths rounded up to whole bytes. With 8 channels of 8 bits (8 bytes per sample) the largest capture is 8191 samples; with 8 channels of 16 bits (16 bytes per sample) it is 4095, so keep `p_buffer_depth_log2` at 11 or below for that build.
+- The largest capture window is one sample less than the buffer, `2^p_buffer_depth_log2 - 1`: a window of the whole buffer comes back with its oldest sample replaced by the newest, a known issue of the core ([protocol](protocol.md#known-issue-a-window-of-the-whole-buffer)). The GUI and `scope_cli.py` do not allow it. With `p_buffer_depth_log2(12)` the largest window is 4095 samples.
 - Keep `p_buffer_depth_log2` at 15 or below.
 
 ## Step 3 — Instantiate `scope_top`

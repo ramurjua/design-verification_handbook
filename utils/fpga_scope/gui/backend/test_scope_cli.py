@@ -81,6 +81,13 @@ class TestCli(unittest.TestCase):
     self.assertIn("state ARMED", out)
     self.assertEqual(port.written[-1], bytes.fromhex("AA 06 00 00 06"))
 
+  def test_capture_window_of_the_whole_buffer_is_refused(self):
+    # the core loses the oldest sample of a window that fills its 16-sample buffer
+    code, _, err, port = run_cli([INFO_FRAME], "capture", "--trig", "0:rise", "--pre", "8", "--post", "8")
+    self.assertEqual(code, 1)
+    self.assertIn("between 1 and 15 samples", err)
+    self.assertEqual(len(port.written), 1) # only GET_INFO
+
   def test_stream(self):
     code, out, _, port = run_cli([
       INFO_FRAME, ok(Opcode.ABORT), ok(Opcode.SET_TRIGGER), ok(Opcode.SET_MODE),
@@ -104,6 +111,12 @@ class TestCli(unittest.TestCase):
   def test_bad_trigger_spec(self):
     with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
       scope_cli.build_parser().parse_args(PORT_ARGS + ["capture", "--trig", "0:sideways"])
+
+  def test_trigger_bit_up_to_15(self):
+    args = scope_cli.build_parser().parse_args(PORT_ARGS + ["capture", "--trig", "2:high:12"])
+    self.assertEqual(args.trig[0][1].bit_select, 12)
+    with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+      scope_cli.build_parser().parse_args(PORT_ARGS + ["capture", "--trig", "2:high:16"])
 
 
 if __name__ == "__main__":

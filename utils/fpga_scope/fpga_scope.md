@@ -2,7 +2,7 @@
 
 A small logic analyzer / oscilloscope that lives inside your FPGA design. You connect up to 8 internal signals to it, and look at them from a browser through a plain USB-UART adapter. No vendor tool, no JTAG and no special hardware are needed while debugging.
 
-![Scope tab showing a captured window](img/gui_scope.png)
+![Scope tab showing one SPI read of an IMU, captured on the board](img/gui_scope.png)
 
 It has two modes, selected from the GUI:
 
@@ -11,11 +11,11 @@ It has two modes, selected from the GUI:
 
 It can also write to the design: eight **controls**, shown in the GUI as buttons, switches or numbers with a name of your choice, appear in the FPGA as eight 32-bit outputs. Use them to start something, enable a test mode or set a value such as a speed without rebuilding.
 
-![Stream tab showing live samples](img/gui_stream.png)
+![Stream tab showing live accelerometer and gyroscope values from the board while it is moved by hand](img/gui_stream.png)
 
 ✔️ Verified via testbenches: the RTL core with a simulated host ([testbench](test/scope_tb.v)) and the Python side with unit tests ([backend tests](gui/backend/)).
 
-🧪 Status: Tested on real hardware with the [example design](example/scope_example_top.v) on a Spartan-7 (xc7s50) board with a 25 MHz clock, at 115200 baud through a CP210x USB-UART adapter: 3000 commands without a lost reply, captures and streams matching the generated signals, and the GUI working end to end. Other devices, clocks and baud rates have not been tried. The controls were added after that run: they are verified in simulation, and the user tried the buttons from the GUI on the board (2026-10-12) and they worked; what exactly was checked was not written down.
+🧪 Status: Tested on real hardware with the [example design](example/scope_example_top.v) on a Spartan-7 (xc7s50) board with a 25 MHz clock, at 115200 baud through a CP210x USB-UART adapter: 3000 commands without a lost reply, captures and streams matching the generated signals, and the GUI working end to end. Other devices, clocks and baud rates have not been tried. The controls were added after that run: they are verified in simulation, and the user tried the buttons from the GUI on the board (2026-10-12) and they worked; what exactly was checked was not written down. The 16-bit channels (`p_channel_max_width(16)`) were tested on the same board on 2026-10-15, with an IMU (LSM6DSM) on six 16-bit channels plus its SPI lines: captures, triggers on bits 8 to 15, full 4096-sample dumps and streams decode correctly. The screenshots above are from that run. It also found the full-buffer issue listed under the limits below.
 
 📁 [Source Code](source/)
 
@@ -121,7 +121,7 @@ python -m unittest test_frontend    # the web page, in a headless Chrome or Edge
 
 - Up to 8 channels of up to 8 bits each, or 16 with `p_channel_max_width(16)`. A wider bus is split over several channels, which the GUI can show as one value again.
 - All signals must be synchronous to the clock given to the scope.
-- A capture holds at most `2^p_buffer_depth_log2` samples, and at most 65535 bytes in total.
+- A capture holds at most `2^p_buffer_depth_log2 - 1` samples, and at most 65535 bytes in total. One less than the buffer because a window of the whole buffer comes back with its oldest sample replaced by the newest, a known issue of the core that the GUI and `scope_cli.py` stay clear of ([details](docs/protocol.md#known-issue-a-window-of-the-whole-buffer)).
 - The baud rate is fixed at build time by `p_uart_preescaler`; there is no autobaud.
 - In Stream mode the sample rate is limited by the UART and is not guaranteed, so that view has no time axis.
 - A control keeps its last value until the FPGA is reset, also when the computer is disconnected. There is no timeout, so limits that matter belong in the design.
