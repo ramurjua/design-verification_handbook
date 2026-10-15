@@ -75,6 +75,8 @@ The existing modules share a prefix scheme; follow it in new RTL:
 
 Every module page (`modules/uart/uart.md` is the template) has: a short description, a `✔️ Verified via testbench …` line, a `🧪 Status:` line, source and testbench links, and an empty-port instantiation snippet. The status line is explicit about **simulation-only vs tested on real hardware** — never claim hardware testing that has not happened.
 
+Modules are versioned one by one (scheme in `modules/modules.md`, "Releases"): the page has a `🏷️ Version` line and a changelog at the end, and each release is a tag `<module>/vX.Y.Z` on `main`. A change to a versioned module bumps its version and adds a changelog entry; tag it once it is on `main`. Modules from before the scheme have no version yet.
+
 A new module or page is also added to its section index (`modules/modules.md`, `utils/utils.md`, …) and to the index in the root `README.md`.
 
 ## fpga_scope (`utils/fpga_scope/`)

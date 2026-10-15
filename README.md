@@ -18,6 +18,7 @@ Welcome! 🚀 This repository is my personal learning space for digital design a
 	* 📂 [UART Transmitter & Receiver](modules/uart/uart.md)
 	* 📂 [SPI Master & Slave](modules/spi/spi.md)
 	* 📂 [Clark Park Direct & Inverse & DDS](modules/clarkpark/clarkpark.md)
+	* 📂 [LSM6DSM IMU SPI driver](modules/imu_lsm6dsm/imu_lsm6dsm.md)
 	* 📂 [2-Level Modulator](modules/modulador_2lvl/modulador_2lvl.md)
 * 📂 [Utils](utils/utils.md)
 	* 📂 [RasberryPi Pico JTAG](utils/JTAG_rp2040/xvc-pico.md)

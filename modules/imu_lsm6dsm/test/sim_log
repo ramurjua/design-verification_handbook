@@ -1,0 +1,17 @@
+VCD info: dumpfile imu_lsm6dsm_tb.vcd opened for output.
+VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
+[INFO] >> Setting initial conditions.
+INFO: ./imu_lsm6dsm_tb.sv:394: Resetting module.
+      Time: 0  Scope: imu_lsm6dsm_tb.reset_task
+INFO: ./imu_lsm6dsm_tb.sv:397: Release Reset
+      Time: 0  Scope: imu_lsm6dsm_tb.reset_task
+[INFO] >> Test init
+[OK]: sample 1 matches canned IMU data
+[OK]: sample 2 matches canned IMU data
+[OK]: sample 3 matches canned IMU data
+[OK]: driver retried WHO_AM_I until the IMU answered
+[OK]: absent IMU flagged after 10 WHO_AM_I reads, bus quiet afterwards
+[OK]: 11 transactions, each started on a tick; the longest ended 834 cycles after it (slot 1000)
+[OK]: ticks faster than a transaction flag or_overrun
+[OK] >> All checks passed
+./imu_lsm6dsm_tb.sv:388: $finish called at 46608 (10ns)
