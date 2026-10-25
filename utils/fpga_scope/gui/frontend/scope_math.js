@@ -11,8 +11,9 @@ const ScopeMath = (() => {
   const HEIGHTS = { auto: null, small: 1, medium: 2.4, large: 4, xlarge: 6 };
   const TRIGGER_TYPES = ["off", "rise", "fall", "high", "low"];
   const MAX_CONTROLS = 8; // 32-bit registers the host writes; a core has all of them or (older builds) none
-  const CONTROL_KINDS = ["off", "button", "toggle", "value"];
+  const CONTROL_KINDS = ["off", "button", "toggle", "value", "select"];
   const MAX_CONTROL_RAW = 0xFFFFFFFF;
+  const MAX_FIELDS = 8; // bit fields of one channel
 
   /* ---- configuration ---- */
 
@@ -26,19 +27,23 @@ const ScopeMath = (() => {
       bits: false, // also show every bit of the signal in a lane of its own
       high: null, // channel that supplies the bits above this one's, null for none
       lane: null, // channel whose lane this signal is drawn in, null for its own
+      values: {}, // raw value -> name, for a state: { 2: "RUN" }
+      fields: [], // bit fields, each drawn in a lane of its own instead of the signal: [{ name, bits: [msb, lsb] or null, values }]
     };
   }
 
   /* A control is not used until it is given a kind:
        button  every press writes `value`
        toggle  a switch that writes 1 and 0
-       value   a number typed in real units, written as its raw value */
+       value   a number typed in real units, written as its raw value
+       select  a drop-down list of `values`; picking a name writes its raw value */
   function defaultControl(i) {
     return {
       name: `control${i}`, kind: "off",
       value: 1, // button: the raw value a press writes
       unit: "", signed: false, frac: 0, gain: 1, offset: 0, // value: typed = signed(raw) * 2^-frac * gain + offset, as for a channel
       min: null, max: null, // value: limits on what may be typed, null for none
+      values: {}, // select: raw value -> name, the entries of the list
     };
   }
 
@@ -66,6 +71,63 @@ const ScopeMath = (() => {
   /* a per-channel list in a file: an array in channel order, or an object keyed by channel number */
   const perChannel = (v) => (v && typeof v === "object" ? v : []);
 
+  /* the key of a named value, "10" or "0xA", as the number; null if it is not one */
+  function valueKey(key) {
+    if (typeof key !== "string") return null;
+    const k = key.trim();
+    const v = /^\d+$/.test(k) ? Number(k) : /^0x[0-9a-f]+$/i.test(k) ? parseInt(k.slice(2), 16) : null;
+    return v !== null && v <= MAX_CONTROL_RAW ? v : null;
+  }
+
+  const valueText = (name) => (typeof name === "string" ? name.slice(0, 24).trim() : "");
+
+  /* { "0": "IDLE", "0x1": "RAMP" } to { 0: "IDLE", 1: "RAMP" }, leaving out what is unusable */
+  function valueNames(v) {
+    const out = {};
+    if (!v || typeof v !== "object" || Array.isArray(v)) return out;
+    for (const [key, name] of Object.entries(v)) {
+      const raw = valueKey(key);
+      if (raw !== null && valueText(name)) out[raw] = valueText(name);
+    }
+    return out;
+  }
+
+  /* named values as typed in a settings field, "0=MOTOR 0; 1=MOTOR 1", and back.
+     parseValueList gives null if any entry is not value=name. */
+  function parseValueList(text) {
+    const entries = {};
+    for (const part of String(text).split(";")) {
+      if (!part.trim()) continue;
+      const at = part.indexOf("=");
+      if (at < 0) return null;
+      const raw = valueKey(part.slice(0, at));
+      const name = valueText(part.slice(at + 1));
+      if (raw === null || !name) return null;
+      entries[raw] = name;
+    }
+    return entries;
+  }
+
+  const valueListText = (values) => Object.entries(values).map(([raw, name]) => `${raw}=${name}`).join("; ");
+
+  /* [msb, lsb] as in Verilog, or one number for a single bit; null if unusable */
+  function bitRange(v) {
+    const bit = (b) => Number.isInteger(b) && b >= 0 && b < MAX_SIGNAL_BITS;
+    if (bit(v)) return [v, v];
+    if (Array.isArray(v) && v.length === 2 && bit(v[0]) && bit(v[1]) && v[0] >= v[1]) return [v[0], v[1]];
+    return null;
+  }
+
+  /* A field without usable bits stays in the list, so that the others keep their place
+     (and configProblems its path), but it is not drawn. */
+  function bitFields(v) {
+    if (!Array.isArray(v)) return [];
+    return v.slice(0, MAX_FIELDS).map((f, k) => {
+      const r = f && typeof f === "object" ? f : {};
+      return { name: text(r.name, "", 24).trim() || `f${k}`, bits: bitRange(r.bits), values: valueNames(r.values) };
+    });
+  }
+
   /* Any value (a parsed file, old browser storage, garbage) to a complete, valid configuration.
      Whatever is missing or unusable gets its default, so a file only needs what it changes. */
   function normalizeConfig(raw) {
@@ -92,6 +154,8 @@ const ScopeMath = (() => {
       d.bits = flag(r.bits, d.bits);
       d.high = channelRef(r.high, c);
       d.lane = channelRef(r.lane, c);
+      d.values = valueNames(r.values);
+      d.fields = bitFields(r.fields);
     });
 
     const controls = perChannel(raw.controls);
@@ -108,6 +172,7 @@ const ScopeMath = (() => {
       d.offset = number(r.offset, d.offset);
       d.min = limit(r.min);
       d.max = limit(r.max);
+      d.values = valueNames(r.values);
     });
 
     const trigger = raw.trigger && typeof raw.trigger === "object" ? raw.trigger : {};
@@ -135,6 +200,7 @@ const ScopeMath = (() => {
   /* The settings of a hand-written configuration that normalizeConfig did not take as written
      (unknown name, wrong type, out of range), as paths like "channels.3.gain". */
   function configProblems(raw, normalized = normalizeConfig(raw)) {
+    raw = canonicalNames(raw);
     const problems = [];
     const walk = (given, taken, path) => {
       if (given && typeof given === "object" && taken && typeof taken === "object") {
@@ -143,6 +209,70 @@ const ScopeMath = (() => {
     };
     walk(raw, normalized, "");
     return problems;
+  }
+
+  /* A copy of a hand-written configuration with the named values and bit fields written
+     the way normalizeConfig keeps them ("0xA" as "10", a single bit as [3, 3]), so that
+     configProblems reports only what was not taken. A field without bits is reported. */
+  function canonicalNames(raw) {
+    if (!raw || typeof raw !== "object") return raw;
+    const copy = JSON.parse(JSON.stringify(raw));
+    const names = (v) => {
+      if (!v || typeof v !== "object" || Array.isArray(v)) return v;
+      const out = {};
+      for (const [key, name] of Object.entries(v)) {
+        const k = valueKey(key);
+        out[k === null ? key : String(k)] = name;
+      }
+      return out;
+    };
+    for (const list of [copy.channels, copy.controls]) {
+      if (!list || typeof list !== "object") continue;
+      for (const r of Object.values(list)) {
+        if (!r || typeof r !== "object") continue;
+        if ("values" in r) r.values = names(r.values);
+        if (list !== copy.channels || !Array.isArray(r.fields)) continue;
+        for (const f of r.fields) {
+          if (!f || typeof f !== "object") continue;
+          if ("values" in f) f.values = names(f.values);
+          if (!("bits" in f)) f.bits = "missing";
+          else if (Number.isInteger(f.bits) && bitRange(f.bits)) f.bits = bitRange(f.bits);
+        }
+      }
+    }
+    return copy;
+  }
+
+  /* ---- named values ---- */
+
+  const hasNames = (cfg) => !!cfg.values && Object.keys(cfg.values).length > 0;
+
+  /* the name of a raw value, or undefined */
+  const valueName = (cfg, raw) => (cfg.values && Object.prototype.hasOwnProperty.call(cfg.values, raw) ? cfg.values[raw] : undefined);
+
+  /* a raw value by its name, or as the number in the signal's raw format when it has none */
+  function namedText(raw, width, cfg) {
+    const name = valueName(cfg, raw);
+    return name !== undefined ? name : formatRaw(raw, width, cfg.format);
+  }
+
+  const hasFields = (cfg) => !!cfg.fields && cfg.fields.some((f) => f.bits);
+
+  /* One signal per bit field of a signal that has its raw values, in the order they were
+     given, shown as a bus with the field's names. They are marked with `field` and `parent`.
+     Bits above the signal's width read as 0, and `outside` says so. */
+  function fieldSignals(signal) {
+    const out = [];
+    signal.cfg.fields.forEach((field, k) => {
+      if (!field.bits) return;
+      const [msb, lsb] = field.bits;
+      const width = msb - lsb + 1;
+      const raw = signal.raw.map((v) => Math.floor(v / 2 ** lsb) % 2 ** width);
+      const cfg = { ...defaultChannel(signal.base), name: `${signal.cfg.name}.${field.name}`, style: "bus",
+                    format: signal.cfg.format, height: signal.cfg.height, values: field.values };
+      out.push({ base: signal.base, parts: signal.parts, width, cfg, raw, values: raw, field: k, parent: signal, outside: msb >= signal.width });
+    });
+    return out;
   }
 
   /* ---- signals: one or more channels shown as one value ---- */
@@ -395,7 +525,9 @@ const ScopeMath = (() => {
      A `lane` that points at a hidden or combined-away channel, or round in a loop, is ignored.
      A signal with `bits` set is followed by one lane for each of its bits. */
   function laneGroups(signals) {
-    const visible = signals.filter((s) => s.cfg.visible);
+    const shown = signals.filter((s) => s.cfg.visible);
+    const split = shown.filter((s) => hasFields(s.cfg)); // drawn as its fields, so it has no lane to share
+    const visible = shown.filter((s) => !hasFields(s.cfg));
     const byBase = new Map(visible.map((s) => [s.base, s]));
     const hostOf = (signal) => {
       const seen = new Set([signal.base]);
@@ -413,11 +545,18 @@ const ScopeMath = (() => {
       if (!groups.has(host.base)) groups.set(host.base, { host, members: [host] });
       if (signal !== host) groups.get(host.base).members.push(signal);
     }
+    const bitLanes = (signal) => (signal.cfg.bits && signal.width > 1 ? bitSignals(signal).map((bit) => ({ host: bit, members: [bit] })) : []);
+    const entries = [...groups.values()].map((group) => ({ base: group.host.base, group }))
+      .concat(split.map((signal) => ({ base: signal.base, signal })))
+      .sort((a, b) => a.base - b.base);
     const lanes = [];
-    for (const group of [...groups.values()].sort((a, b) => a.host.base - b.host.base)) {
-      lanes.push(group);
-      for (const signal of group.members) {
-        if (signal.cfg.bits && signal.width > 1) for (const bit of bitSignals(signal)) lanes.push({ host: bit, members: [bit] });
+    for (const { group, signal } of entries) {
+      if (group) {
+        lanes.push(group);
+        for (const member of group.members) lanes.push(...bitLanes(member));
+      } else {
+        for (const field of fieldSignals(signal)) lanes.push({ host: field, members: [field] });
+        lanes.push(...bitLanes(signal));
       }
     }
     return lanes;
@@ -444,14 +583,31 @@ const ScopeMath = (() => {
 
   const csvCell = (s) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
 
-  /* columns: [{ name, values }]. A capture (pre given) also gets the time relative to the trigger. */
+  /* The CSV columns of signals that have their raw and shown values: each signal under its
+     label, then, if it has named values, the name of each sample's value, then each bit field
+     raw, followed by its names if it has any. A value without a name leaves its cell empty. */
+  function csvColumns(signals) {
+    const columns = [];
+    const names = (cfg, raw) => raw.map((v) => { const name = valueName(cfg, v); return name === undefined ? "" : name; });
+    for (const s of signals) {
+      columns.push({ name: label(s.cfg), values: s.values });
+      if (hasNames(s.cfg)) columns.push({ name: `${s.cfg.name}:name`, values: names(s.cfg, s.raw) });
+      for (const f of fieldSignals(s)) {
+        columns.push({ name: f.cfg.name, values: f.raw });
+        if (hasNames(f.cfg)) columns.push({ name: `${f.cfg.name}:name`, values: names(f.cfg, f.raw) });
+      }
+    }
+    return columns;
+  }
+
+  /* columns: [{ name, values }], values numbers or text. A capture (pre given) also gets the time relative to the trigger. */
   function csvText(columns, { pre = null, period = 1 } = {}) {
     const isCapture = pre !== null;
     const lines = [(isCapture ? ["sample", "time_s"] : ["sample"]).concat(columns.map((c) => csvCell(c.name))).join(",")];
     const n = columns.length ? columns[0].values.length : 0;
     for (let i = 0; i < n; i++) {
       const head = isCapture ? [i - pre, ((i - pre) * period).toExponential(6)] : [i];
-      lines.push(head.concat(columns.map((c) => c.values[i])).join(","));
+      lines.push(head.concat(columns.map((c) => (typeof c.values[i] === "string" ? csvCell(c.values[i]) : c.values[i]))).join(","));
     }
     return lines.join("\n") + "\n";
   }
@@ -491,15 +647,16 @@ const ScopeMath = (() => {
 
   return {
     MAX_CHANNELS, MAX_SIGNAL_BITS, RANGES, STYLES, FORMATS, HEIGHTS, TRIGGER_TYPES,
-    MAX_CONTROLS, CONTROL_KINDS, MAX_CONTROL_RAW,
+    MAX_CONTROLS, CONTROL_KINDS, MAX_CONTROL_RAW, MAX_FIELDS,
     defaultChannel, defaultControl, defaultConfig, normalizeConfig, configProblems,
     controlRaw, controlShown,
     buildSignals, rawValues, toSigned, isSigned, scaleValue, scaleValues, isIdentity,
     fullRange, autoRange, laneRange, niceStep, ticks,
     trim, formatTick, formatValue, formatRaw, formatHz, timeUnit, formatSeconds, label,
     fullView, clampView, zoomView, panView, visibleSamples,
+    hasNames, valueName, namedText, parseValueList, valueListText, hasFields, fieldSignals,
     stats, busRuns, bitSignals, laneGroups, laneWeight,
     captureWindowFits,
-    csvText, captureFile, parseCaptureFile,
+    csvColumns, csvText, captureFile, parseCaptureFile,
   };
 })();

@@ -2,6 +2,7 @@
 python -m unittest test_app
 """
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -108,6 +109,36 @@ class TestSimDevice(unittest.TestCase):
       scope._command(Opcode.CONTROL_WRITE, bytes([0, 0, 0, 0, 1])) # what it does if asked anyway
 
 
+class TestSimStates(unittest.TestCase):
+  """The sim-fsm port: state machines for named values, matching gui/examples/sim-fsm.json."""
+
+  EXAMPLE = Path(__file__).resolve().parent.parent / "examples" / "sim-fsm.json"
+
+  def capture(self, scope):
+    info = scope.get_info()
+    scope.set_trigger(TriggerConfig([ChannelTrigger(True, TriggerType.EDGE_RISE)], pre_trigger_count=0, post_trigger_count=1000, decimation=2))
+    scope.arm()
+    return info.split_channels(scope.dump())
+
+  def test_states_are_the_ones_the_example_names(self):
+    config = json.loads(self.EXAMPLE.read_text(encoding="utf-8"))["channels"]
+    scope = sim_client(signals="states")
+    self.assertEqual(scope.get_info().channel_widths[:4], (1, 4, 8, 8))
+    _, sensor, state, _ = self.capture(scope)
+    card, fsm = (field["values"] for field in config["2"]["fields"])
+    self.assertEqual({str(v >> 4) for v in state} - set(card), set())
+    self.assertEqual({str(v & 15) for v in state} - set(fsm), set())
+    self.assertGreaterEqual(len({v & 15 for v in state}), 6, "a capture shows most of the run")
+    self.assertEqual({str(v) for v in sensor} - set(config["1"]["values"]), {"6"}, "one state without a name, on purpose")
+
+  def test_control_0_sets_the_speed(self):
+    scope = sim_client(signals="states")
+    slow = max(self.capture(scope)[3])
+    scope.abort()
+    scope.write_control(0, 2)
+    self.assertEqual((slow, max(self.capture(scope)[3])), (60, 180))
+
+
 class TestApp(unittest.TestCase):
 
   def setUp(self):
@@ -128,7 +159,7 @@ class TestApp(unittest.TestCase):
 
   def test_ports_include_sim(self):
     ports = [p["device"] for p in self.http.get("/api/ports").json()]
-    self.assertEqual(ports[0], "sim")
+    self.assertEqual(ports[:2], ["sim", "sim-fsm"])
     self.assertNotIn("sim-v1", ports) # the old-core stand-in is for tests, not for the list
 
   def test_commands_need_a_connection(self):

@@ -18,6 +18,7 @@ from protocol import ChannelTrigger, Mode, ScopeClient, ScopeError, ScopeState, 
 from sim_device import SimDevice
 
 SIM_PORT = "sim"
+SIM_STATES_PORT = "sim-fsm" # the simulated device with state machines on its channels, for named values
 SIM_OLD_PORT = "sim-v1" # the simulated device as a core built before the controls existed; not listed, for tests
 POLL_SECONDS = 0.1
 
@@ -35,7 +36,8 @@ class NotConnected(Exception):
 
 def list_ports():
   from serial.tools import list_ports as lp
-  ports = [{"device": SIM_PORT, "description": "Simulated device (no hardware)"}]
+  ports = [{"device": SIM_PORT, "description": "Simulated device (no hardware)"},
+           {"device": SIM_STATES_PORT, "description": "Simulated device with state machines (no hardware)"}]
   ports += [{"device": p.device, "description": p.description} for p in sorted(lp.comports())]
   return ports
 
@@ -59,8 +61,9 @@ class ScopeSession:
   def connect(self, port, baudrate, timeout=1.0):
     with self._lock:
       self._close()
-      if port in (SIM_PORT, SIM_OLD_PORT):
-        client = ScopeClient(SimDevice(protocol_version=1 if port == SIM_OLD_PORT else 2), timeout)
+      if port in (SIM_PORT, SIM_STATES_PORT, SIM_OLD_PORT):
+        device = SimDevice(protocol_version=1 if port == SIM_OLD_PORT else 2, signals="states" if port == SIM_STATES_PORT else "basic")
+        client = ScopeClient(device, timeout)
       else:
         client = ScopeClient.open(port, baudrate, timeout)
       try:

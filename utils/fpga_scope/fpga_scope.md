@@ -30,7 +30,7 @@ It can also write to the design: eight **controls**, shown in the GUI as buttons
 | Document | What it is for |
 |----------|----------------|
 | [Integration guide](docs/integration.md) | Step by step: add the scope to a design, pick the parameters, assign the pins, first contact |
-| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names), zoom, cursors, controls, saving the setup to a file, recording a stream |
+| [Using the GUI](docs/gui.md) | Reading values, per-channel settings (signed, gain, offset, names, state names and bit fields), zoom, cursors, controls, saving the setup to a file, recording a stream |
 | [Protocol](docs/protocol.md) | The UART wire protocol between the computer and the FPGA |
 | [Status and roadmap](docs/TODO.md) | What is done, what is tested, design decisions, what is left |
 

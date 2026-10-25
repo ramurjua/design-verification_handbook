@@ -1,0 +1,22 @@
+{
+  "channels": {
+    "0": { "name": "tick" },
+    "1": { "name": "sensor", "style": "bus",
+           "values": { "0": "IDLE", "1": "RESET", "2": "WAIT", "3": "READ" } },
+    "2": { "name": "state", "fields": [
+      { "name": "card", "bits": [7, 4],
+        "values": { "0": "IDLE", "1": "RAMP", "2": "RUN", "3": "BRAKE", "4": "FAULT" } },
+      { "name": "fsm", "bits": [3, 0],
+        "values": { "0": "START_UP", "1": "MOTOR_AWAKE", "2": "READY", "3": "RAMP", "4": "RUN", "5": "BRAKE",
+                    "8": "FAULT_IMU_ID", "9": "FAULT_BAR_ID", "10": "FAULT_MOTOR_TELEMETRY",
+                    "11": "FAULT_MOTOR_HW", "12": "FAULT_MOTOR_DISAGREE" } }
+    ] },
+    "3": { "name": "speed", "unit": "rpm", "gain": 10, "range": "auto" }
+  },
+  "controls": {
+    "0": { "name": "motor", "kind": "select",
+           "values": { "0": "MOTOR 0", "1": "MOTOR 1", "2": "MOTOR 2", "3": "MOTOR 3" } }
+  },
+  "window": { "pre": 100, "post": 900, "decimation": 2 },
+  "stream": { "decimation": 2 }
+}

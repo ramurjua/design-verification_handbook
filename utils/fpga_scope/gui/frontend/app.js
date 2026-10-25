@@ -32,7 +32,7 @@ const CHANNEL_FIELDS = [
 /* settings of a control: [key, label, kind, options, the kinds of control it applies to (all if not given)] */
 const CONTROL_FIELDS = [
   ["name", "Name", "text"],
-  ["kind", "Shown as", "select", [["off", "Not used"], ["button", "Button"], ["toggle", "Switch (on / off)"], ["value", "Value"]]],
+  ["kind", "Shown as", "select", [["off", "Not used"], ["button", "Button"], ["toggle", "Switch (on / off)"], ["value", "Value"], ["select", "Drop-down list"]]],
   ["value", "Value a press writes", "raw", null, ["button"]],
   ["unit", "Unit", "text", null, ["value"]],
   ["signed", "Signed (two's complement)", "check", null, ["value"]],
@@ -41,8 +41,9 @@ const CONTROL_FIELDS = [
   ["offset", "Offset", "number", null, ["value"]],
   ["min", "Smallest allowed", "limit", null, ["value"]],
   ["max", "Largest allowed", "limit", null, ["value"]],
+  ["values", "Entries", "list", null, ["select"]],
 ];
-const CONTROL_KIND_NOTES = { off: "not used", button: "button", toggle: "switch", value: "value" };
+const CONTROL_KIND_NOTES = { off: "not used", button: "button", toggle: "switch", value: "value", select: "drop-down" };
 
 const app = {
   info: null, // what CMD_GET_INFO reported, null while disconnected
@@ -331,7 +332,10 @@ function buildChannelRows(force = false) {
       });
       fields.append(caption, input);
     }
-    details.append(summary, fields);
+    const names = document.createElement("p"); // named values and bit fields only come from a configuration file
+    names.className = "hint";
+    names.id = `ch${c}-names`;
+    details.append(summary, fields, names);
     box.append(details);
   });
   refreshChannelRows();
@@ -368,8 +372,26 @@ function refreshChannelRows() {
       input.hidden = input.labels[0].hidden = manualOnly;
     }
     $(`ch${c}-visible`).disabled = !own;
+    $(`ch${c}-names`).textContent = own ? namesNote(own) : "";
+    $(`ch${c}-names`).hidden = !$(`ch${c}-names`).textContent;
     if ($(`trig-name-${c}`)) $(`trig-name-${c}`).textContent = cfg.name;
   });
+}
+
+/* what a signal has of named values and bit fields, which are only set in a configuration file */
+function namesNote(signal) {
+  const { cfg, width } = signal;
+  const count = (values) => Object.keys(values).length;
+  const parts = [];
+  if (M.hasNames(cfg)) parts.push(`Named values: ${count(cfg.values)}.`);
+  const fields = cfg.fields.filter((f) => f.bits);
+  if (fields.length) {
+    const range = ([msb, lsb]) => (msb === lsb ? `[${msb}]` : `[${msb}:${lsb}]`);
+    parts.push(`Fields, each in a lane of its own: ${fields.map((f) => `${f.name} ${range(f.bits)}${count(f.values) ? ` (${count(f.values)} names)` : ""}`).join(", ")}.`);
+    const outside = fields.filter((f) => f.bits[0] >= width);
+    if (outside.length) parts.push(`${outside.map((f) => f.name).join(", ")} go${outside.length === 1 ? "es" : ""} above the signal's ${width} bits, which read as 0.`);
+  }
+  return parts.length ? `${parts.join(" ")} Set in the configuration file.` : "";
 }
 
 /* ---- controls: values written to the FPGA ---- */
@@ -413,6 +435,12 @@ function buildControlRows() {
         if (kind === "text") input.maxLength = key === "name" ? 24 : 12;
         if (kind === "raw") input.title = "A whole number from 0 to 4294967295, decimal or 0x...";
         if (kind === "limit") input.placeholder = "none";
+        if (kind === "list") {
+          input.type = "text";
+          input.value = M.valueListText(cfg.values);
+          input.placeholder = "0=MOTOR 0; 1=MOTOR 1";
+          input.title = "value=name pairs separated by ;, the value a whole number (decimal or 0x...) that picking the name writes";
+        }
       }
       input.id = id;
       input.addEventListener("input", () => {
@@ -422,6 +450,11 @@ function buildControlRows() {
         else if (kind === "select") setControl(i, key, input.value);
         else if (kind === "int") setControl(i, key, Math.min(M.MAX_SIGNAL_BITS, Math.max(0, parseInt(typed, 10) || 0)));
         else if (kind === "limit") { if (typed === "" || Number.isFinite(Number(typed))) setControl(i, key, typed === "" ? null : Number(typed)); }
+        else if (kind === "list") { // applied once it reads as a list; a half-typed entry changes nothing
+          const values = M.parseValueList(typed);
+          input.setCustomValidity(values ? "" : "Write value=name pairs separated by ;");
+          if (values) setControl(i, key, values);
+        }
         else if (kind === "raw") { if (typed !== "" && Number.isInteger(Number(typed)) && Number(typed) >= 0 && Number(typed) <= M.MAX_CONTROL_RAW) setControl(i, key, Number(typed)); }
         else if (Number.isFinite(parseFloat(typed)) && !(key === "gain" && parseFloat(typed) === 0)) setControl(i, key, parseFloat(typed)); // a half-typed number changes nothing
       });
@@ -444,7 +477,8 @@ function setControl(i, key, value) {
 function refreshControlRows() {
   app.config.controls.forEach((cfg, i) => {
     $(`ctl-name-${i}`).textContent = cfg.name;
-    $(`ctl-note-${i}`).textContent = `control ${i}, ${CONTROL_KIND_NOTES[cfg.kind]}`;
+    const listed = cfg.kind === "select" ? `, ${Object.keys(cfg.values).length} entries` : "";
+    $(`ctl-note-${i}`).textContent = `control ${i}, ${CONTROL_KIND_NOTES[cfg.kind]}${listed}`;
     $(`ctl-${i}`).classList.toggle("unused", cfg.kind === "off");
     for (const [key, , , , kinds] of CONTROL_FIELDS) {
       const input = $(`ctl${i}-${key}`);
@@ -455,6 +489,10 @@ function refreshControlRows() {
 
 /* a control's value in its own units, as text */
 function controlText(cfg, raw) {
+  if (cfg.kind === "select") {
+    const name = M.valueName(cfg, raw);
+    return name === undefined ? String(raw) : name;
+  }
   return M.formatValue(Number(M.controlShown(cfg, raw).toPrecision(9))) + (cfg.unit ? ` ${cfg.unit}` : "");
 }
 
@@ -493,6 +531,23 @@ function renderControls() {
       item.append(label, input);
       if (cfg.unit) item.append(cfg.unit);
       item.append(send, now);
+    } else if (cfg.kind === "select") {
+      // shows what the FPGA holds, like a switch; picking an entry writes its value at once
+      const label = document.createElement("label");
+      label.htmlFor = `ctl-sel-${i}`;
+      label.textContent = cfg.name;
+      const list = document.createElement("select");
+      list.id = `ctl-sel-${i}`;
+      const known = raw !== null && M.valueName(cfg, raw) !== undefined;
+      if (!known) { // unknown, or a value the list does not have: say so rather than show a wrong entry
+        const placeholder = new Option(raw === null ? "?" : `${raw} (not in the list)`, "", true, true);
+        placeholder.disabled = true;
+        list.add(placeholder);
+      }
+      for (const [value, text] of Object.entries(cfg.values)) list.add(new Option(text, value));
+      if (known) list.value = String(raw);
+      list.addEventListener("change", () => { if (list.value !== "") writeControl(i, Number(list.value)); });
+      item.append(label, list);
     } else {
       const button = document.createElement("button");
       button.type = "button";
@@ -509,7 +564,8 @@ function renderControls() {
       }
       item.append(button);
     }
-    for (const input of item.querySelectorAll("button, input")) input.disabled = !controlsUsable();
+    for (const input of item.querySelectorAll("button, input, select")) input.disabled = !controlsUsable();
+    if (cfg.kind === "select" && !Object.keys(cfg.values).length) item.querySelector("select").disabled = true; // nothing to pick yet
     bar.append(item);
   }
   if (app.info && !app.info.num_controls && used.length) {
@@ -530,7 +586,7 @@ async function writeControl(i, raw) {
   if (!app.controls) app.controls = new Array(M.MAX_CONTROLS).fill(0);
   app.controls[i] = reply.value;
   const cfg = app.config.controls[i];
-  $("controls-status").textContent = `${cfg.name}: wrote ${cfg.kind === "value" ? controlText(cfg, reply.value) : reply.value} to control ${i}.`;
+  $("controls-status").textContent = `${cfg.name}: wrote ${cfg.kind === "value" || cfg.kind === "select" ? controlText(cfg, reply.value) : reply.value} to control ${i}.`;
   renderControls();
 }
 
@@ -736,9 +792,11 @@ function record(msg) {
 /* every signal as shown, like csvText(), plus the burst each sample came in: bursts are not contiguous in time */
 function recordingCsv() {
   const rec = app.recording;
-  const columns = M.buildSignals(rec.widths, app.config.channels).map((s) => (
-    { name: M.label(s.cfg), values: M.scaleValues(M.rawValues(s, rec.widths, rec.channels), s.width, s.cfg) }));
-  return M.csvText([{ name: "burst", values: rec.burst }].concat(columns));
+  const signals = M.buildSignals(rec.widths, app.config.channels).map((s) => {
+    const raw = M.rawValues(s, rec.widths, rec.channels);
+    return { ...s, raw, values: M.scaleValues(raw, s.width, s.cfg) };
+  });
+  return M.csvText([{ name: "burst", values: rec.burst }].concat(M.csvColumns(signals)));
 }
 
 function stopRecording() {
@@ -775,8 +833,7 @@ function download(text, name, type) {
 function csvText() {
   const data = currentData();
   if (!data) return "";
-  const columns = derive(data).signals.map((s) => ({ name: M.label(s.cfg), values: s.values }));
-  return M.csvText(columns, app.tab === "scope" ? { pre: data.pre, period: data.decimation / data.clk_freq_hz } : {});
+  return M.csvText(M.csvColumns(derive(data).signals), app.tab === "scope" ? { pre: data.pre, period: data.decimation / data.clk_freq_hz } : {});
 }
 
 function downloadCsv() {
@@ -1075,6 +1132,7 @@ function drawTrace(ctx, signal, lane, x, from, to, pxPerSample) {
 
 /* the value a bus band is labelled with */
 function busText(signal, raw) {
+  if (M.hasNames(signal.cfg)) return M.namedText(raw, signal.width, signal.cfg);
   if (signal.cfg.format === "dec") return M.formatValue(M.scaleValue(raw, signal.width, signal.cfg));
   return M.formatRaw(raw, signal.width, signal.cfg.format);
 }
@@ -1175,9 +1233,14 @@ function positionText(i) {
   return i === n - 1 ? "newest sample" : `${n - 1 - i} samples ago`;
 }
 
-/* a signal's value at sample i as the readouts show it: scaled, with its unit, then the raw value */
+/* a signal's value at sample i as the readouts show it: scaled, with its unit, then the raw value.
+   One with named values shows the name, and the raw value alone when it has none. */
 function valueText(signal, i) {
   const { cfg, width } = signal;
+  if (M.hasNames(cfg)) {
+    const name = M.valueName(cfg, signal.raw[i]), raw = M.formatRaw(signal.raw[i], width, cfg.format);
+    return name === undefined ? raw : `${name} (${raw})`;
+  }
   let text = M.formatValue(signal.values[i]) + (cfg.unit ? ` ${cfg.unit}` : "");
   if (width > 1 && !(cfg.format === "dec" && M.isIdentity(width, cfg))) text += ` (${M.formatRaw(signal.raw[i], width, cfg.format)})`;
   return text;
@@ -1205,7 +1268,7 @@ function drawHover(ctx, ink) {
   tooltip.append(head);
   for (const lane of lanes) {
     for (const s of lane.group.members) {
-      if (s.parent) continue; // a bit lane: its signal is already in the readout
+      if (s.bit !== undefined) continue; // a bit lane: its signal is already in the readout
       const py = lane.y(s.values[i]);
       if (s.cfg.style !== "bus" && py >= lane.top - 3 && py <= lane.top + lane.height + 3) {
         ctx.beginPath();
@@ -1272,17 +1335,18 @@ function updateMeasurements() {
   body.replaceChildren();
   for (const lane of lanes) {
     for (const s of lane.group.members) {
-      if (s.parent) continue;
+      if (s.bit !== undefined) continue; // a bit lane: its signal has a row
       const st = M.stats(s.values, first, last);
+      const named = M.hasNames(s.cfg); // a state: min, max and mean of it mean nothing
       const row = body.insertRow();
       const name = row.insertCell();
       const swatch = document.createElement("span");
       swatch.className = "swatch";
       swatch.style.background = `var(--series-${s.base + 1})`;
       name.append(swatch, M.label(s.cfg));
-      const cells = [number(st.min), number(st.max), number(st.mean), number(st.pkpk),
+      const cells = [...(named ? ["—", "—", "—", "—"] : [number(st.min), number(st.max), number(st.mean), number(st.pkpk)]),
                      a === null ? "" : valueText(s, a), b === null ? "" : valueText(s, b),
-                     a === null || b === null ? "" : number(s.values[b] - s.values[a])];
+                     a === null || b === null ? "" : named ? "—" : number(s.values[b] - s.values[a])];
       for (const text of cells) row.insertCell().textContent = text;
     }
   }

@@ -601,6 +601,77 @@
     eq(q("ctl-now-2").textContent, "now -10 rpm", "the core's values were not touched by loading files");
   });
 
+  await step("named values and bit fields reach the lanes, readouts, statistics and CSV; a drop-down control", async () => {
+    const kept = JSON.stringify(js("collectConfig()"));
+    js("loadConfigText")(JSON.stringify({
+      channels: {
+        2: { name: "mode", style: "bus", values: { 0: "IDLE", 1: "RESET", "0x2": "READ" } },
+        3: { name: "state", fields: [{ name: "hi", bits: [7, 4], values: { 0: "ZERO" } }, { name: "lo", bits: [3, 0] }, { name: "far", bits: [9, 8] }] },
+      },
+      controls: { 6: { name: "mode_sel", kind: "select", values: { 0: "OFF", 3: "AUTO", 5: "MANUAL" } } },
+    }), "names.json");
+    eq(q("cfg-status").textContent, "Loaded names.json.");
+    await capture();
+
+    eq(laneNames(), ["ch0", "ch1", "mode", "state.hi", "state.lo", "state.far"], "the fields take the place of their channel");
+    const raw2 = js("app.capture.channels[2]"), raw3 = js("app.capture.channels[3]");
+    eq(lanes()[3].group.host.raw, raw3.map((v) => v >> 4));
+    eq(lanes()[4].group.host.raw, raw3.map((v) => v & 15));
+    eq(lanes()[5].group.host.raw, raw3.map(() => 0), "bits above the channel read as 0");
+    eq([js("busText(derive(currentData()).signals[2], 1)"), js("busText(derive(currentData()).signals[2], 9)")], ["RESET", "0x9"], "bus band: the name, or the number");
+    eq(js("busText(layout.lanes[3].group.host, 0)"), "ZERO");
+    ok(painted(), "drawn");
+
+    ok(/^Named values: 3\. Set in the configuration file\.$/.test(q("ch2-names").textContent), q("ch2-names").textContent);
+    ok(/hi \[7:4\] \(1 names\), lo \[3:0\], far \[9:8\]\. far goes above the signal's 8 bits/.test(q("ch3-names").textContent), q("ch3-names").textContent);
+    ok(q("ch0-names").hidden, "no note on a channel without names");
+
+    const hex = (v) => "0x" + v.toString(16).toUpperCase();
+    const mode = (v) => (v <= 2 ? `${["IDLE", "RESET", "READ"][v]} (${hex(v)})` : hex(v));
+    pointer("pointermove", atSample(10));
+    const tip = q("tooltip").textContent;
+    ok(tip.includes(mode(raw2[10])) && tip.includes("state.lo") && !/\bstate\b(?!\.)/.test(tip), "hover readout: " + tip);
+
+    click(atSample(5));
+    const rows = [...q("measure").tBodies[0].rows].map((r) => [...r.cells].map((c) => c.textContent));
+    eq(rows.map((r) => r[0]), ["ch0", "ch1", "mode", "state.hi", "state.lo", "state.far"]);
+    eq(rows[2].slice(1, 5), ["—", "—", "—", "—"], "no statistics of a state");
+    eq(rows[2][5], mode(raw2[5]), "the value at A by its name");
+    ok(rows[4][1] !== "—", "a field without names has statistics");
+    q("cursors-clear").click();
+
+    const csv = js("csvText()").split("\n");
+    eq(csv[0], "sample,time_s,ch0,ch1,mode,mode:name,state,state.hi,state.hi:name,state.lo,state.far");
+    const first = csv[1].split(",");
+    eq(first.slice(4, 6), [String(raw2[0]), raw2[0] <= 2 ? ["IDLE", "RESET", "READ"][raw2[0]] : ""]);
+    eq(first.slice(6, 8).concat(first.slice(9)), [raw3[0], raw3[0] >> 4, raw3[0] & 15, 0].map(String));
+
+    // a drop-down control: picking an entry writes it at once, and the list shows what the core holds
+    const entries = () => [...q("ctl-sel-6").options].map((o) => o.text);
+    eq(entries(), ["OFF", "AUTO", "MANUAL"]);
+    eq(q("ctl-sel-6").value, "0", "the core holds 0, which is OFF");
+    ok(q("ctl-note-6").textContent.endsWith("drop-down, 3 entries"), q("ctl-note-6").textContent);
+    ok(!q("ctl6-values").hidden && q("ctl6-gain").hidden, "a list has entries, not scaling");
+    eq(q("ctl6-values").value, "0=OFF; 3=AUTO; 5=MANUAL");
+    set("ctl-sel-6", "5");
+    await until(() => js("app.controls[6]") === 5, "MANUAL written as 5");
+    eq((await coreControls())[6], 5);
+    eq(q("ctl-sel-6").value, "5");
+    eq(q("controls-status").textContent, "mode_sel: wrote MANUAL to control 6.");
+
+    set("ctl6-values", "0=OFF; 0x3=AUTO; 5=MANUAL; 7=TEST");
+    eq(entries(), ["OFF", "AUTO", "MANUAL", "TEST"], "entries typed in the settings");
+    set("ctl6-values", "0=OFF; 3");
+    eq(js("app.config.controls[6].values"), { 0: "OFF", 3: "AUTO", 5: "MANUAL", 7: "TEST" }, "a half-typed list changes nothing");
+    set("ctl6-values", "0=OFF; 3=AUTO");
+    eq([entries()[0], q("ctl-sel-6").value], ["5 (not in the list)", ""], "a value the list does not have is shown as such");
+    set("ctl-sel-6", "0");
+    await until(() => js("app.controls[6]") === 0, "OFF written back");
+
+    js("loadConfigText")(kept, "kept.json");
+    eq(js("app.config.channels[3].fields"), [], "loading another configuration drops them");
+  });
+
   await step("a core built before the controls shows them disabled", async () => {
     q("connect").click();
     await until(() => q("state-label").textContent === "Disconnected", "the disconnect");

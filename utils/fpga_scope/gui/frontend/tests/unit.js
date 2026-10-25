@@ -325,7 +325,7 @@
       stream: { decimation: 5, batch: 20000, window: 500 },
     });
     eq(config.channels[0], { name: "gyro_x", unit: "dps", visible: false, signed: true, frac: 4, gain: 0.5, offset: -3, format: "bin",
-                             range: "manual", min: -10, max: 10, style: "line", height: "large", bits: true, high: 1, lane: 2 });
+                             range: "manual", min: -10, max: 10, style: "line", height: "large", bits: true, high: 1, lane: 2, values: {}, fields: [] });
     eq(config.channels[1], M.defaultChannel(1), "a channel cannot be its own upper bits, and the rest was junk");
     eq(config.trigger, { ...M.defaultConfig().trigger, channels: [{ type: "fall", bit: 3 }, ...M.defaultConfig().trigger.channels.slice(1)], combine: "or" });
     eq(config.window, { pre: 7, post: 300, decimation: 1 });
@@ -360,9 +360,122 @@
        ["channels.0.gain", "channels.0.range", "channels.0.colour", "window.pre", "extra", "trigger.channels.9"]);
   });
 
+  /* ---- named values and bit fields ---- */
+
+  /* the Drone motor case: two state machines packed in one 8-bit channel */
+  const MOTOR_STATE = {
+    name: "state", style: "bus",
+    fields: [
+      { name: "card", bits: [7, 4], values: { 0: "IDLE", 1: "RAMP", 2: "RUN", 3: "BRAKE", 4: "FAULT" } },
+      { name: "fsm", bits: [3, 0], values: { 0: "START_UP", 2: "READY", "0xA": "FAULT_MOTOR_TELEMETRY" } },
+    ],
+  };
+
+  test("no named values or fields by default, and old configurations keep working", () => {
+    eq(M.defaultChannel(0).values, {});
+    eq(M.defaultChannel(0).fields, []);
+    eq(M.defaultControl(0).values, {});
+    eq(M.configProblems({ channels: { 4: { name: "state", style: "bus", format: "bin" } } }), []);
+  });
+
+  test("named values are keyed by the raw value, decimal or hex", () => {
+    const cfg = M.normalizeConfig({ channels: { 3: { values: { 0: "IDLE", "0x1": "RESET", " 10 ": "READ" } } } }).channels[3];
+    eq(cfg.values, { 0: "IDLE", 1: "RESET", 10: "READ" });
+    eq(M.valueName(cfg, 10), "READ");
+    eq(M.valueName(cfg, 5), undefined);
+    eq(M.namedText(1, 4, cfg), "RESET");
+    eq(M.namedText(5, 4, cfg), "0x5", "a value without a name is the number, in the raw format");
+    eq(M.namedText(5, 4, { ...cfg, format: "bin" }), "0b0101");
+    ok(M.hasNames(cfg) && !M.hasNames(M.defaultChannel(0)));
+  });
+
+  test("unusable named values are left out and reported", () => {
+    const raw = { channels: { 3: { values: { "-1": "NEG", x: "X", 2: 7, 3: "", 4: "a".repeat(30), 5: "OK" } } } };
+    const cfg = M.normalizeConfig(raw).channels[3];
+    eq(cfg.values, { 4: "a".repeat(24), 5: "OK" });
+    eq(M.configProblems(raw), ["channels.3.values.2", "channels.3.values.3", "channels.3.values.4", "channels.3.values.-1", "channels.3.values.x"]);
+    eq(M.normalizeConfig({ channels: { 3: { values: ["A", "B"] } } }).channels[3].values, {}, "a list is not a map");
+  });
+
+  test("bit fields: [msb, lsb] or one bit, and the ones without usable bits are kept but not drawn", () => {
+    const raw = { channels: { 6: { fields: [{ name: "card", bits: [7, 4] }, { bits: 3 }, { name: "bad", bits: [2, 5] }, { name: "none" }] } } };
+    const cfg = M.normalizeConfig(raw).channels[6];
+    eq(cfg.fields, [{ name: "card", bits: [7, 4], values: {} }, { name: "f1", bits: [3, 3], values: {} },
+                    { name: "bad", bits: null, values: {} }, { name: "none", bits: null, values: {} }]);
+    eq(M.configProblems(raw), ["channels.6.fields.2.bits", "channels.6.fields.3.bits"]);
+    ok(M.hasFields(cfg) && !M.hasFields({ fields: [{ bits: null }] }));
+    eq(M.normalizeConfig({ channels: { 0: { fields: Array.from({ length: 10 }, () => ({ bits: 0 })) } } }).channels[0].fields.length, M.MAX_FIELDS);
+    eq(M.configProblems({ channels: [{ fields: [{ bits: 32 }] }] }), ["channels.0.fields.0.bits"]);
+  });
+
+  test("named values and fields survive being saved and loaded, with nothing to report", () => {
+    const config = M.normalizeConfig({ channels: { 6: MOTOR_STATE }, controls: { 0: { kind: "value", values: { 0: "OFF", 3: "AUTO" } } } });
+    eq(M.normalizeConfig(JSON.parse(JSON.stringify(config))), config);
+    eq(M.configProblems({ channels: { 6: MOTOR_STATE } }), []);
+    eq(M.configProblems(config), []);
+    eq(config.controls[0].values, { 0: "OFF", 3: "AUTO" });
+  });
+
+  test("a drop-down control: a kind of its own, with entries typed as value=name pairs", () => {
+    ok(M.CONTROL_KINDS.includes("select"));
+    const cfg = M.normalizeConfig({ controls: { 2: { name: "motor", kind: "select", values: { 0: "MOTOR 0", 1: "MOTOR 1" } } } }).controls[2];
+    eq([cfg.kind, cfg.values], ["select", { 0: "MOTOR 0", 1: "MOTOR 1" }]);
+    eq(M.valueListText(cfg.values), "0=MOTOR 0; 1=MOTOR 1");
+    eq(M.parseValueList("0=MOTOR 0; 1=MOTOR 1"), cfg.values, "and back");
+    eq(M.parseValueList(" 0x10 = A ; ; 2=B=C; "), { 2: "B=C", 16: "A" }, "spaces, hex, an empty entry, = in a name");
+    eq(M.parseValueList(""), {});
+    for (const bad of ["0", "x=A", "-1=A", "1=", "1=A; 2"]) eq(M.parseValueList(bad), null, bad);
+  });
+
+  const motorSignals = (samples) => {
+    const cfgs = M.normalizeConfig({ channels: { 6: MOTOR_STATE } }).channels;
+    return M.buildSignals([1, 1, 1, 1, 1, 1, 8], cfgs).map((s) => {
+      const raw = M.rawValues(s, [1, 1, 1, 1, 1, 1, 8], [0, 1, 2, 3, 4, 5].map(() => samples.map(() => 0)).concat([samples]));
+      return { ...s, raw, values: M.scaleValues(raw, s.width, s.cfg) };
+    });
+  };
+
+  test("a field is a bus of its own bits, with its names", () => {
+    const [card, fsm] = M.fieldSignals(motorSignals([0x00, 0x22, 0x4A])[6]);
+    eq([card.cfg.name, fsm.cfg.name], ["state.card", "state.fsm"]);
+    eq(card.raw, [0, 2, 4]);
+    eq(fsm.raw, [0, 2, 10]);
+    eq([card.width, card.cfg.style, card.field, card.outside], [4, "bus", 0, false]);
+    eq(card.raw.map((v) => M.namedText(v, card.width, card.cfg)), ["IDLE", "RUN", "FAULT"]);
+    eq(fsm.raw.map((v) => M.namedText(v, fsm.width, fsm.cfg)), ["START_UP", "READY", "FAULT_MOTOR_TELEMETRY"]);
+    eq(M.namedText(7, 4, fsm.cfg), "0x7");
+  });
+
+  test("a signal with fields is drawn as its fields, in its place", () => {
+    const lanes = M.laneGroups(motorSignals([0x22]));
+    eq(lanes.map((g) => g.host.cfg.name), ["ch0", "ch1", "ch2", "ch3", "ch4", "ch5", "state.card", "state.fsm"]);
+    ok(lanes.slice(6).every((g) => g.members.length === 1 && M.laneWeight(g) === M.HEIGHTS.small), "one small lane each");
+    const hidden = M.laneGroups(motorSignals([0x22]).map((s) => (s.base === 6 ? { ...s, cfg: { ...s.cfg, visible: false } } : s)));
+    eq(hidden.length, 6, "hiding the channel hides its fields");
+    const sharing = M.laneGroups(motorSignals([0x22]).map((s) => (s.base === 0 ? { ...s, cfg: { ...s.cfg, lane: 6 } } : s)));
+    eq(sharing.map((g) => g.host.cfg.name)[0], "ch0", "a lane cannot be shared with a signal shown as fields");
+  });
+
+  test("a field above the signal's width reads as 0", () => {
+    const signal = { base: 0, parts: [0], width: 4, raw: [0xF], cfg: M.normalizeConfig({ channels: [{ fields: [{ bits: [5, 2] }] }] }).channels[0] };
+    const [field] = M.fieldSignals(signal);
+    eq(field.raw, [3]);
+    ok(field.outside);
+  });
+
+  test("the CSV has a name column next to a named value, and each field raw and named", () => {
+    const [barometer] = M.buildSignals([4], M.normalizeConfig({ channels: [{ name: "baro", values: { 0: "IDLE", 1: "READ" } }] }).channels)
+      .map((s) => ({ ...s, raw: [0, 1, 5], values: [0, 1, 5] }));
+    eq(M.csvColumns([barometer]).map((c) => [c.name, c.values]), [["baro", [0, 1, 5]], ["baro:name", ["IDLE", "READ", ""]]]);
+    const columns = M.csvColumns(motorSignals([0x22, 0x07]).slice(6));
+    eq(columns.map((c) => c.name), ["state", "state.card", "state.card:name", "state.fsm", "state.fsm:name"]);
+    eq(M.csvText(columns).split("\n")[2], "1,7,0,IDLE,7,", "the packed value is kept as it was");
+    eq(M.csvText([{ name: "s:name", values: ["A,B"] }]), 'sample,s:name\n0,"A,B"\n', "a name is quoted when needed");
+  });
+
   /* ---- controls ---- */
 
-  const control = (fields = {}) => ({ ...M.defaultControl(0), ...fields });
+  const control =(fields = {}) => ({ ...M.defaultControl(0), ...fields });
 
   test("no control is in use by default", () => {
     const config = M.defaultConfig();
@@ -379,7 +492,7 @@
       { kind: "toggle", value: 1.5 },
     ] });
     eq(config.controls[0], { ...M.defaultControl(0), name: "run", kind: "button", value: 0xFFFFFFFF });
-    eq(config.controls[1], { name: "speed", kind: "value", value: 1, unit: "rpm", signed: true, frac: 2, gain: 0.5, offset: 10, min: -100, max: 100 });
+    eq(config.controls[1], { name: "speed", kind: "value", value: 1, unit: "rpm", signed: true, frac: 2, gain: 0.5, offset: 10, min: -100, max: 100, values: {} });
     eq(config.controls[2], M.defaultControl(2), "all of it was junk");
     eq(config.controls[3], { ...M.defaultControl(3), kind: "button" }, "a value over 32 bits");
     eq(config.controls[4], { ...M.defaultControl(4), kind: "toggle" }, "a value that is not whole");

@@ -3,13 +3,15 @@
 A SimDevice stands in for the serial port handed to protocol.ScopeClient: frames
 written to it are answered the way scope_cmd_if.v answers them, with the reply
 bytes released at UART speed. The channels carry synthetic signals (square
-waves on 1-bit channels, a ramp or a sine on wider ones).
+waves on 1-bit channels, a ramp or a sine on wider ones), or, with
+signals="states" (port sim-fsm), state machines to look at with named values
+and bit fields; gui/examples/sim-fsm.json is a configuration for it.
 
 This is a behavioural stand-in for GUI development, NOT a reference model of
 the RTL: a capture resolves in one go at CMD_ARM time and a stream burst cannot
 be interrupted half-way, so a control write is never dropped the way the RTL
-drops one during a burst. The controls are stored and read back, nothing more:
-they do not act on the synthetic signals. Passing against it says nothing
+drops one during a burst. The controls are stored and read back; only with
+signals="states" does one act on a signal (control 0 scales the motor speed). Passing against it says nothing
 about real hardware.
 """
 
@@ -25,11 +27,32 @@ STATUS_ERROR = 0x01
 TRIGGER_SEARCH_CYCLES = 200_000 # how far ahead CMD_ARM looks for the trigger condition
 CAPTURE_SECONDS = 0.4 # how long a capture stays ARMED before reporting DONE, so the GUI has something to show
 
+STATES_WIDTHS = (1, 4, 8, 8)
+
+# signals="states": one run of a motor, as (steps, system FSM state, motor card state) on ch2,
+# the FSM in bits [3:0] and the card in [7:4] (the encoding of gui/examples/sim-fsm.json)
+MOTOR_RUN = (
+  (30, 0, 0),   # START_UP, card IDLE
+  (30, 1, 0),   # MOTOR_AWAKE
+  (40, 2, 0),   # READY
+  (50, 3, 1),   # RAMP, card RAMP
+  (130, 4, 2),  # RUN, card RUN
+  (50, 5, 3),   # BRAKE, card BRAKE
+  (40, 2, 0),   # READY
+  (30, 10, 4),  # FAULT_MOTOR_TELEMETRY, card FAULT
+)
+MOTOR_RUN_STEPS = sum(steps for steps, _, _ in MOTOR_RUN)
+# ch1: a sensor driver, (steps, state); 6 has no name in the example configuration, to show how that looks
+SENSOR_CYCLE = ((40, 0), (10, 1), (25, 2), (15, 3), (40, 0), (10, 1), (25, 2), (15, 3), (12, 6))
+SENSOR_CYCLE_STEPS = sum(steps for steps, _ in SENSOR_CYCLE)
+
 
 class SimDevice:
 
-  def __init__(self, channel_widths=(1, 1, 4, 8), buffer_depth_log2=10, clk_freq_hz=1_000_000,
-               baudrate=115200, realtime=True, protocol_version=2):
+  def __init__(self, channel_widths=None, buffer_depth_log2=10, clk_freq_hz=1_000_000,
+               baudrate=115200, realtime=True, protocol_version=2, signals="basic"):
+    if channel_widths is None: channel_widths = STATES_WIDTHS if signals == "states" else (1, 1, 4, 8)
+    self.signals = signals # "basic": squares, ramps and sines; "states": state machines (see MOTOR_RUN)
     self.protocol_version = protocol_version # 1: a core from before the controls, which ignores their opcodes
     self.controls = [0] * NUM_CONTROLS
     self.channel_widths = tuple(channel_widths)
@@ -85,6 +108,7 @@ class SimDevice:
   # Signals
 
   def _channel_value(self, channel, t):
+    if self.signals == "states": return self._state_value(channel, t)
     width = self.channel_widths[channel]
     mask = (1 << width) - 1
     if width == 1:
@@ -92,6 +116,27 @@ class SimDevice:
     if channel % 2 == 0:
       return (t // 8) & mask # ramp
     return round((math.sin(2 * math.pi * t / 200) + 1) / 2 * mask) # sine
+
+  @staticmethod
+  def _phase(table, step):
+    """the entry of a (steps, ...) table that `step` falls in, and how far into it"""
+    for entry in table:
+      if step < entry[0]: return entry, step
+      step -= entry[0]
+    return table[-1], step
+
+  def _state_value(self, channel, t):
+    step = t // 4 # a state lasts a few clocks
+    if channel == 0: return (t // 20) & 1 # square wave, as on the basic port
+    if channel == 1: return self._phase(SENSOR_CYCLE, step % SENSOR_CYCLE_STEPS)[0][1]
+    (steps, fsm, card), into = self._phase(MOTOR_RUN, step % MOTOR_RUN_STEPS)
+    if channel == 2: return card << 4 | fsm
+    # ch3: speed, up in RAMP, flat in RUN, down in BRAKE; control 0 (the motor shown) sets how fast
+    top = min(255, 60 * (1 + min(self.controls[0], 3)))
+    if fsm == 3: return top * into // steps
+    if fsm == 4: return top
+    if fsm == 5: return top - top * into // steps
+    return 0
 
   def _sample(self, t):
     word = 0

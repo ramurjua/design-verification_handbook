@@ -29,12 +29,15 @@ See "Verification record" for exactly what was tested.
 - `gui/backend/scope_cli.py` — command-line tool, used for bring-up.
 - `gui/backend/session.py`, `app.py` — connection/job handling and the
   FastAPI server (REST + WebSocket).
-- `gui/backend/sim_device.py` — simulated core selectable as port `sim`.
+- `gui/backend/sim_device.py` — simulated core selectable as port `sim`,
+  or `sim-fsm` with state machines on its channels (for named values; its
+  configuration is `gui/examples/sim-fsm.json`).
   A stand-in for GUI work, NOT a reference model of the RTL.
 - `gui/frontend/` — the web page: Scope and Stream tabs, per-channel
   trigger, hover readout, CSV download; Y axes, per-channel display
   settings, zoom, cursors, measurements, saved configurations, recording
-  of a whole stream; controls shown as buttons, switches and values
+  of a whole stream; controls shown as buttons, switches and values; named
+  values (enums) and bit fields of a channel
   (`scope_math.js` holds the maths, `tests/` its tests).
 - `docs/protocol.md`, `docs/integration.md`, `docs/gui.md`.
 
@@ -134,6 +137,16 @@ See "Verification record" for exactly what was tested.
   `test_frontend.py` runs `gui/frontend/tests/` in a headless browser: the
   display maths (`unit.html`) and the real page driven against the `sim`
   port (`e2e.html`); `test_app.py` covers the configuration store.
+- **Named values, bit fields and drop-down controls (2026-10-25),
+  verified**: `unit.html` (parsing, problems reported, field extraction,
+  lanes, CSV columns, the Drone motor ch6 layout, the entries text) and one
+  `e2e.html` step (lanes, bus text, readout, statistics, CSV, settings note,
+  a drop-down control writing to `sim` and showing what it holds); the user
+  looked at it in the GUI against `sim-fsm` with
+  `gui/examples/sim-fsm.json` and accepted it. GUI only, so no board test
+  is needed (user, 2026-10-25): a drop-down writes through the same control
+  write as the buttons tried on the board. Not used with `scope/motor.json`
+  yet.
 - **GUI display features on the board (2026-10-12)**: tried by hand by the
   user, they work. No written record of which settings were exercised.
 - **Hardware, 2026-10-10**: `example/scope_example_top.v` on the Drone
@@ -216,6 +229,11 @@ See "Verification record" for exactly what was tested.
   `protocol_version` 1 and gets its controls greyed out.
 - The full-buffer issue (see "Known issues") stays in the RTL; the hosts
   keep the window one sample short of the buffer (user, 2026-10-15).
+- Named values and bit fields (user, 2026-10-25): set only in the
+  configuration file, no editor in the GUI (the channel settings show a
+  summary); a channel with fields is drawn as its fields, without a lane of
+  its own; keys are the raw unsigned value (decimal or `0x` hex), with no
+  signed keys. No trigger on a name or field value (would need RTL).
 - Controls are named "control", not "ctrl", in the RTL: `scope_ctrl` and
   the `w_ctrl_*` wires are the capture state machine, an unrelated thing.
 
@@ -342,6 +360,32 @@ that send 16 bits, needed nothing: controls were already 32 bits.)
       see "Verification record").
 - [x] `scope_cli.py --trig` still refused bits 8-15; found on the board
       2026-10-15, now 0-15 with a test.
+
+## Named values and bit fields (implemented 2026-10-25)
+
+Asked for by the user for the Drone FPGA_SOM `MOTOR_DEBUG` image, whose ch6
+packs two state machines (motor card state in bits [7:4], system FSM in
+[3:0]). GUI only; described in `docs/gui.md` ("Named values and bit
+fields") and in the fpga-scope skill.
+
+- [x] `channels.N.values`, `channels.N.fields` (name, bits, values) and
+      `controls.N.values` in `scope_math.js`, reported by `configProblems`
+      when unusable.
+- [x] Names in the bus band, hover readout, A/B columns and CSV (`:name`
+      columns, field columns); `—` for the statistics of a named signal.
+- [x] A control kind `select`: a drop-down list of named values that writes
+      the one picked at once and shows the one the core holds; entries set in
+      the file or typed in the settings as `0=MOTOR 0; 1=MOTOR 1`.
+- [x] Port `sim-fsm` (`SimDevice(signals="states")`): a sensor FSM on ch1,
+      the motor card / system FSM packed on ch2 as on the Drone ch6, a speed
+      on ch3 scaled by control 0; `gui/examples/sim-fsm.json` names it all.
+      `test_app.TestSimStates` checks the two agree. Looked at once,
+      rendered headless (2026-10-25).
+- [x] Verified: tests plus the user's look at `sim-fsm` (2026-10-25); no
+      board test needed for a GUI-only change (user decision).
+- [ ] Not built: editing names and fields in the GUI; a trigger on
+      "field == value" (needs a comparator in `scope_trigger`, like the
+      level trigger above).
 
 ## Still to do
 
