@@ -18,6 +18,10 @@ This section contains digital design modules that have been successfully develop
 
 [LSM6DSM IMU SPI driver](imu_lsm6dsm/imu_lsm6dsm.md) for the ST LSM6DSM accelerometer and gyroscope (also LSM6DSL / LSM6DSO): identifies and configures the chip, then reads the six axes as signed 16-bit values on every tick. Uses the SPI master.
 
+### 🔹 LPS22HB barometer SPI driver and height
+
+[LPS22HB barometer SPI driver and height](baro_lps22hb/baro_lps22hb.md) for the ST LPS22HB pressure sensor: identifies and configures the chip, then reads pressure (24-bit, 4096 LSB/hPa) and temperature on every tick, plus an optional module that turns the pressure into a height above a reference taken on request, in 2 cm steps. Uses the SPI master, in the same SPI mode as the LSM6DSM IMU driver.
+
 ### 🔹 2-Level Modulator
 
 [2-Level Modulator](modulador_2lvl/modulador_2lvl.md) module that generates the PWM signals for a 3-phase 2-level power converter from three modulating signals, using a configurable triangular or sawtooth carrier.

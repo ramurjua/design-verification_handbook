@@ -14,3 +14,5 @@ utils/fpga_scope/test/scope_wide_tb.vcd
 utils/fpga_scope/test/sim_log
 modules/uart/test/uart_async_tb.vcd
 modules/imu_lsm6dsm/test/imu_lsm6dsm_tb.vcd
+modules/baro_lps22hb/test/baro_lps22hb_tb.vcd
+modules/baro_lps22hb/test/baro_height_tb.vcd

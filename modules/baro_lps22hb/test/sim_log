@@ -1,0 +1,18 @@
+VCD info: dumpfile baro_lps22hb_tb.vcd opened for output.
+VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
+[INFO] >> Setting initial conditions.
+INFO: ./baro_lps22hb_tb.sv:398: Resetting module.
+      Time: 0  Scope: baro_lps22hb_tb.reset_task
+INFO: ./baro_lps22hb_tb.sv:401: Release Reset
+      Time: 0  Scope: baro_lps22hb_tb.reset_task
+[INFO] >> Test init
+[OK]: sample 1 (burst 1) - pressure 4150273, temperature -1233
+[OK]: sample 2 (burst 3) - pressure 4150275, temperature -1231
+[OK]: sample 3 (burst 5) - pressure 4150277, temperature -1229
+[OK]: 6 burst reads, 3 with new data, 3 samples out
+[OK]: driver retried WHO_AM_I until the barometer answered
+[OK]: absent barometer flagged after 10 WHO_AM_I reads, bus quiet afterwards
+[OK]: 12 transactions, each started on a tick; the longest ended 450 cycles after it (slot 600)
+[OK]: ticks faster than a transaction flag or_overrun
+[OK] >> All checks passed
+./baro_lps22hb_tb.sv:392: $finish called at 51884 (10ns)
