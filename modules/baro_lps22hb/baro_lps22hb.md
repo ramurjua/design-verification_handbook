@@ -87,7 +87,7 @@ With the default `p_spi_prescaler = 4`, one SPI bit takes 8 `clk` cycles (3.125 
 
 One transaction: bit 0 R/W (`1` = read), bits 1-7 the register address, then data bytes, MSB first. Multi-byte transfers auto-increment the address when `CTRL_REG2.IF_ADD_INC = 1` (the chip's default).
 
-`o_spi_cs_n` is `spi_master`'s busy status inverted, so it frames each transaction on its own. While its CS is high the chip is in I2C mode and would read other devices' SPI traffic on SCK/MOSI as I2C, so the driver turns I2C off (`I2C_DIS`) right after its reset. With the chip on a shared bus, the other devices that also have an I2C mode should turn it off too. The handbook's `imu_lsm6dsm` v1.0.0 does not do this; in the project this driver comes from, the IMU driver writes `CTRL4_C.I2C_disable` for that.
+`o_spi_cs_n` is `spi_master`'s busy status inverted, so it frames each transaction on its own. While its CS is high the chip is in I2C mode and would read other devices' SPI traffic on SCK/MOSI as I2C, so the driver turns I2C off (`I2C_DIS`) right after its reset. With the chip on a shared bus, the other devices that also have an I2C mode should turn it off too. For the [LSM6DSM IMU driver](../imu_lsm6dsm/imu_lsm6dsm.md) that is `p_i2c_disable = 1` (from v1.1.0), as on the board this was tested on.
 
 ## Registers used by this driver
 

@@ -1,9 +1,10 @@
+[INFO] >> p_i2c_disable = 0
 VCD info: dumpfile imu_lsm6dsm_tb.vcd opened for output.
 VCD warning: $dumpvars: Package ($unit) is not dumpable with VCD.
 [INFO] >> Setting initial conditions.
-INFO: ./imu_lsm6dsm_tb.sv:394: Resetting module.
+INFO: ./imu_lsm6dsm_tb.sv:412: Resetting module.
       Time: 0  Scope: imu_lsm6dsm_tb.reset_task
-INFO: ./imu_lsm6dsm_tb.sv:397: Release Reset
+INFO: ./imu_lsm6dsm_tb.sv:415: Release Reset
       Time: 0  Scope: imu_lsm6dsm_tb.reset_task
 [INFO] >> Test init
 [OK]: sample 1 matches canned IMU data
@@ -14,4 +15,4 @@ INFO: ./imu_lsm6dsm_tb.sv:397: Release Reset
 [OK]: 11 transactions, each started on a tick; the longest ended 834 cycles after it (slot 1000)
 [OK]: ticks faster than a transaction flag or_overrun
 [OK] >> All checks passed
-./imu_lsm6dsm_tb.sv:388: $finish called at 46608 (10ns)
+./imu_lsm6dsm_tb.sv:406: $finish called at 46608 (10ns)

@@ -20,7 +20,7 @@ This section contains digital design modules that have been successfully develop
 
 ### 🔹 LPS22HB barometer SPI driver and height
 
-[LPS22HB barometer SPI driver and height](baro_lps22hb/baro_lps22hb.md) for the ST LPS22HB pressure sensor: identifies and configures the chip, then reads pressure (24-bit, 4096 LSB/hPa) and temperature on every tick, plus an optional module that turns the pressure into a height above a reference taken on request, in 2 cm steps. Uses the SPI master, in the same SPI mode as the LSM6DSM IMU driver.
+[LPS22HB barometer SPI driver and height](baro_lps22hb/baro_lps22hb.md) for the ST LPS22HB pressure sensor: identifies and configures the chip, then reads pressure (24-bit, 4096 LSB/hPa) and temperature on every tick, plus an optional module that turns the pressure into a height above a reference taken on request, in 2 cm steps. Uses the SPI master and can share the bus with the LSM6DSM IMU driver (with its `p_i2c_disable = 1`).
 
 ### 🔹 2-Level Modulator
 

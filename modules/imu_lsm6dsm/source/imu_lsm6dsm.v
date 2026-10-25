@@ -7,7 +7,10 @@ module imu_lsm6dsm # (
   parameter [3:0] p_odr_xl = 4'b0101, /* CTRL1_XL ODR_XL[3:0]: 0101 = 208 Hz high-performance */
   parameter [1:0] p_fs_xl  = 2'b11,   /* CTRL1_XL FS_XL[1:0]: 11 = +/-8g */
   parameter [3:0] p_odr_g  = 4'b0101, /* CTRL2_G ODR_G[3:0]: 0101 = 208 Hz high-performance */
-  parameter [1:0] p_fs_g   = 2'b10    /* CTRL2_G FS_G[1:0]: 10 = +/-1000 dps */
+  parameter [1:0] p_fs_g   = 2'b10,   /* CTRL2_G FS_G[1:0]: 10 = +/-1000 dps */
+  parameter p_i2c_disable  = 0        /* 1: also write CTRL4_C I2C_disable = 1 (SPI only), for a bus shared with
+                                         other devices: with its CS high the chip would otherwise read their
+                                         SPI traffic as I2C. 0: no CTRL4_C write */
 )(
   input clk,
   input rst,
@@ -36,11 +39,13 @@ module imu_lsm6dsm # (
 localparam lp_addr_ctrl1_xl = 7'h10;
 localparam lp_addr_ctrl2_g  = 7'h11;
 localparam lp_addr_ctrl3_c  = 7'h12;
+localparam lp_addr_ctrl4_c  = 7'h13;
 localparam lp_addr_who_am_i = 7'h0F;
 localparam lp_addr_outx_l_g = 7'h22; /* burst start: OUTX_L_G .. OUTZ_H_A (22h-2Dh) */
 
 localparam lp_ctrl3_c_reset  = 8'h01; /* SW_RESET = 1 */
 localparam lp_ctrl3_c_config = 8'h44; /* BDU = 1, IF_INC = 1 */
+localparam lp_ctrl4_c_config = 8'h04; /* I2C_disable = 1 */
 
 localparam lp_burst_bytes = 12; /* 6 gyro + 6 accel data bytes */
 localparam lp_burst_bits  = 8 + 8*lp_burst_bytes; /* command byte + 12 data bytes = 104 */
@@ -96,6 +101,8 @@ localparam st_burst_kick  = 5'd14;
 localparam st_burst_busy  = 5'd15;
 localparam st_burst_latch = 5'd16;
 localparam st_id_retry_wait = 5'd17;
+localparam st_cfg4_kick   = 5'd18; /* CTRL4_C: I2C off (only with p_i2c_disable) */
+localparam st_cfg4_busy   = 5'd19;
 
 reg [4:0] r_state;
 assign o5_debug_state = r_state;
@@ -119,6 +126,7 @@ wire w_spi_done = r_spi_seen_busy && !w_spi_busy;
 wire w_in_transaction = (r_state == st_reset_busy) || (r_state == st_id_busy) ||
                         (r_state == st_id_latch) || (r_state == st_cfg1_busy) ||
                         (r_state == st_cfg2_busy) || (r_state == st_cfg3_busy) ||
+                        (r_state == st_cfg4_busy) ||
                         (r_state == st_burst_kick) || (r_state == st_burst_busy) ||
                         (r_state == st_burst_latch);
 
@@ -201,7 +209,7 @@ always @(posedge clk) begin
         /* sticky: stop talking to a device that never identified itself as a LSM6DSM */
       end
 
-      /* Configuration: BDU, then accelerometer ODR/FS, then gyroscope ODR/FS */
+      /* Configuration: BDU, (I2C off), then accelerometer ODR/FS, then gyroscope ODR/FS */
       st_cfg1_kick: if (i_tick) begin
         r_spi_ip_data <= {{(lp_spi_buffer-16){1'b0}}, 1'b0, lp_addr_ctrl3_c, lp_ctrl3_c_config};
         r_spi_ip_count <= 16;
@@ -209,7 +217,16 @@ always @(posedge clk) begin
         r_spi_seen_busy <= 1'b0;
         r_state <= st_cfg1_busy;
       end
-      st_cfg1_busy: if (w_spi_done) r_state <= st_cfg2_kick;
+      st_cfg1_busy: if (w_spi_done) r_state <= (p_i2c_disable != 0) ? st_cfg4_kick : st_cfg2_kick;
+
+      st_cfg4_kick: if (i_tick) begin
+        r_spi_ip_data <= {{(lp_spi_buffer-16){1'b0}}, 1'b0, lp_addr_ctrl4_c, lp_ctrl4_c_config};
+        r_spi_ip_count <= 16;
+        r_spi_valid <= 1'b1;
+        r_spi_seen_busy <= 1'b0;
+        r_state <= st_cfg4_busy;
+      end
+      st_cfg4_busy: if (w_spi_done) r_state <= st_cfg2_kick;
 
       st_cfg2_kick: if (i_tick) begin
         r_spi_ip_data <= {{(lp_spi_buffer-16){1'b0}}, 1'b0, lp_addr_ctrl1_xl, p_odr_xl, p_fs_xl, 1'b0, 1'b0};

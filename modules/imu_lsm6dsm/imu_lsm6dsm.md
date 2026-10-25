@@ -4,9 +4,9 @@ Driver for the ST LSM6DSM 6-axis IMU (3-axis accelerometer and 3-axis gyroscope)
 
 ✔️ Verified via testbench against a behavioural model of the chip's SPI port that flags any edge that is not SPI mode 3: register writes in order, `WHO_AM_I` retries, burst samples, an absent chip, tick timing and overrun.
 
-🧪 Status: Tested on real hardware with an LSM6DSM on a Spartan-7 (xc7s50) board, 25 MHz clock, ticks at 208 Hz (2026-10-12 and 2026-10-15): it identifies and configures the chip after a cold start, then all six axes read correctly (see [Verification](#verification)). Not yet checked on hardware: the gyroscope scale against a known rotation, and `WHO_AM_I` over many cold starts.
+🧪 Status: Tested on real hardware with an LSM6DSM on a Spartan-7 (xc7s50) board, 25 MHz clock, ticks at 208 Hz (2026-10-12 and 2026-10-15): it identifies and configures the chip after a cold start, then all six axes read correctly (see [Verification](#verification)). `p_i2c_disable = 1` tested on the same board with an LPS22HB barometer on the bus (2026-10-16). Not yet checked on hardware: the gyroscope scale against a known rotation, and `WHO_AM_I` over many cold starts.
 
-🏷️ Version: v1.0.0 (2026-10-15), see the [changelog](#changelog).
+🏷️ Version: v1.1.0 (2026-10-25), see the [changelog](#changelog).
 
 📁 [Source Code](source/imu_lsm6dsm.v)
 
@@ -26,7 +26,8 @@ imu_lsm6dsm # (
     .p_odr_xl(),               /* CTRL1_XL.ODR_XL[3:0], accelerometer data rate */
     .p_fs_xl(),                /* CTRL1_XL.FS_XL[1:0], accelerometer full scale */
     .p_odr_g(),                /* CTRL2_G.ODR_G[3:0], gyroscope data rate */
-    .p_fs_g()                  /* CTRL2_G.FS_G[1:0], gyroscope full scale */
+    .p_fs_g(),                 /* CTRL2_G.FS_G[1:0], gyroscope full scale */
+    .p_i2c_disable()           /* 1: also turn the chip's I2C off, for a shared SPI bus */
 ) imu_lsm6dsm (
     .clk(),
     .rst(),            /* Synchronous reset, active high */
@@ -106,6 +107,8 @@ Multi-byte transfers append further 8-bit blocks at the same clock rate; the reg
 
 The chip-select line is derived from `spi_master`'s busy status (`o_spi_cs_n` = not busy), so it frames each transaction automatically — the driver never toggles CS directly. The driver holds its own `spi_master`, so if other devices share SCK/MOSI/MISO, the integrator combines the pins outside this module and makes sure only one master transfers at a time (see `i_tick` below).
 
+While its CS is high the chip is in I2C mode, and on a shared bus it would read the other devices' SPI traffic on SCK/MOSI as I2C. With `p_i2c_disable = 1` the driver writes `CTRL4_C.I2C_disable` (SPI only) during configuration; set it whenever another device shares the bus (for example the [LPS22HB barometer](../baro_lps22hb/baro_lps22hb.md)). The default `0` leaves I2C on, as in v1.0.0.
+
 ## Registers used by this driver
 
 | Register | Address | Purpose |
@@ -114,6 +117,7 @@ The chip-select line is derived from `spi_master`'s busy status (`o_spi_cs_n` = 
 | `CTRL1_XL` | `0x10` (R/W) | Accelerometer ODR + full-scale select. Layout: `ODR_XL[3:0] \| FS_XL[1:0] \| 0 \| 0` (the two low bits, filter bandwidth options, are written as 0). |
 | `CTRL2_G` | `0x11` (R/W) | Gyroscope ODR + full-scale select. Layout: `ODR_G[3:0] \| FS_G[1:0] \| FS_125 \| 0`. |
 | `CTRL3_C` | `0x12` (R/W) | Layout: `BOOT \| BDU \| H_LACTIVE \| PP_OD \| SIM \| IF_INC \| BLE \| SW_RESET`. |
+| `CTRL4_C` | `0x13` (R/W) | Written only with `p_i2c_disable = 1`, as `0x04`: `I2C_disable = 1` (bit 2), every other bit at its default 0. |
 | `OUTX_L_G` .. `OUTZ_H_XL` | `0x22`-`0x2D` (R) | 12 contiguous bytes: gyro X/Y/Z then accel X/Y/Z, low byte then high byte per axis. A single burst read starting at `0x22` grabs a full sample. |
 
 ### Available modes / options
@@ -176,7 +180,7 @@ On reset, the driver runs a fixed sequence over the internal `spi_master`, entir
 
 1. **Software reset** — write `CTRL3_C = 0x01` (`SW_RESET = 1`), then wait at least `p_reset_wait_cycles` clocks (default 1,000,000 = 40 ms at 25 MHz: the chip's turn-on time plus margin).
 2. **ID check** — read `WHO_AM_I`. If it reads `p_who_am_i`, latch `or_id_ok` and continue to configuration. Otherwise wait at least `p_id_retry_wait_cycles` clocks (default 1 s at 25 MHz) and read it again, so an IMU that powers up later than the FPGA is still picked up. After `p_id_max_attempts` wrong readbacks in a row (default 10), latch `or_id_error` and stop (the driver never proceeds to configure or sample a device that didn't identify itself correctly).
-3. **Configure** — write `CTRL3_C` (`BDU=1, IF_INC=1`), then `CTRL1_XL` (accel ODR/FS), then `CTRL2_G` (gyro ODR/FS).
+3. **Configure** — write `CTRL3_C` (`BDU=1, IF_INC=1`), then, only with `p_i2c_disable = 1`, `CTRL4_C = 0x04` (I2C off), then `CTRL1_XL` (accel ODR/FS), then `CTRL2_G` (gyro ODR/FS).
 4. **Steady state** — on every tick, issue one 13-byte SPI read (1 command byte + 12 data bytes) starting at `OUTX_L_G` (`0x22`). Once complete, split the 96 data bits into the 6 signed 16-bit axis outputs, pulse `or_valid` for one clock, and wait for the next tick.
 
 ### Driving `i_tick`
@@ -210,7 +214,8 @@ module imu_lsm6dsm # (
   parameter [3:0] p_odr_xl = 4'b0101,   // CTRL1_XL.ODR_XL[3:0]
   parameter [1:0] p_fs_xl  = 2'b11,     // CTRL1_XL.FS_XL[1:0]
   parameter [3:0] p_odr_g  = 4'b0101,   // CTRL2_G.ODR_G[3:0]
-  parameter [1:0] p_fs_g   = 2'b10      // CTRL2_G.FS_G[1:0]
+  parameter [1:0] p_fs_g   = 2'b10,     // CTRL2_G.FS_G[1:0]
+  parameter p_i2c_disable  = 0          // 1: also write CTRL4_C.I2C_disable = 1
 )(
   input clk,
   input rst,
@@ -249,6 +254,7 @@ module imu_lsm6dsm # (
 | `p_fs_xl` | Raw 2-bit value written to `CTRL1_XL.FS_XL[1:0]` — accelerometer full scale, see table above. |
 | `p_odr_g` | Raw 4-bit value written to `CTRL2_G.ODR_G[3:0]` — gyroscope output data rate, see table above. |
 | `p_fs_g` | Raw 2-bit value written to `CTRL2_G.FS_G[1:0]` — gyroscope full scale, see table above. |
+| `p_i2c_disable` | `1`: one more configuration write, `CTRL4_C = 0x04` (`I2C_disable`: SPI only), for a bus shared with other devices (see [SPI interface](#spi-interface)). `0` (default): no `CTRL4_C` write, the chip's I2C stays on. |
 
 ### Ports
 
@@ -267,11 +273,11 @@ module imu_lsm6dsm # (
 | `or_id_ok` | output reg | 1 | Sticky: set if `WHO_AM_I` read back `p_who_am_i`. Stays `0` both before the check has run and if it fails — only means "checked and passed," not "hasn't failed yet." |
 | `or_id_error` | output reg | 1 | Sticky: set once `WHO_AM_I` has failed to read back `p_who_am_i` on all `p_id_max_attempts` reads. Once set, the driver stops talking to the device. Stays `0` while retries are still in progress. |
 | `or_overrun` | output reg | 1 | Sticky: a tick arrived while a transaction was still in progress, so it was lost (in steady state, a missed sample). Never set when the ticks respect the spacing in "Driving `i_tick`"; it flags a schedule that is too tight. |
-| `o5_debug_state` | output | 5 | Current FSM state (the `st_*` values in the source), for debug only. `6` = stopped on ID error, `13` = waiting for the next sample tick, `15` = burst read in progress, `16` = sample latched (the only state with bit 4 set, so bit 4 doubles as a sample pulse), `17` = waiting to retry the ID check. |
+| `o5_debug_state` | output | 5 | Current FSM state (the `st_*` values in the source), for debug only. `6` = stopped on ID error, `13` = waiting for the next sample tick, `15` = burst read in progress, `16` = sample latched, `17` = waiting to retry the ID check, `18`/`19` = `CTRL4_C` write (only with `p_i2c_disable = 1`). Once in the sample loop (`13`-`16`) bit 4 is set only in `16`, so there it doubles as a sample pulse. |
 
 ## Verification
 
-`test/` (Icarus Verilog, `python run.py` from that folder) runs the driver against a behavioural model of the chip's SPI port in mode 3, which flags any edge that is not mode 3. It checks the register writes in order, two wrong `WHO_AM_I` answers followed by a right one, three burst samples, a second driver with no chip on the bus (gives up after 10 reads and goes quiet), that every transaction starts on a tick and ends 834 clocks after it at most, and that ticks closer than a transaction set `or_overrun`.
+`test/` (Icarus Verilog, `python run.py` from that folder) runs the driver against a behavioural model of the chip's SPI port in mode 3, which flags any edge that is not mode 3. `run.py` runs it twice, with `p_i2c_disable` 0 and 1 (logs in `sim_log` and `sim_log_i2c_disable`). It checks the register writes in order (with the `CTRL4_C` write only in the second run), two wrong `WHO_AM_I` answers followed by a right one, three burst samples, a second driver with no chip on the bus (gives up after 10 reads and goes quiet), that every transaction starts on a tick and ends 834 clocks after it at most, and that ticks closer than a transaction set `or_overrun`.
 
 The testbench makes its ticks with a plain counter. In the project it comes from, the ticks come from a task scheduler that shares the SPI bus with other devices; the driver only sees the tick, so nothing changes for it.
 
@@ -281,6 +287,7 @@ On hardware (Spartan-7 xc7s50, 25 MHz, ticks at 208 Hz, LSM6DSM), watched with [
 - One burst every 120192 clocks with CS low for about 832 clocks (104 SCK cycles of 8 clocks).
 - At rest and flat the accelerometer reads a total of 1.01 g, with about 3.5 LSB (0.9 mg) rms of noise; the gyroscope shows offsets of about 1 to 3 dps and about 1 LSB of noise. Moving the board, the total stays near 1 g while gravity moves between the axes, and the gyroscope follows the movement: byte order, sign and accelerometer scale are right.
 - New samples arrive at 206 Hz with the 208 Hz ODR.
+- With `p_i2c_disable = 1` and an LPS22HB barometer sharing the bus (2026-10-16): the IMU still identifies, configures and reads correctly, and the barometer works alongside it.
 
 ## Recreating the module
 
@@ -293,4 +300,5 @@ To rebuild this driver from scratch against a different SPI master or from anoth
 
 ## Changelog
 
+- **v1.1.0** (2026-10-25): new parameter `p_i2c_disable` (default 0, existing instantiations unchanged): writes `CTRL4_C.I2C_disable` for a bus shared with other devices. Ported from the Drone FPGA_SOM project, where it runs on hardware with the LPS22HB barometer since 2026-10-16. The testbench runs with both values.
 - **v1.0.0** (2026-10-15): first release in the handbook, from the Drone FPGA_SOM project as tested there on hardware on 2026-10-15. Needs `spi_master.v` with `p_cpha` (handbook SPI module, same date).

@@ -15,6 +15,14 @@
 
 module imu_lsm6dsm_tb();
 
+  /**** Configuration under test: run.py runs the test twice, without and
+        with I2C_DISABLE defined (DUT p_i2c_disable 0 / 1) ****/
+`ifdef I2C_DISABLE
+  localparam lp_i2c_disable = 1;
+`else
+  localparam lp_i2c_disable = 0;
+`endif
+
   /**** Fixed test signals ****/
   integer error_counter = 0;
   integer sample_count = 0;
@@ -67,7 +75,8 @@ module imu_lsm6dsm_tb();
 
   imu_lsm6dsm #(
     .p_reset_wait_cycles(20),
-    .p_id_retry_wait_cycles(30)
+    .p_id_retry_wait_cycles(30),
+    .p_i2c_disable(lp_i2c_disable)
   ) dut (
     .clk(clk25),
     .rst(!resetn),
@@ -119,11 +128,19 @@ module imu_lsm6dsm_tb();
   localparam [6:0] lp_addr_outx_l_g = 7'h22;
 
   /* expected {RW,ADDR[6:0],DATA[7:0]} for each write the driver issues, in order (default DUT params) */
-  localparam [63:0] lp_exp_writes = {
+  localparam lp_num_writes = lp_i2c_disable ? 5 : 4;
+  localparam [79:0] lp_exp_writes = lp_i2c_disable ? {
+    16'h1201, /* CTRL3_C <= SW_RESET (0x01) */
+    16'h1244, /* CTRL3_C <= BDU|IF_INC (0x44) */
+    16'h1304, /* CTRL4_C <= I2C_disable (0x04) */
+    16'h105C, /* CTRL1_XL <= ODR 208Hz, FS +/-8g (0x5C) */
+    16'h1158  /* CTRL2_G <= ODR 208Hz, FS +/-1000dps (0x58) */
+  } : {
     16'h1201, /* CTRL3_C <= SW_RESET (0x01) */
     16'h1244, /* CTRL3_C <= BDU|IF_INC (0x44) */
     16'h105C, /* CTRL1_XL <= ODR 208Hz, FS +/-8g (0x5C) */
-    16'h1158  /* CTRL2_G <= ODR 208Hz, FS +/-1000dps (0x58) */
+    16'h1158, /* CTRL2_G <= ODR 208Hz, FS +/-1000dps (0x58) */
+    16'h0000
   };
 
   /* a wrong WHO_AM_I answer is 00h, what a silent bus reads through the pull-down */
@@ -206,7 +223,7 @@ module imu_lsm6dsm_tb();
     end
     else if (r_imu_rw && r_imu_addr == lp_addr_outx_l_g && imu_bits == 104) ; /* burst read */
     else if (!r_imu_rw && imu_bits == 16) begin
-      if (write_count >= 4 || {1'b0, r_imu_addr, r_imu_wdata} !== lp_exp_writes[63 - 16*write_count -: 16]) begin
+      if (write_count >= lp_num_writes || {1'b0, r_imu_addr, r_imu_wdata} !== lp_exp_writes[79 - 16*write_count -: 16]) begin
         $error("[ERROR]: write %0d mismatch, got %h", write_count, {1'b0, r_imu_addr, r_imu_wdata});
         error_counter = error_counter + 1;
       end
@@ -330,6 +347,7 @@ module imu_lsm6dsm_tb();
   /**** Test flow ****/
   initial begin
 
+    $display("[INFO] >> p_i2c_disable = %0d", lp_i2c_disable);
     $dumpfile ("imu_lsm6dsm_tb.vcd");
     $dumpvars();
 
@@ -350,8 +368,8 @@ module imu_lsm6dsm_tb();
       error_counter = error_counter + 1;
     end
 
-    if (write_count !== 4) begin
-      $error("[ERROR]: expected 4 register writes (reset + 3 config), saw %0d", write_count);
+    if (write_count !== lp_num_writes) begin
+      $error("[ERROR]: expected %0d register writes (reset + config), saw %0d", lp_num_writes, write_count);
       error_counter = error_counter + 1;
     end
 
