@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "provenance": "Each answer was computed twice, once with WAL (wal-lang 0.9.1 through skill/scripts/wal_run.py) and once with an independent plain-Python VCD parser, on the waveforms as committed/generated on 2026-11-04; both agreed. If a testbench changes and its VCD is regenerated, these answers must be recomputed.",
+  "grading": "Numbers match within 'abs_tol' (default 0.01). Hex strings are compared as integers, other strings case-insensitively. Lists are compared in order and must have the same length, except lists named in 'keyed_lists', whose items are matched by that key; extra items in the answer are then ignored. Keys present in the answer but not in the golden answer are ignored (e.g. 'notes').",
+  "answers": {
+    "E1": {
+      "answer": {"edges": [
+        {"time_ns": 12480, "data_hex": "153524"},
+        {"time_ns": 25160, "data_hex": "84d609"},
+        {"time_ns": 37840, "data_hex": "b97b0d"},
+        {"time_ns": 50520, "data_hex": "c28465"},
+        {"time_ns": 63200, "data_hex": "f3e301"},
+        {"time_ns": 75880, "data_hex": "23f176"},
+        {"time_ns": 88560, "data_hex": "d457ed"},
+        {"time_ns": 101240, "data_hex": "fde9f9"},
+        {"time_ns": 113920, "data_hex": "f784c5"},
+        {"time_ns": 126600, "data_hex": "aff7e5"}
+      ]}
+    },
+    "E2": {"answer": {"period_ns": 480}},
+    "E3": {"answer": {"fast_count": 300, "slow_count": 300, "identical": true, "first5": [36, 99, 101, 1, 61]}},
+    "E4": {"answer": {"rst_fall_ns": 195, "first_tx_fall_ns": 415}},
+    "E5": {"answer": {"shortest_low_ns": 160, "longest_low_ns": 1440}},
+    "D1": {
+      "answer": {"states": [
+        {"state": "0", "visits": 11, "avg": 30.3636, "min": 20, "max": 53},
+        {"state": "1", "visits": 240, "avg": 6, "min": 6, "max": 6},
+        {"state": "2", "visits": 240, "avg": 6, "min": 6, "max": 6}
+      ]},
+      "keyed_lists": {"states": "state"}
+    },
+    "D2": {
+      "answer": {"captures": [
+        {"arm_to_capturing": 265, "capturing_to_done": 4},
+        {"arm_to_capturing": 15, "capturing_to_done": 4},
+        {"arm_to_capturing": 1493, "capturing_to_done": 4}
+      ], "avg_arm_to_capturing": 591}
+    },
+    "D3": {"answer": {"armed_and_trigger": 6, "ignored": 3}},
+    "D4": {"answer": {"avg_ns": 62.579, "min_ns": 52.6, "max_ns": 71.2, "slow_first": 0}, "abs_tol": 0.05},
+    "D5": {"answer": {"frames": 300, "mismatches": 0, "bad_stop": 0, "min_start_gap_ns": 1620, "max_start_gap_ns": 2100}}
+  }
+}

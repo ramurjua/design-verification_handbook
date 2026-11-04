@@ -14,6 +14,7 @@ Welcome! 🚀 This repository is my personal learning space for digital design a
 	* 📂 [Cocotb Framework](verification/cocotb/Cocotb.md)
 		* 📂 [Create a simple testbench: 4-bits adder example](verification/cocotb/Simple_tb/adder_example.md) 
 		* 📂 [Using advanced verification components: counter example](verification/cocotb/Complex_tb/counter_example.md) 
+	* 📂 [Waveform Analysis with WAL](verification/waveforms-analysis/waveforms_analysis.md)
 * 📂 [Code Modules](modules/modules.md)
 	* 📂 [UART Transmitter & Receiver](modules/uart/uart.md)
 	* 📂 [SPI Master & Slave](modules/spi/spi.md)

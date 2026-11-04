@@ -1,0 +1,1802 @@
+{
+ "meta": {
+  "run": "20261104-192959",
+  "claude_version": "2.1.318",
+  "effort": "",
+  "models": [
+   "haiku",
+   "sonnet",
+   "opus"
+  ],
+  "arms": [
+   "wal"
+  ],
+  "reused_from": "20261104-191157"
+ },
+ "results": [
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "E1",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "edges": [
+     {
+      "time_ns": 12480,
+      "data_hex": "153524"
+     },
+     {
+      "time_ns": 25160,
+      "data_hex": "84d609"
+     },
+     {
+      "time_ns": 37840,
+      "data_hex": "b97b0d"
+     },
+     {
+      "time_ns": 50520,
+      "data_hex": "c28465"
+     },
+     {
+      "time_ns": 63200,
+      "data_hex": "f3e301"
+     },
+     {
+      "time_ns": 75880,
+      "data_hex": "23f176"
+     },
+     {
+      "time_ns": 88560,
+      "data_hex": "d457ed"
+     },
+     {
+      "time_ns": 101240,
+      "data_hex": "fde9f9"
+     },
+     {
+      "time_ns": 113920,
+      "data_hex": "f784c5"
+     },
+     {
+      "time_ns": 126600,
+      "data_hex": "aff7e5"
+     }
+    ],
+    "notes": "The waveform has 10 rising edges of spi_tb.w_received_slave, each at the time given by the rising-times-ns helper (edge time = TS@1), and the data is read at the index after each edge with values-at, so it reflects every change at that timestamp. No values were x/z, so all hex strings are plain 6-digit values; nothing else was ambiguous."
+   },
+   "wall_s": 12.0,
+   "duration_ms": 10299,
+   "cost_usd": 0.006152320000000001,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "E2",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "period_ns": 480,
+    "notes": "The period is constant at 480 ns for every in-word interval (230 of 230 rising-to-rising gaps, duty 240 ns high). Between words there is a 1640 ns idle gap with no toggling, which I excluded as not part of a word transfer. The 240 rising edges form 10 bursts of 24, consistent with 24-bit words. I took \"period\" as rising-to-rising, and the waveform was used as-is without re-running the simulation."
+   },
+   "wall_s": 23.4,
+   "duration_ms": 22029,
+   "cost_usd": 0.00898105,
+   "num_turns": 6,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "E3",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "fast_count": 300,
+    "slow_count": 300,
+    "identical": true,
+    "first5": [
+     36,
+     99,
+     101,
+     1,
+     61
+    ],
+    "notes": "Each receiver delivered 300 bytes on rising edges of w_dv (the index before each edge, with data read at index+1, i.e. right after the edge); the fast and slow sequences are identical across all 300 entries, with no x/z values. The first byte events are at 1935.5 ns (fast) and 2004.3 ns (slow), and the first five bytes are 36, 99, 101, 1, 61 in both. I did not check framing or parity; this compares the two receivers' outputs only. Several of my scratch WAL lines contained undefined names and failed, but none affected the reported numbers, which came from the successful runs."
+   },
+   "wall_s": 59.7,
+   "duration_ms": 58150,
+   "cost_usd": 0.009309580000000001,
+   "num_turns": 7,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "E4",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "rst_fall_ns": 195,
+    "first_tx_fall_ns": 415,
+    "notes": "uart_async_tb.rst has exactly one falling edge (195.0 ns, no rising edge in the trace) and w_tx's first falling edge after it is at 415.0 ns; both were read with the script's falling-times-ns helper, which reports the edge time (TS@1) rather than the previous change. I did not separately cross-check the sampled values around those times, so the result relies on the helper's documented convention."
+   },
+   "wall_s": 29.0,
+   "duration_ms": 27665,
+   "cost_usd": 0.00451686,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "E5",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "shortest_low_ns": 160,
+    "longest_low_ns": 1440,
+    "notes": "Reset is released at 195 ns (falling edge of uart_async_tb.rst, read as TS@1), and the first w_tx falling edge after that is at 415 ns, so no ambiguity about the starting point. I paired each falling edge with the next rising edge (854 low pulses, 854 falls and 854 rises, all paired). The shortest is 160 ns (many occurrences, e.g. 2045 to 2205 ns) and the longest is 1440 ns (481895 to 483335 ps, i.e. 481.895 to 483.335 us), and both were printed by the script. I did not check the transmitter's frame structure against the baud-rate parameters, so I cannot say whether these widths are whole bit multiples."
+   },
+   "wall_s": 59.6,
+   "duration_ms": 58267,
+   "cost_usd": 0.00833794,
+   "num_turns": 6,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "D1",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "states": [
+     {
+      "state": "0",
+      "visits": 11,
+      "avg": 30.3636,
+      "min": 20,
+      "max": 53
+     },
+     {
+      "state": "1",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     },
+     {
+      "state": "2",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     }
+    ],
+    "notes": "The state was sampled with whenever (rising spi_tb.clk25), so each value is the pre-edge value, and runs were counted across the 3215 rising edges. The only x sample is the first edge (a one-cycle x run), which was excluded; the run lengths sum to 3214, so no other states were skipped. The average is shown to four decimals (334/11 for state 0). No other method problems came up, although a WAL map/set loop silently failed to update variables, so I used whenever instead."
+   },
+   "wall_s": 48.9,
+   "duration_ms": 47566,
+   "cost_usd": 0.00812,
+   "num_turns": 8,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "D2",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "captures": [
+     {
+      "arm_to_capturing": 265,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 15,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 1493,
+      "capturing_to_done": 4
+     }
+    ],
+    "avg_arm_to_capturing": 591,
+    "notes": "Three rising edges of scope_tb.clk sample i_cmd_arm high, at 98860, 325660 and 764140 ns; o_state is 0 at all three, so each capture starts from idle. Counts were taken with rising-edges on scope_tb.clk and values sampled just before each edge, and the average (591.000) is printed by the script. The arm-to-capturing gaps vary a lot (15 to 1493 edges), which is consistent with the trigger being waited on rather than a fixed delay, but I did not check the testbench to confirm that."
+   },
+   "wall_s": 60.6,
+   "duration_ms": 59328,
+   "cost_usd": 0.00679869,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "D3",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "armed_and_trigger": 6,
+    "ignored": 3,
+    "notes": "Counted rising edges of scope_tb.clk (27596 total) where w_trigger_pulse and o_state, both sampled just before the edge, are 1; edge times are 109420, 325740, 325900, 326060, 326220 and 823820 ns. o_state was still 1 at the next edge for 3 of them (the 325740, 325900 and 326060 ns hits, next edges at 325780, 325940, 326100 ns). I used the decimal value 1 as \"armed\" as the question states, without checking the FSM encoding in the RTL."
+   },
+   "wall_s": 100.7,
+   "duration_ms": 99356,
+   "cost_usd": 0.00532389,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "D4",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "avg_ns": 62.579,
+    "min_ns": 52.6,
+    "max_ns": 71.2,
+    "slow_first": 0,
+    "notes": "Both signals have 300 rising edges, paired by index (k-th with k-th) as asked; delay = slow minus fast, so every pair is positive (fast receiver first for all 300 bytes, 0 where slow was first, 0 ties). Edge times came from the rising-times-ns helper (TS@1 convention), and the avg/min/max values are copied from the script's printf output. Nothing ambiguous beyond that pairing choice."
+   },
+   "wall_s": 22.7,
+   "duration_ms": 21240,
+   "cost_usd": 0.00411932,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "wal",
+   "qid": "D5",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "frames": 300,
+    "mismatches": 0,
+    "bad_stop": 0,
+    "min_start_gap_ns": 1620,
+    "max_start_gap_ns": 2100,
+    "notes": "Frame starts were found greedily: the first w_tx falling edge after the rst falling edge at 195 ns (first start 415 ns), then the first falling edge at or after previous start + 1600 ns; this rule is safe because data-bit transitions cannot fall in that window. Bits were sampled at start + 160*(k+0.5) ns, using at-ns on w_tx. The decoded bytes match both uart_rx_fast.orp_data (at or_dv) and top-level w8_data_fast (at w_dv_fast) with 0 mismatches, and the start-bit check also found no violations."
+   },
+   "wall_s": 76.0,
+   "duration_ms": 74680,
+   "cost_usd": 0.011310760000000001,
+   "num_turns": 6,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "E1",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "edges": [
+     {
+      "time_ns": 12480,
+      "data_hex": "153524"
+     },
+     {
+      "time_ns": 25160,
+      "data_hex": "84d609"
+     },
+     {
+      "time_ns": 37840,
+      "data_hex": "b97b0d"
+     },
+     {
+      "time_ns": 50520,
+      "data_hex": "c28465"
+     },
+     {
+      "time_ns": 63200,
+      "data_hex": "f3e301"
+     },
+     {
+      "time_ns": 75880,
+      "data_hex": "23f176"
+     },
+     {
+      "time_ns": 88560,
+      "data_hex": "d457ed"
+     },
+     {
+      "time_ns": 101240,
+      "data_hex": "fde9f9"
+     },
+     {
+      "time_ns": 113920,
+      "data_hex": "f784c5"
+     },
+     {
+      "time_ns": 126600,
+      "data_hex": "aff7e5"
+     }
+    ],
+    "notes": "none"
+   },
+   "wall_s": 10.6,
+   "duration_ms": 9084,
+   "cost_usd": 0.0514101,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "E2",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "period_ns": 480,
+    "notes": "I only printed the first 12 rising edges of w_sck, which are 480 ns apart each. I did not check later words or gaps between words."
+   },
+   "wall_s": 11.6,
+   "duration_ms": 10082,
+   "cost_usd": 0.0491357,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "E3",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "fast_count": 300,
+    "slow_count": 300,
+    "identical": true,
+    "first5": [
+     36,
+     99,
+     101,
+     1,
+     61
+    ],
+    "notes": "none"
+   },
+   "wall_s": 15.7,
+   "duration_ms": 14108,
+   "cost_usd": 0.05131380000000001,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "E4",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "rst_fall_ns": 195,
+    "first_tx_fall_ns": 415,
+    "notes": "none"
+   },
+   "wall_s": 16.5,
+   "duration_ms": 14971,
+   "cost_usd": 0.0490666,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "E5",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "shortest_low_ns": 160,
+    "longest_low_ns": 1440,
+    "notes": "rst is high at the start and falls at 195 ns, so I took 195 ns as the end of reset. I paired 854 falling and 854 rising edges of w_tx after that time. w_tx is x at time 0."
+   },
+   "wall_s": 41.8,
+   "duration_ms": 40432,
+   "cost_usd": 0.06508749999999999,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "D1",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "states": [
+     {
+      "state": "0",
+      "visits": 11,
+      "avg": 30.3636,
+      "min": 20,
+      "max": 53
+     },
+     {
+      "state": "1",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     },
+     {
+      "state": "2",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     }
+    ],
+    "notes": "The x state (one single-edge visit at the start) is excluded. Values were sampled at the index before each rising edge, which is the pre-edge value. The 3215 edges are fully accounted for by the visit lengths."
+   },
+   "wall_s": 13.0,
+   "duration_ms": 11466,
+   "cost_usd": 0.0536717,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "D2",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "captures": [
+     {
+      "arm_to_capturing": 265,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 15,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 1493,
+      "capturing_to_done": 4
+     }
+    ],
+    "avg_arm_to_capturing": 591,
+    "notes": "none"
+   },
+   "wall_s": 52.8,
+   "duration_ms": 51395,
+   "cost_usd": 0.062401200000000004,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "D3",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "armed_and_trigger": 6,
+    "ignored": 3,
+    "notes": "My first count of ignored triggers printed 0 because the `set` inside the nested `map` closure did not update the counter. I listed the next-edge states directly and counted from that list: three were still 1 and three had moved to 2."
+   },
+   "wall_s": 70.6,
+   "duration_ms": 69189,
+   "cost_usd": 0.0605598,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "D4",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "avg_ns": 62.5787,
+    "min_ns": 52.6,
+    "max_ns": 71.2,
+    "slow_first": 0,
+    "notes": "none. There were 300 rising edges on each signal. The slow receiver was never first, and every delay was positive."
+   },
+   "wall_s": 22.9,
+   "duration_ms": 21477,
+   "cost_usd": 0.052691,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "sonnet",
+   "arm": "wal",
+   "qid": "D5",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "frames": 300,
+    "mismatches": 0,
+    "bad_stop": 0,
+    "min_start_gap_ns": 1620,
+    "max_start_gap_ns": 2100,
+    "notes": "Reset is high at t=0 and falls at 195 ns, so I took \"after reset\" as after that fall. Frame starts are the falling edges of w_tx at or after the previous start + 1500 ns. The fast receiver's bytes are w8_data_fast right after each rising edge of w_dv_fast (300 bytes)."
+   },
+   "wall_s": 49.9,
+   "duration_ms": 48487,
+   "cost_usd": 0.0892404,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "E1",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "edges": [
+     {
+      "time_ns": 12480,
+      "data_hex": "153524"
+     },
+     {
+      "time_ns": 25160,
+      "data_hex": "84d609"
+     },
+     {
+      "time_ns": 37840,
+      "data_hex": "b97b0d"
+     },
+     {
+      "time_ns": 50520,
+      "data_hex": "c28465"
+     },
+     {
+      "time_ns": 63200,
+      "data_hex": "f3e301"
+     },
+     {
+      "time_ns": 75880,
+      "data_hex": "23f176"
+     },
+     {
+      "time_ns": 88560,
+      "data_hex": "d457ed"
+     },
+     {
+      "time_ns": 101240,
+      "data_hex": "fde9f9"
+     },
+     {
+      "time_ns": 113920,
+      "data_hex": "f784c5"
+     },
+     {
+      "time_ns": 126600,
+      "data_hex": "aff7e5"
+     }
+    ],
+    "notes": "none"
+   },
+   "wall_s": 9.9,
+   "duration_ms": 8296,
+   "cost_usd": 0.1039966,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "E2",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "period_ns": 480,
+    "notes": "Measured as the spacing between consecutive rising edges of w_sck; inside each 24-bit word it is always 480 ns. The only longer gaps (1640 ns) fall between words, so I left them out."
+   },
+   "wall_s": 10.3,
+   "duration_ms": 8672,
+   "cost_usd": 0.1030374,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "E3",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "fast_count": 300,
+    "slow_count": 300,
+    "identical": true,
+    "first5": [
+     36,
+     99,
+     101,
+     1,
+     61
+    ],
+    "notes": "Data was read at index+1 after each rising edge found by the rising-edges helper, which gives the value right after the edge. I did not check for x or z values, but every value read was a plain integer."
+   },
+   "wall_s": 15.9,
+   "duration_ms": 14319,
+   "cost_usd": 0.1155816,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "E4",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "rst_fall_ns": 195,
+    "first_tx_fall_ns": 415,
+    "notes": "rst has exactly one falling edge (195 ns), and w_tx has no falling edge before it, so the first w_tx fall after reset is also its first fall overall."
+   },
+   "wall_s": 16.7,
+   "duration_ms": 15314,
+   "cost_usd": 0.102938,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "E5",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "shortest_low_ns": 160,
+    "longest_low_ns": 1440,
+    "notes": "Reset is active-high: it starts at 1 and is released at 195 ns. I took every falling edge of w_tx after that and paired each one, in order, with the next rising edge. That gave 854 complete low pulses, with no pulse still open at the end of the trace. w_tx starts as x, but its first falling edge is at 415 ns, after reset, so the x start did not create any false pulse."
+   },
+   "wall_s": 38.5,
+   "duration_ms": 37102,
+   "cost_usd": 0.123305,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "D1",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "states": [
+     {
+      "state": "0",
+      "visits": 11,
+      "avg": 30.3636,
+      "min": 20,
+      "max": 53
+     },
+     {
+      "state": "1",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     },
+     {
+      "state": "2",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     }
+    ],
+    "notes": "I read the state at each of the 3215 rising edges of clk25 from the index just before the edge (the pre-edge value). The state was x at only the first edge, which counts as one visit, and I left it out. Treating x as a separate value meant it did not split any visits of the real states."
+   },
+   "wall_s": 13.7,
+   "duration_ms": 12110,
+   "cost_usd": 0.1092966,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "D2",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "captures": [
+     {
+      "arm_to_capturing": 265,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 15,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 1493,
+      "capturing_to_done": 4
+     }
+    ],
+    "avg_arm_to_capturing": 591,
+    "notes": "The arm edges are at 98860 ns, 325660 ns and 764140 ns. I took the values sampled at each edge from the index just before the edge. The search for state 2 starts at the edge after the arm edge, and the search for state 3 starts at the edge after the first capturing edge. i_cmd_arm read as x at one clock edge (probably before reset), and I treated that edge as not high."
+   },
+   "wall_s": 31.2,
+   "duration_ms": 29758,
+   "cost_usd": 0.1159152,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "D3",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "armed_and_trigger": 6,
+    "ignored": 3,
+    "notes": "Both signals were sampled at the index just before each rising clk edge. \"Still 1 at the next clock edge\" was taken to mean o_state sampled at the next rising edge of clk. The 6 hits are at 109420, 325740, 325900, 326060, 326220 and 823820 ns, and 3 of them are followed by o_state = 1 at the next edge."
+   },
+   "wall_s": 19.8,
+   "duration_ms": 18449,
+   "cost_usd": 0.10799120000000001,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "D4",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "avg_ns": 62.578667,
+    "min_ns": 52.6,
+    "max_ns": 71.2,
+    "slow_first": 0,
+    "notes": "Both receivers have 300 rising edges each, so the k-th edges were paired directly with rising-times-ns (edge time = TS@1). Over all 300 bytes the slow receiver was never first, and the delay was never zero."
+   },
+   "wall_s": 17.7,
+   "duration_ms": 16312,
+   "cost_usd": 0.1086916,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "opus",
+   "arm": "wal",
+   "qid": "D5",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "session_error": false,
+   "answer": {
+    "frames": 300,
+    "mismatches": 0,
+    "bad_stop": 0,
+    "min_start_gap_ns": 1620,
+    "max_start_gap_ns": 2100,
+    "notes": "Reset ends when rst falls at 195 ns (it has no rising edge in the trace). A frame starts at the first falling edge of w_tx after the previous frame's stop-bit midpoint (start + 1520 ns). Bits were sampled with at-ns at start + 160*(k+1.5) ns, and all start bits read 0 at their middle. The fast receiver's bytes were read from w8_data_fast right after each rising edge of w_dv_fast."
+   },
+   "wall_s": 51.8,
+   "duration_ms": 50450,
+   "cost_usd": 0.15773959999999998,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": ""
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "D1",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "states": [
+     {
+      "state": "0",
+      "visits": 11,
+      "avg": 30.363636363636363,
+      "min": 20,
+      "max": 53
+     },
+     {
+      "state": "1",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     },
+     {
+      "state": "2",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     }
+    ],
+    "notes": "I parsed the VCD with a short Python script (run with -I) that samples r3_state at each 0->1 transition of clk25 using the values from before that timestamp's changes; 3215 rising edges were found and the visit lengths sum to 3214, plus one leading x sample that was excluded. The x sample at the first edge forms a one-edge x visit, which is ignored as instructed, and the final visit runs to the last rising edge in the file (#12860), which I counted as a complete visit."
+   },
+   "wall_s": 31.0,
+   "duration_ms": 28865,
+   "cost_usd": 0.0073630100000000006,
+   "num_turns": 6,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "D2",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "captures": [
+     {
+      "arm_to_capturing": 265,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 15,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 1493,
+      "capturing_to_done": 4
+     }
+    ],
+    "avg_arm_to_capturing": 591,
+    "notes": "I parsed the VCD with a small Python script in my scratch directory (run with -I), not WAL. I took the signals by identifier (clk=H, i_cmd_arm=z, o_state=z$), and sampled each at the rising edge by reading the values before that timestamp's changes were applied. The arm-to-capturing count searches from the edge after arm and stops at the first sampled o_state==2; all three arms started from state 0 (idle) and reached capturing and then done. Nothing else was ambiguous."
+   },
+   "wall_s": 27.5,
+   "duration_ms": 25600,
+   "cost_usd": 0.00791402,
+   "num_turns": 7,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "D3",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "armed_and_trigger": 6,
+    "ignored": 3,
+    "notes": "I parsed the VCD with a small Python script (python -I) that samples values just before each rising clk edge (0\u21921), using clk=H, w_trigger_pulse=c, and u_ctrl.o_state=z$ (the u_ctrl scope declares it at line 480). The script found 6 edges with trigger=1 and state=1 (at t=10942, 32574, 32590, 32606, 32622, 82382); the state was still 1 at the next edge in 3 of them (32574, 32590, 32606). Only the vector id lookup and scope membership were checked by reading the header, not by a separate tool."
+   },
+   "wall_s": 30.5,
+   "duration_ms": 28711,
+   "cost_usd": 0.00979794,
+   "num_turns": 8,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "D4",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "avg_ns": 62.578667,
+    "min_ns": 52.6,
+    "max_ns": 71.2,
+    "slow_first": 0,
+    "notes": "I located the signals by VCD identifier: w_dv_fast is '$' and w_dv_slow is '#'. Those identifiers are shared with uart_rx_fast.or_dv and uart_rx_slow.or_dv, which Icarus aliases to the same net, so the edges should be the same either way. Both signals have 300 rising edges, paired by index, and the slow edge is always later than the fast one, so no byte had the slow receiver first (delay range 52.6\u201371.2 ns, no ties). The parser was a small Python streamer run with -I and no WAL; I did not cross-check it against any other tool."
+   },
+   "wall_s": 24.9,
+   "duration_ms": 23152,
+   "cost_usd": 0.00707082,
+   "num_turns": 7,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "D5",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "frames": 300,
+    "mismatches": 0,
+    "bad_stop": 0,
+    "min_start_gap_ns": 1620,
+    "max_start_gap_ns": 2100,
+    "notes": "I decoded w_tx (VCD id '!') with a plain Python streaming parser, not WAL. Reset releases at 195 ns, and each frame's start is a falling edge of w_tx; bits were sampled at start + 80 ns + k*160 ns, and I checked that all 300 decoded bytes equal the fast receiver's w8_data_fast values captured on each w_dv_fast rising edge (also 300). The one interpretation choice was taking the fast receiver's byte from the w_dv_fast strobe; the other falling edges (554 of the 854) fall inside frames and were skipped."
+   },
+   "wall_s": 35.7,
+   "duration_ms": 34167,
+   "cost_usd": 0.00875762,
+   "num_turns": 7,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "E1",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "edges": [
+     {
+      "time_ns": 12480,
+      "data_hex": "153524"
+     },
+     {
+      "time_ns": 25160,
+      "data_hex": "84d609"
+     },
+     {
+      "time_ns": 37840,
+      "data_hex": "b97b0d"
+     },
+     {
+      "time_ns": 50520,
+      "data_hex": "c28465"
+     },
+     {
+      "time_ns": 63200,
+      "data_hex": "f3e301"
+     },
+     {
+      "time_ns": 75880,
+      "data_hex": "23f176"
+     },
+     {
+      "time_ns": 88560,
+      "data_hex": "d457ed"
+     },
+     {
+      "time_ns": 101240,
+      "data_hex": "fde9f9"
+     },
+     {
+      "time_ns": 113920,
+      "data_hex": "f784c5"
+     },
+     {
+      "time_ns": 126600,
+      "data_hex": "aff7e5"
+     }
+    ],
+    "notes": "The VCD timescale is 10 ns, so raw timestamps (1248, 2516, ...) were multiplied by 10 to get ns. VCD omits leading zeros in vector values, so the 21- and 22-bit values were zero-extended to 24 bits before conversion to hex. Rising edges were taken as 0\u21921 transitions of w_received_slave between consecutive timestamps, with data taken after all changes at that timestamp; no x/z transitions on the clock were seen."
+   },
+   "wall_s": 29.0,
+   "duration_ms": 27336,
+   "cost_usd": 0.00675196,
+   "num_turns": 6,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "E2",
+   "level": "easy",
+   "ok": false,
+   "errors": [
+    "E2.period_ns: 48, expected 480"
+   ],
+   "answer": {
+    "period_ns": 48,
+    "notes": "Parsed the VCD directly with awk (scratch output in my temp dir, nothing in the repo modified). During each 24-bit word, w_sck rising edges are exactly 48 ns apart (e.g. 112, 160, 208 ns), with 24 rising edges per word; the 164 ns spacing only appears between words while the bus is idle. I took \"period\" as the full rising-to-rising cycle, not the 24 ns half-period."
+   },
+   "wall_s": 17.8,
+   "duration_ms": 16055,
+   "cost_usd": 0.00258815,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "E3",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "fast_count": 300,
+    "slow_count": 300,
+    "identical": true,
+    "first5": [
+     36,
+     99,
+     101,
+     1,
+     61
+    ],
+    "notes": "Parsed the VCD directly with a Python script (no WAL); rising edges were 0\u21921 transitions of w_dv_*, and data was taken as the last value at or before the edge timestamp, so same-timestamp data changes count as \"right after\". Both receivers saw 300 edges, all data values are defined (no x/z), and the 300-byte sequences match element for element. I did not separately verify the decoded bytes against the transmitter's sent data."
+   },
+   "wall_s": 21.3,
+   "duration_ms": 19689,
+   "cost_usd": 0.0055961,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "E4",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "rst_fall_ns": 195,
+    "first_tx_fall_ns": 415,
+    "notes": "Found rst (id \",\") and top-level w_tx (id \"!\") by parsing the VCD header with a short streaming Python script run with -I; the same id \"!\" is also reused for i_rx/o_tx in sub-scopes, so I only tracked the top-level scope's w_tx. rst has a single falling edge at 195000 ps (195 ns), and the first w_tx falling edge after that is at 415000 ps (415 ns), with timescale 1ps confirmed."
+   },
+   "wall_s": 25.5,
+   "duration_ms": 23863,
+   "cost_usd": 0.00557775,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "haiku",
+   "arm": "nowal",
+   "qid": "E5",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "shortest_low_ns": 160,
+    "longest_low_ns": 1440,
+    "notes": "Reset (`rst`) releases once, at 195 ns, and I counted only complete low pulses (a 1\u21920 edge followed by a 0\u21921 edge) after that time, giving 854 pulses. Pulses that were already low at reset release, or still low at the end of the dump, were excluded, and X-to-0 transitions were not treated as pulse starts. The script was a quick Python VCD parser run with -I; I did not cross-check it with a second tool."
+   },
+   "wall_s": 19.3,
+   "duration_ms": 17364,
+   "cost_usd": 0.00543877,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "D1",
+   "level": "difficult",
+   "ok": false,
+   "errors": [
+    "D1.states[state=0].avg: 29.454545454545453, expected 30.3636",
+    "D1.states[state=0].max: 52, expected 53"
+   ],
+   "answer": {
+    "states": [
+     {
+      "state": "0",
+      "visits": 11,
+      "avg": 29.454545454545453,
+      "min": 20,
+      "max": 52
+     },
+     {
+      "state": "1",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     },
+     {
+      "state": "2",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     }
+    ],
+    "notes": "I parsed the VCD with a custom Python script and sampled the state value just before each 0\u21921 transition of clk25. The first sample was x (1 edge) and was ignored. The final run, which is cut off when the simulation ends, is counted as a normal visit."
+   },
+   "wall_s": 24.4,
+   "duration_ms": 22772,
+   "cost_usd": 0.19175779999999998,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "D2",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "captures": [
+     {
+      "arm_to_capturing": 265,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 15,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 1493,
+      "capturing_to_done": 4
+     }
+    ],
+    "avg_arm_to_capturing": 591,
+    "notes": "Arm was sampled high at three edges: 98860, 325660 and 764140 ns. I parsed the VCD with a custom Python script and took each sample from the values before that timestamp's changes were applied. The 4-edge capturing-to-done count looks short for a capture, but it is what the waveform shows."
+   },
+   "wall_s": 16.4,
+   "duration_ms": 14528,
+   "cost_usd": 0.1579228,
+   "num_turns": 3,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "D3",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "armed_and_trigger": 6,
+    "ignored": 3,
+    "notes": "\"Still 1 at the next clock edge\" was read as o_state sampled (value just before) at the next rising edge equal to 1. The three ignored triggers are consecutive edges at 325740, 325900 and 326060 ns. The other three hits (109420, 326220, 823820 ns) moved o_state to 2 on the next edge."
+   },
+   "wall_s": 25.4,
+   "duration_ms": 23638,
+   "cost_usd": 0.1808668,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "D4",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "avg_ns": 62.578667,
+    "min_ns": 52.6,
+    "max_ns": 71.2,
+    "slow_first": 0,
+    "notes": "I parsed the VCD with a custom Python script and counted only 0\u21921 transitions as rising edges; transitions out of x/z were not counted. That gave 300 edges on each signal, so they paired one-to-one. The slow receiver was never first: every delay is positive."
+   },
+   "wall_s": 17.4,
+   "duration_ms": 15881,
+   "cost_usd": 0.1699768,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "D5",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "frames": 300,
+    "mismatches": 0,
+    "bad_stop": 0,
+    "min_start_gap_ns": 1620,
+    "max_start_gap_ns": 2100,
+    "notes": "I decoded with a custom Python VCD parser. Each frame starts at a falling edge of w_tx after reset is released at 195 ns, and each bit is read at start + 80 + 160\u00b7k ns. I took the fast receiver's bytes from w8_data_fast at each rising edge of w_dv_fast; all 300 matched."
+   },
+   "wall_s": 25.3,
+   "duration_ms": 23592,
+   "cost_usd": 0.19626680000000002,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "E1",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "edges": [
+     {
+      "time_ns": 12480,
+      "data_hex": "153524"
+     },
+     {
+      "time_ns": 25160,
+      "data_hex": "84d609"
+     },
+     {
+      "time_ns": 37840,
+      "data_hex": "b97b0d"
+     },
+     {
+      "time_ns": 50520,
+      "data_hex": "c28465"
+     },
+     {
+      "time_ns": 63200,
+      "data_hex": "f3e301"
+     },
+     {
+      "time_ns": 75880,
+      "data_hex": "23f176"
+     },
+     {
+      "time_ns": 88560,
+      "data_hex": "d457ed"
+     },
+     {
+      "time_ns": 101240,
+      "data_hex": "fde9f9"
+     },
+     {
+      "time_ns": 113920,
+      "data_hex": "f784c5"
+     },
+     {
+      "time_ns": 126600,
+      "data_hex": "aff7e5"
+     }
+    ],
+    "notes": "Parsed the VCD with a custom Python script. I counted only 0\u21921 transitions as rising edges, so a change from x or z to 1 would not count. Data values were read after every change at the edge's timestamp had been applied, and the timestamps were multiplied by 10 because the timescale is 10 ns."
+   },
+   "wall_s": 29.1,
+   "duration_ms": 27385,
+   "cost_usd": 0.16691260000000002,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "E2",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "period_ns": 480,
+    "notes": "Rising edges of w_sck are 48 ticks apart inside each word, and the timescale is 10 ns, so the period is 480 ns. The 164-tick gaps between rising edges fall between words, so I left them out."
+   },
+   "wall_s": 11.2,
+   "duration_ms": 9386,
+   "cost_usd": 0.1551236,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "E3",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "fast_count": 300,
+    "slow_count": 300,
+    "identical": true,
+    "first5": [
+     36,
+     99,
+     101,
+     1,
+     61
+    ],
+    "notes": "I used a custom Python VCD parser and counted only 0\u21921 transitions as rising edges, so an x\u21921 change would not count. The data was sampled once all changes at each edge's timestamp had been applied."
+   },
+   "wall_s": 18.0,
+   "duration_ms": 16428,
+   "cost_usd": 0.1612348,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "E4",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "rst_fall_ns": 195,
+    "first_tx_fall_ns": 415,
+    "notes": "none"
+   },
+   "wall_s": 14.9,
+   "duration_ms": 13038,
+   "cost_usd": 0.1494018,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "opus",
+   "arm": "nowal",
+   "qid": "E5",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "shortest_low_ns": 160,
+    "longest_low_ns": 1440,
+    "notes": "\"After reset\" was read as low pulses starting after rst falls at 195 ns. The first low on w_tx starts at 415 ns, so this choice does not change the result. All 854 low pulses are complete (the waveform ends with w_tx high), and their widths are multiples of the 160 ns bit period."
+   },
+   "wall_s": 21.0,
+   "duration_ms": 19236,
+   "cost_usd": 0.1815406,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "D1",
+   "level": "difficult",
+   "ok": false,
+   "errors": [
+    "D1.states[state=0].avg: 30.454545454545453, expected 30.3636",
+    "D1.states[state=0].max: 54, expected 53"
+   ],
+   "answer": {
+    "states": [
+     {
+      "state": "0",
+      "visits": 11,
+      "avg": 30.454545454545453,
+      "min": 20,
+      "max": 54
+     },
+     {
+      "state": "1",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     },
+     {
+      "state": "2",
+      "visits": 240,
+      "avg": 6,
+      "min": 6,
+      "max": 6
+     }
+    ],
+    "notes": "Parsed the VCD with a Python script. States were sampled at each clk25 rising edge using the value before that timestamp's NBA updates. I assumed the clock change precedes the state change within a timestamp. No x values appeared at the sampled edges."
+   },
+   "wall_s": 14.8,
+   "duration_ms": 12972,
+   "cost_usd": 0.0844295,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "D2",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "captures": [
+     {
+      "arm_to_capturing": 265,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 15,
+      "capturing_to_done": 4
+     },
+     {
+      "arm_to_capturing": 1493,
+      "capturing_to_done": 4
+     }
+    ],
+    "avg_arm_to_capturing": 591,
+    "notes": "i_cmd_arm changes at the same timestamp as the rising clk edge (arm edges at 9886, 32566 and 76414 ns). I used the pre-edge value, so the edge where arm first rises doesn't count and the first edge sampling it high is the next one. If you counted the value right after the edge instead, the arm edges would be one cycle earlier and the counts one higher."
+   },
+   "wall_s": 35.1,
+   "duration_ms": 33396,
+   "cost_usd": 0.11404800000000001,
+   "num_turns": 7,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "D3",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "armed_and_trigger": 6,
+    "ignored": 3,
+    "notes": "none"
+   },
+   "wall_s": 23.7,
+   "duration_ms": 21831,
+   "cost_usd": 0.08516420000000001,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "D4",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "avg_ns": 62.5787,
+    "min_ns": 52.6,
+    "max_ns": 71.2,
+    "slow_first": 0,
+    "notes": "I paired 300 rising edges on each signal. The delay was positive for all 300 pairs, so the slow receiver was never first. Timestamps are in ps and I divided by 1000 to get ns."
+   },
+   "wall_s": 13.3,
+   "duration_ms": 11492,
+   "cost_usd": 0.0754672,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "D5",
+   "level": "difficult",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "frames": 300,
+    "mismatches": 0,
+    "bad_stop": 0,
+    "min_start_gap_ns": 1620,
+    "max_start_gap_ns": 2100,
+    "notes": "The VCD timescale is 1 ps, so I converted the times to ns. \"After reset\" was taken as rst falling to 0 at 195 ns. I decoded 300 frames, and the fast receiver also produced 300 bytes. I read each fast byte from w8_data_fast after all changes at the w_dv_fast rising timestamp."
+   },
+   "wall_s": 33.0,
+   "duration_ms": 31307,
+   "cost_usd": 0.10317099999999998,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "E1",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "edges": [
+     {
+      "time_ns": 12480,
+      "data_hex": "153524"
+     },
+     {
+      "time_ns": 25160,
+      "data_hex": "84D609"
+     },
+     {
+      "time_ns": 37840,
+      "data_hex": "B97B0D"
+     },
+     {
+      "time_ns": 50520,
+      "data_hex": "C28465"
+     },
+     {
+      "time_ns": 63200,
+      "data_hex": "F3E301"
+     },
+     {
+      "time_ns": 75880,
+      "data_hex": "23F176"
+     },
+     {
+      "time_ns": 88560,
+      "data_hex": "D457ED"
+     },
+     {
+      "time_ns": 101240,
+      "data_hex": "FDE9F9"
+     },
+     {
+      "time_ns": 113920,
+      "data_hex": "F784C5"
+     },
+     {
+      "time_ns": 126600,
+      "data_hex": "AFF7E5"
+     }
+    ],
+    "notes": "none. The signal starts as x and goes to 0 at t=4; I didn't count that as a rising edge. Timestamps are VCD ticks \u00d710 ns. Data values are zero-padded to 24 bits."
+   },
+   "wall_s": 23.2,
+   "duration_ms": 21601,
+   "cost_usd": 0.08847970000000001,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "E2",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "period_ns": 480,
+    "notes": "none"
+   },
+   "wall_s": 8.4,
+   "duration_ms": 6569,
+   "cost_usd": 0.0693439,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "E3",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "fast_count": 300,
+    "slow_count": 300,
+    "identical": true,
+    "first5": [
+     36,
+     99,
+     101,
+     1,
+     61
+    ],
+    "notes": "none"
+   },
+   "wall_s": 28.0,
+   "duration_ms": 26397,
+   "cost_usd": 0.0821707,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "E4",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "rst_fall_ns": 195,
+    "first_tx_fall_ns": 415,
+    "notes": "none"
+   },
+   "wall_s": 20.8,
+   "duration_ms": 19076,
+   "cost_usd": 0.07497930000000001,
+   "num_turns": 4,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  },
+  {
+   "model": "sonnet",
+   "arm": "nowal",
+   "qid": "E5",
+   "level": "easy",
+   "ok": true,
+   "errors": [],
+   "answer": {
+    "shortest_low_ns": 160,
+    "longest_low_ns": 1440,
+    "notes": "Counted only low pulses that start after reset release at 195 ns. The final w_tx edge is a rise, so every low pulse is complete. Pulse width is the time from a falling edge to the next rising edge."
+   },
+   "wall_s": 30.4,
+   "duration_ms": 28628,
+   "cost_usd": 0.0879748,
+   "num_turns": 5,
+   "is_error": false,
+   "returncode": 0,
+   "stderr": "",
+   "reused": true
+  }
+ ]
+}

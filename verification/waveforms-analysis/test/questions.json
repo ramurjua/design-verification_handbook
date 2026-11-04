@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "description": "Questions about simulation waveforms of this repository, used to compare how well Claude answers them with and without the WAL skill. Paths are relative to the repository root. Answers are graded against golden.json by run_bench.py.",
+  "conventions": "\"Sampled at an edge\" means the value just before that clock edge (what a flip-flop sees). \"Right after an edge\" means the value once every change at that timestamp has happened. Times are absolute simulation times in ns.",
+  "waveforms": {
+    "A": {"path": "modules/spi/test/spi_tb.vcd", "about": "SPI master and slave testbench, timescale 10 ns, 130 kB"},
+    "B": {"path": "modules/uart/test/uart_async_tb.vcd", "about": "UART transmitter and two receivers on clocks 2 % fast / 2 % slow, timescale 1 ps, 6.6 MB"},
+    "C": {"path": "utils/fpga_scope/test/scope_tb.vcd", "about": "FPGA debug scope core driven over UART, timescale 10 ns, 2 MB"}
+  },
+  "questions": [
+    {
+      "id": "E1", "level": "easy", "waveform": "A",
+      "text": "For every rising edge of spi_tb.w_received_slave: the time of the edge in ns, and the value of spi_tb.w24_data_received_slave right after the edge, as a hex string.",
+      "schema": {"edges": {"type": "array", "items": {"type": "object", "properties": {"time_ns": {"type": "number"}, "data_hex": {"type": "string"}}, "required": ["time_ns", "data_hex"], "additionalProperties": false}}}
+    },
+    {
+      "id": "E2", "level": "easy", "waveform": "A",
+      "text": "The period of spi_tb.w_sck in ns while a word is being transferred.",
+      "schema": {"period_ns": {"type": "number"}}
+    },
+    {
+      "id": "E3", "level": "easy", "waveform": "B",
+      "text": "How many bytes each receiver delivered (rising edges of uart_async_tb.w_dv_fast and of uart_async_tb.w_dv_slow), whether the two byte sequences (uart_async_tb.w8_data_fast / uart_async_tb.w8_data_slow right after each of those edges) are identical, and the first 5 bytes in decimal.",
+      "schema": {"fast_count": {"type": "integer"}, "slow_count": {"type": "integer"}, "identical": {"type": "boolean"}, "first5": {"type": "array", "items": {"type": "integer"}}}
+    },
+    {
+      "id": "E4", "level": "easy", "waveform": "B",
+      "text": "The time in ns at which uart_async_tb.rst falls, and the time of the first falling edge of uart_async_tb.w_tx after that.",
+      "schema": {"rst_fall_ns": {"type": "number"}, "first_tx_fall_ns": {"type": "number"}}
+    },
+    {
+      "id": "E5", "level": "easy", "waveform": "B",
+      "text": "The shortest and the longest low pulse on uart_async_tb.w_tx after reset, in ns.",
+      "schema": {"shortest_low_ns": {"type": "number"}, "longest_low_ns": {"type": "number"}}
+    },
+    {
+      "id": "D1", "level": "difficult", "waveform": "A",
+      "text": "Consider spi_tb.spi_master.r3_state sampled at every rising edge of spi_tb.clk25. A visit is a maximal run of consecutive edges with the same value. For each state value (ignore the unknown x value): the number of visits, and the average, minimum and maximum visit length in clock cycles. Give the state as a decimal string (\"0\", \"1\", ...).",
+      "schema": {"states": {"type": "array", "items": {"type": "object", "properties": {"state": {"type": "string"}, "visits": {"type": "integer"}, "avg": {"type": "number"}, "min": {"type": "integer"}, "max": {"type": "integer"}}, "required": ["state", "visits", "avg", "min", "max"], "additionalProperties": false}}}
+    },
+    {
+      "id": "D2", "level": "difficult", "waveform": "C",
+      "text": "scope_tb.dut.u_ctrl.o_state is the capture state machine (0 idle, 1 armed, 2 capturing, 3 done); the clock is scope_tb.clk. For each rising edge of scope_tb.clk at which scope_tb.dut.u_ctrl.i_cmd_arm is sampled high, in time order: how many clock edges until the first edge at which o_state is sampled as 2 (arm edge n, first capturing edge n+k counts as k), and from that edge how many more edges until the first edge at which o_state is sampled as 3. Also the average of the arm-to-capturing counts.",
+      "schema": {"captures": {"type": "array", "items": {"type": "object", "properties": {"arm_to_capturing": {"type": "integer"}, "capturing_to_done": {"type": "integer"}}, "required": ["arm_to_capturing", "capturing_to_done"], "additionalProperties": false}}, "avg_arm_to_capturing": {"type": "number"}}
+    },
+    {
+      "id": "D3", "level": "difficult", "waveform": "C",
+      "text": "At how many rising edges of scope_tb.clk are scope_tb.dut.w_trigger_pulse = 1 and scope_tb.dut.u_ctrl.o_state = 1 (armed) sampled at the same time? Of those, at how many is o_state still 1 at the next clock edge (the trigger was ignored)?",
+      "schema": {"armed_and_trigger": {"type": "integer"}, "ignored": {"type": "integer"}}
+    },
+    {
+      "id": "D4", "level": "difficult", "waveform": "B",
+      "text": "Pair the k-th rising edge of uart_async_tb.w_dv_fast with the k-th rising edge of uart_async_tb.w_dv_slow. For the delay (slow edge time minus fast edge time, in ns): the average, minimum and maximum, and for how many bytes the slow receiver was first.",
+      "schema": {"avg_ns": {"type": "number"}, "min_ns": {"type": "number"}, "max_ns": {"type": "number"}, "slow_first": {"type": "integer"}}
+    },
+    {
+      "id": "D5", "level": "difficult", "waveform": "B",
+      "text": "Decode uart_async_tb.w_tx after reset yourself as UART 8N1, LSB first, 160 ns per bit (16 cycles of uart_async_tb.clk_tx), each bit sampled in its middle. Report the number of frames, how many decoded bytes differ from the fast receiver's byte sequence (same order), how many frames have a stop bit that is not 1, and the minimum and maximum time between the starts of consecutive frames in ns.",
+      "schema": {"frames": {"type": "integer"}, "mismatches": {"type": "integer"}, "bad_stop": {"type": "integer"}, "min_start_gap_ns": {"type": "number"}, "max_start_gap_ns": {"type": "number"}}
+    }
+  ]
+}

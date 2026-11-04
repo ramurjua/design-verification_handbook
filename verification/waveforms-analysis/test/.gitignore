@@ -1,0 +1,3 @@
+# full Claude transcripts (contain local paths); report.md and results.json are kept
+results/*/raw/
+__pycache__/
